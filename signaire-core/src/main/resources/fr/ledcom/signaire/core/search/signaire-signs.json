@@ -41,7 +41,10 @@
         "analyzer": "folding",
         "fields": {
           "sort": {"type": "keyword", "normalizer": "folding"},
-          "prefix": {"type": "text", "analyzer": "folding_prefix", "search_analyzer": "folding"}
+          "prefix": {"type": "text", "analyzer": "folding_prefix", "search_analyzer": "folding"},
+          "fr": {"type": "text", "analyzer": "french"},
+          "de": {"type": "text", "analyzer": "german"},
+          "it": {"type": "text", "analyzer": "italian"}
         }
       },
       "periphrase": {

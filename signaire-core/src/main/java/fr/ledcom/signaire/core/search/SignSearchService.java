@@ -24,6 +24,8 @@ import fr.ledcom.signaire.model.Sign;
 @Service
 public class SignSearchService {
 
+    /** The name, stemmed in each language: "chats" finds "CHAT". */
+    private static final List<String> NAME_STEMMED_FIELDS = List.of("name.fr", "name.de", "name.it");
     /** Free text fields, with their language specific sub-fields. */
     private static final List<String> TEXT_FIELDS = List.of(
             "periphrase^2", "periphrase.fr", "periphrase.de", "periphrase.it",
@@ -78,6 +80,8 @@ public class SignSearchService {
         if (text != null) {
             bool.should(s -> s.match(m -> m.field("name").query(text).boost(5f)));
             bool.should(s -> s.match(m -> m.field("name.prefix").query(text).operator(Operator.And).boost(2f)));
+            bool.should(s -> s.multiMatch(m -> m.query(text).fields(NAME_STEMMED_FIELDS).operator(Operator.And)
+                    .boost(3f)));
             // fuzzy, but with the right first letter: otherwise "laus" finds "Maus" and "eau"
             bool.should(s -> s.multiMatch(m -> m.query(text).fields(TEXT_FIELDS).operator(Operator.And)
                     .fuzziness("AUTO").prefixLength(1)));

@@ -49,6 +49,12 @@ class SignSearchServiceIT {
     }
 
     @Test
+    void findsSignsByTheInflectedFormsOfTheirName() {
+        assertThat(names(SignQuery.forText("chats"))).first().isEqualTo("CHAT");
+        assertThat(names(SignQuery.forText("Katzen"))).first().isEqualTo("KATZE");
+    }
+
+    @Test
     void findsSignsByTheBeginningOfTheirName() {
         assertThat(names(SignQuery.forText("laus"))).containsExactly("LAUSANNE");
     }
