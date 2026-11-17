@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.wikimedia</groupId>
+        <artifactId>wmf-jvm-parent-pom</artifactId>
+        <version>1.102</version>
+    </parent>
+
+    <groupId>fr.ledcom</groupId>
+    <artifactId>signaire</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Signaire</name>
+    <description>Swiss sign language lexicon: search, personal word lists and learning material, based on SignSuisse data.</description>
+
+    <modules>
+        <module>signaire-model</module>
+        <module>signaire-bundle</module>
+        <module>signaire-extractor</module>
+        <module>signaire-core</module>
+        <module>signaire-cli</module>
+        <module>signaire-web</module>
+    </modules>
+
+    <properties>
+        <!-- the version from the parent POM cannot parse Java 27 class files -->
+        <forbiddenapis.version>3.11</forbiddenapis.version>
+        <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
+        <lombok.version>1.18.48</lombok.version>
+        <maven.compiler.release>27</maven.compiler.release>
+        <maven.compiler.source>27</maven.compiler.source>
+        <maven.compiler.target>27</maven.compiler.target>
+        <picocli.version>4.7.7</picocli.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the version from the parent POM cannot read Java 27 class files -->
+        <spotbugs.version>4.10.5</spotbugs.version>
+        <spring-boot.version>4.1.2</spring-boot.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-bundle</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-extractor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli-spring-boot-starter</artifactId>
+                <version>${picocli.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <!-- the version from the parent POM cannot read Java 27 class files -->
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>4.10.5.0</version>
+                </plugin>
+                <plugin>
+                    <!-- the version from the parent POM cannot read Java 27 class files -->
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.16</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

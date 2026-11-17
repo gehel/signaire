@@ -40,3 +40,6 @@ build/
 
 ### IDE ###
 .idea/
+
+### Maven ###
+pom.xml.bak
