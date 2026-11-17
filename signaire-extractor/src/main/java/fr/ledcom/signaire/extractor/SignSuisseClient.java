@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.file.Path;
 import java.util.List;
 
 import fr.ledcom.signaire.model.Category;
@@ -11,7 +12,7 @@ import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
 
 /** Access to the SignSuisse lexicon. */
-public class SignSuisseClient implements SignSearch {
+public class SignSuisseClient implements SignSource {
 
     /** SignSuisse returns at most this number of search results. */
     public static final int MAX_RESULTS = 100;
@@ -37,8 +38,14 @@ public class SignSuisseClient implements SignSearch {
         return searchParser.parse(fetcher.fetchText(uri));
     }
 
+    @Override
     public Sign fetchSign(SearchHit hit) {
         return pageParser.parse(fetcher.fetchText(URI.create(hit.url())), hit.url(), hit.uid(), hit.language());
+    }
+
+    @Override
+    public void download(URI uri, Path target) {
+        fetcher.download(uri, target);
     }
 
     /** Encodes like JavaScript's encodeURIComponent, which the SignSuisse page uses. */
