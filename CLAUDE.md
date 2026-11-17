@@ -42,8 +42,10 @@ Key decisions:
 - **Storage**: Elasticsearch holds only the sign corpus (fully rebuildable from bundles). User accounts
   and lists live in PostgreSQL (JPA). Lists reference signs by SignSuisse `uid`.
 - **Auth**: local accounts (Spring Security form login, bcrypt) plus optional OIDC via configuration.
-- **i18n**: all user-facing strings (web and CLI) go through Spring `MessageSource`
-  (`messages_fr.properties` first). Don't hardcode French strings in code.
+- **i18n**: never hardcode user-facing strings. The base bundles are French (`messages.properties`);
+  other languages get `messages_<lang>.properties`. Web uses the Spring `MessageSource`, and the supported
+  locales are listed in `LocaleConfiguration` (add a locale there when adding a translation). CLI help
+  texts use picocli resource bundles (`fr/ledcom/signaire/cli/messages.properties`).
 - Printed exports (PDF, e-book) show the SignSuisse photo/illustration plus a QR code linking to the video.
 
 ### SignSuisse data source
@@ -68,21 +70,33 @@ Key decisions:
 ## Build and test
 
 Use the Maven wrapper. The parent POM `org.wikimedia:wmf-jvm-parent-pom` enforces quality gates during
-the build: checkstyle (validate phase; the WMF ruleset is strict, e.g. `HideUtilityClassConstructor`),
-forbiddenapis (compile), spotbugs + findsecbugs, the no-package-cycles enforcer rule, duplicate-finder
-(verify), and sortpom (POM elements must be in sorted order).
+the build: checkstyle (validate phase), forbiddenapis (compile), spotbugs with findsecbugs and sb-contrib,
+the no-package-cycles enforcer rule, duplicate-finder (verify), and sortpom (POM elements must be in
+sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Temurin 27.
 
 ```bash
 ./mvnw verify                                   # full build with all quality checks
 ./mvnw -PnoVerify verify                        # skip the static analysis for a quick loop
-./mvnw -pl signaire-core -am test               # one module and the modules it depends on
-./mvnw -pl signaire-core test -Dtest=SearchServiceTest              # single test class
-./mvnw -pl signaire-core test -Dtest='SearchServiceTest#findsByName' # single test method
+./mvnw -pl signaire-web -am test                # one module and the modules it depends on
+./mvnw -pl signaire-web -am test -Dtest=HomeControllerTest -Dsurefire.failIfNoSpecifiedTests=false
+./mvnw -pl signaire-web -am test -Dtest='HomeControllerTest#homePageIsInFrenchByDefault' -Dsurefire.failIfNoSpecifiedTests=false
 ./mvnw sortpom:sort                             # fix POM ordering after editing a pom.xml
 ```
 
-Integration tests (`*IT.java`, failsafe) use Testcontainers for Elasticsearch and PostgreSQL and need
-Docker. `compose.yaml` starts the same services for local development.
+Gotchas with the WMF ruleset and Java 27:
+- The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
+  the parent's versions can't handle Java 27 class files. Check these first when bumping the JDK or the
+  parent.
+- Import order: `java.*`, `javax.*`, `org.*`, `com.*`, then everything else (`edu.*`, `picocli.*`, …) as
+  one group; groups are separated by a blank line, static imports on top.
+- Classes with only static methods need a non-public constructor (`HideUtilityClassConstructor`); Spring
+  Boot application classes get a `protected` constructor.
+- No trailing spaces, including in `.properties` files: write a significant trailing space as `\u0020`.
+- Silence a spotbugs false positive with `@SuppressFBWarnings(value = ..., justification = ...)`
+  (`spotbugs-annotations`, `provided` scope).
+
+Integration tests (`*IT.java`, failsafe) will use Testcontainers for Elasticsearch and PostgreSQL, so
+they need Docker.
 
 ## Conventions
 
