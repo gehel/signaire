@@ -29,6 +29,7 @@
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
+        <jsoup.version>1.24.1</jsoup.version>
         <lombok.version>1.18.48</lombok.version>
         <maven.compiler.release>27</maven.compiler.release>
         <maven.compiler.source>27</maven.compiler.source>
@@ -78,6 +79,11 @@
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli-spring-boot-starter</artifactId>
                 <version>${picocli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
