@@ -84,6 +84,13 @@ sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Tem
 ./mvnw sortpom:sort                             # fix POM ordering after editing a pom.xml
 ```
 
+Gotchas with Spring Boot and picocli:
+- CLI subcommands are `@Scope("prototype")` beans: picocli doesn't reset every option (positional lists)
+  between runs of the same object.
+- Apps get the core services by importing `SignaireCoreConfiguration`, not by scanning `fr.ledcom.signaire`
+  (that would pick up core's test application from the test-jar). It names the packages it scans as strings,
+  because the no-package-cycles rule also covers test classes.
+
 Gotchas with the WMF ruleset and Java 27:
 - The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
   the parent's versions can't handle Java 27 class files. Check these first when bumping the JDK or the
@@ -98,8 +105,25 @@ Gotchas with the WMF ruleset and Java 27:
   `SuppressForbidden` (see the extractor tests). `ResourceBundle.getBundle` and `String.formatted` need an
   explicit locale.
 
-Integration tests (`*IT.java`, failsafe) will use Testcontainers for Elasticsearch and PostgreSQL, so
-they need Docker.
+Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers and need Docker. The
+Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
+shared with the CLI (and web) tests. Run a single IT with
+`./mvnw -pl signaire-core verify -Dit.test=SignSearchServiceIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
+
+Running the CLI locally:
+
+```bash
+docker compose up -d                                     # Elasticsearch on localhost:9200
+./mvnw -PnoVerify -pl signaire-cli -am package -DskipTests
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar extraire -c religion -l fr -o bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar charger --bundles bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar chercher dieu
+```
+
+Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
+signs of "religion"); use `--sans-medias` while developing. After changing the index mapping
+(`signaire-signs.json`), reindex with `charger --reindexer`: the bundle registry only notices bundle
+changes.
 
 ## Conventions
 
