@@ -22,6 +22,7 @@
         <module>signaire-extractor</module>
         <module>signaire-core</module>
         <module>signaire-cli</module>
+        <module>signaire-web</module>
     </modules>
 
     <properties>
