@@ -67,6 +67,12 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-extractor</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -118,6 +124,14 @@
                             <!-- any annotation of that name, with a reason, can justify a forbidden API use -->
                             <suppressAnnotation>**.SuppressForbidden</suppressAnnotation>
                         </suppressAnnotations>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <!-- Spring Boot repackages the jar: run the tests on the classes instead -->
+                        <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                     </configuration>
                 </plugin>
                 <plugin>

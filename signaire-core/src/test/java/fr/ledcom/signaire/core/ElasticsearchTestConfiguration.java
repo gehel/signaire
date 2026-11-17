@@ -11,7 +11,7 @@ import org.testcontainers.utility.DockerImageName;
 public class ElasticsearchTestConfiguration {
 
     /** Keep in line with compose.yaml and the version of the Elasticsearch client. */
-    static final String IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.4.8";
+    public static final String IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.4.8";
 
     @Bean
     @ServiceConnection
