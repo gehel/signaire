@@ -51,6 +51,18 @@ class SignEnumeratorTest {
     }
 
     @Test
+    void refinesQueriesThatFail() {
+        FakeLexicon lexicon = new FakeLexicon("ZERO 0", "ZÉRO 0 0", "ZEN");
+        lexicon.failingQuery = "0";
+
+        SignEnumerator.Result result = new SignEnumerator(lexicon, CAP, 10).enumerate(Language.FRENCH, Category.CITY);
+
+        assertThat(result.hits()).extracting(SearchHit::name).containsExactlyInAnyOrder("ZERO 0", "ZÉRO 0 0", "ZEN");
+        assertThat(result.complete()).isTrue();
+        assertThat(lexicon.queries).contains("0", "00").doesNotContain("0 0");
+    }
+
+    @Test
     void keepsOnlyHitsInTheRequestedLanguage() {
         FakeLexicon lexicon = new FakeLexicon("ZURICH");
         lexicon.extraHit = new SearchHit("999", "ZÜRICH", Language.GERMAN, "https://example.org/999");
@@ -65,6 +77,7 @@ class SignEnumeratorTest {
         private final List<String> names;
         private final List<String> queries = new ArrayList<>();
         private SearchHit extraHit;
+        private String failingQuery;
 
         FakeLexicon(String... names) {
             this.names = List.of(names);
@@ -73,6 +86,9 @@ class SignEnumeratorTest {
         @Override
         public List<SearchHit> search(String term, Language language, Category category) {
             queries.add(term);
+            if (term.equals(failingQuery)) {
+                throw new ExtractionException("HTTP status 500");
+            }
             String normalizedTerm = normalize(term.strip());
             List<SearchHit> hits = new ArrayList<>();
             for (int i = 0; i < names.size(); i++) {

@@ -1,10 +1,13 @@
 package fr.ledcom.signaire.extractor;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.text.Normalizer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,10 +27,11 @@ import fr.ledcom.signaire.model.Language;
  * appending each character of the alphabet. With substring matching this is exhaustive: following the
  * characters of a name eventually leads to a query matching that name and returning less than the maximum.
  * The alphabet starts with letters and digits and grows with the characters (spaces, apostrophes…) found in
- * the names of the signs.
+ * the names of the signs. Queries that fail are refined like truncated ones.
  */
 public class SignEnumerator {
 
+    private static final Logger LOG = System.getLogger(SignEnumerator.class.getName());
     private static final String INITIAL_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}");
 
@@ -72,6 +76,8 @@ public class SignEnumerator {
         /** Number of results by query, as the search sees it (stripped). */
         private final Map<String, Integer> resultCounts = new HashMap<>();
         private final Set<String> truncated = new LinkedHashSet<>();
+        /** Queries the search failed on (stripped). */
+        private final Set<String> failed = new HashSet<>();
         private final Map<String, SearchHit> hits = new LinkedHashMap<>();
         private int queries;
         private boolean complete = true;
@@ -105,8 +111,17 @@ public class SignEnumerator {
             if (known != null) {
                 return known;
             }
-            List<SearchHit> results = search.search(query, language, category);
+            List<SearchHit> results;
             queries++;
+            try {
+                results = search.search(query, language, category);
+            } catch (ExtractionException e) {
+                // e.g. SignSuisse fails on "0": refining the query is the way around
+                LOG.log(Level.WARNING, "Search for \"{0}\" failed, refining it: {1}", query, e.getMessage());
+                resultCounts.put(key, maxResults);
+                failed.add(key);
+                return maxResults;
+            }
             resultCounts.put(key, results.size());
             for (SearchHit hit : results) {
                 if (hit.language() == language) {
@@ -122,10 +137,11 @@ public class SignEnumerator {
                 complete = false;
                 return;
             }
-            boolean endsWithSpace = Character.isWhitespace(query.charAt(query.length() - 1));
+            // the search ignores trailing and repeated spaces: refining a failed query or a query ending with a
+            // space with a space would repeat the same search until the length limit
+            boolean noSpace = Character.isWhitespace(query.charAt(query.length() - 1)) || failed.contains(query.strip());
             for (char c : characters) {
-                // the search ignores repeated spaces, refining with them would loop until the length limit
-                if (!(endsWithSpace && Character.isWhitespace(c))) {
+                if (!(noSpace && Character.isWhitespace(c))) {
                     pending.add(query + c);
                 }
             }
