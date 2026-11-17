@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.DialectVariant;
 import fr.ledcom.signaire.model.Example;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
@@ -126,7 +127,8 @@ public class BundleWriter {
         return Stream.of(
                 sign.videos().stream(),
                 sign.examples().stream().map(Example::video).filter(Objects::nonNull),
-                sign.images().stream())
+                sign.images().stream(),
+                sign.dialectVariants().stream().map(DialectVariant::video))
             .flatMap(Function.identity());
     }
 

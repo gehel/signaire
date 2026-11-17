@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.DialectVariant;
 import fr.ledcom.signaire.model.Example;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
@@ -54,7 +55,8 @@ class BundleRoundTripTest {
 
         try (Bundle bundle = reader.read(zip)) {
             assertThat(bundle.manifest().checksums())
-                    .containsKeys(BundleManifest.SIGNS_ENTRY, "media/lausanne.mp4", "media/lausanne-example.mp4");
+                    .containsOnlyKeys(BundleManifest.SIGNS_ENTRY, "media/lausanne.mp4", "media/lausanne-example.mp4",
+                            "media/lausanne.jpg", "media/lausanne-vd.mp4");
             try (InputStream video = bundle.openMedia("media/lausanne.mp4")) {
                 assertThat(new String(video.readAllBytes(), UTF_8)).isEqualTo("video of lausanne");
             }
@@ -64,8 +66,10 @@ class BundleRoundTripTest {
 
     @Test
     void mediaThatWasNotDownloadedIsOnlyReferenced() throws IOException {
-        Sign sign = new Sign("1", Language.FRENCH, "X", null, null, null, null,
-                List.of(Category.CITY), List.of(new Media("https://example.org/x.mp4", null)), null, null);
+        Sign sign = Sign.builder("1", Language.FRENCH, "X")
+                .categories(List.of(Category.CITY))
+                .videos(List.of(new Media("https://example.org/x.mp4", null)))
+                .build();
 
         Path zip = writer.write(tmp.resolve("ville.zip"), Category.CITY, List.of(sign), mediaRoot());
 
@@ -98,8 +102,9 @@ class BundleRoundTripTest {
     void writerRejectsMediaPathsOutsideOfTheMediaDirectory() throws IOException {
         Path mediaRoot = mediaRoot();
         Files.writeString(tmp.resolve("secret.txt"), "secret");
-        Sign sign = new Sign("1", Language.FRENCH, "X", null, null, null, null, null,
-                List.of(new Media("https://example.org/x.mp4", "media/../../secret.txt")), null, null);
+        Sign sign = Sign.builder("1", Language.FRENCH, "X")
+                .videos(List.of(new Media("https://example.org/x.mp4", "media/../../secret.txt")))
+                .build();
 
         assertThatThrownBy(() -> writer.write(tmp.resolve("ville.zip"), Category.CITY, List.of(sign), mediaRoot))
                 .isInstanceOf(BundleException.class)
@@ -112,22 +117,28 @@ class BundleRoundTripTest {
         Files.writeString(root.resolve("media/lausanne.mp4"), "video of lausanne");
         Files.writeString(root.resolve("media/lausanne-example.mp4"), "example video");
         Files.writeString(root.resolve("media/lausanne.jpg"), "photo");
+        Files.writeString(root.resolve("media/lausanne-vd.mp4"), "dialect variant");
         return root;
     }
 
     private static Sign lausanne() {
-        return new Sign("119158", Language.FRENCH, "LAUSANNE",
-                "https://www.sgb-fss.ch/signsuisse/fr/lexikon/119158/lausanne",
-                "Ville, lac, colline.", "Lausanne est une ville de Suisse romande.", "Reconnu",
-                List.of(Category.CITY),
-                List.of(new Media("https://example.org/lausanne.mp4", "media/lausanne.mp4")),
-                List.of(new Example("Lausanne est la capitale du canton de Vaud.",
-                        new Media("https://example.org/lausanne-example.mp4", "media/lausanne-example.mp4"))),
-                List.of(new Media("https://example.org/lausanne.jpg", "media/lausanne.jpg")));
+        return Sign.builder("119158", Language.FRENCH, "LAUSANNE")
+                .sourceUrl("https://www.sgb-fss.ch/signsuisse/fr/lexikon/119158/lausanne")
+                .periphrase("Ville, lac, colline.")
+                .definition("Lausanne est une ville de Suisse romande.")
+                .status("Reconnu")
+                .categories(List.of(Category.CITY))
+                .dialects(List.of("VD"))
+                .videos(List.of(new Media("https://example.org/lausanne.mp4", "media/lausanne.mp4")))
+                .examples(List.of(new Example("Lausanne est la capitale du canton de Vaud.",
+                        new Media("https://example.org/lausanne-example.mp4", "media/lausanne-example.mp4"))))
+                .images(List.of(new Media("https://example.org/lausanne.jpg", "media/lausanne.jpg")))
+                .dialectVariants(List.of(new DialectVariant(List.of("VD"),
+                        new Media("https://example.org/lausanne-vd.mp4", "media/lausanne-vd.mp4"))))
+                .build();
     }
 
     private static Sign geneve() {
-        return new Sign("2", Language.FRENCH, "GENÈVE", null, null, null, null,
-                List.of(Category.CITY), null, null, null);
+        return Sign.builder("2", Language.FRENCH, "GENÈVE").categories(List.of(Category.CITY)).build();
     }
 }
