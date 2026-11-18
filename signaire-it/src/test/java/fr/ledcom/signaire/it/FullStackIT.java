@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -160,21 +160,15 @@ class FullStackIT {
     }
 
     /** Waits for the web application to start and to load the bundles in the background. */
-    private static void awaitSigns() throws Exception {
+    private static void awaitSigns() {
         Session visitor = new Session();
-        Instant deadline = Instant.now().plus(Duration.ofMinutes(3));
-        while (Instant.now().isBefore(deadline)) {
-            assertThat(web.isAlive()).as("web application, see %s", web.log()).isTrue();
-            try {
-                if (visitor.get("/?q=lausanne").body().contains("href=\"/signs/9001\"")) {
-                    return;
-                }
-            } catch (IOException e) {
+        await("signs loaded by the web application, see " + web.log())
+                .atMost(Duration.ofMinutes(3))
+                .pollInterval(Duration.ofSeconds(1))
+                .failFast("web application stopped, see " + web.log(), () -> !web.isAlive())
                 // not started yet
-            }
-            Thread.sleep(1000);
-        }
-        throw new IllegalStateException("The signs were not loaded in time, see " + web.log());
+                .ignoreExceptionsInstanceOf(IOException.class)
+                .until(() -> visitor.get("/?q=lausanne").body().contains("href=\"/signs/9001\""));
     }
 
     private static Path jar(String property) {
