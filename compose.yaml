@@ -11,6 +11,18 @@ services:
       - "127.0.0.1:9200:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+  postgres:
+    # keep in line with PostgresTestConfiguration
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: signaire
+      POSTGRES_USER: signaire
+      POSTGRES_PASSWORD: signaire
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
 
 volumes:
   elasticsearch-data:
+  postgres-data:

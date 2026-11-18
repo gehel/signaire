@@ -16,7 +16,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.MgetResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.mget.MultiGetResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import fr.ledcom.signaire.model.Sign;
 
@@ -65,6 +67,23 @@ public class SignSearchService {
             return response.found() ? Optional.ofNullable(response.source()) : Optional.empty();
         } catch (IOException e) {
             throw new SearchException("Cannot get sign " + uid, e);
+        }
+    }
+
+    /** The signs with the given uids, in the same order; unknown uids are skipped. */
+    public List<Sign> findByUids(List<String> uids) {
+        if (uids.isEmpty()) {
+            return List.of();
+        }
+        try {
+            MgetResponse<Sign> response = client.mget(m -> m.index(SignIndex.SIGNS).ids(uids), Sign.class);
+            return response.docs().stream()
+                    .filter(MultiGetResponseItem::isResult)
+                    .map(item -> item.result().source())
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (IOException e) {
+            throw new SearchException("Cannot get signs " + uids, e);
         }
     }
 

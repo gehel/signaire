@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{layout :: head(${sign.name()})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
@@ -57,6 +58,41 @@
                        th:src="${links.media(variant.video())}" th:text="#{sign.videoUnsupported}"></video>
             </li>
         </ul>
+    </section>
+
+    <!--/* Replaced by the htmx responses to the forms it contains */-->
+    <section id="sign-lists" class="sign-lists" th:fragment="lists">
+        <h2 th:text="#{lists.title}">My lists</h2>
+        <p sec:authorize="!isAuthenticated()">
+            <a th:href="@{/login}" th:text="#{sign.loginToAdd}">Log in to add this sign to your lists.</a>
+        </p>
+        <th:block sec:authorize="isAuthenticated()">
+            <p th:if="${listError}" class="error" role="alert" th:text="#{${listError}(${maxNameLength})}">Error</p>
+            <ul class="lists">
+                <li th:each="list : ${lists}" th:with="inList=${listsWithSign.contains(list.id())}">
+                    <a th:href="@{/lists/{id}(id=${list.id()})}" th:text="${list.name()}">Family</a>
+                    <form th:if="${inList}" method="post" class="inline" hx-target="#sign-lists" hx-swap="outerHTML"
+                          th:action="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}"
+                          th:hx-post="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}">
+                        <span class="in-list" th:text="#{sign.inList}">In the list</span>
+                        <button type="submit" class="link" th:text="#{lists.remove}">Remove</button>
+                    </form>
+                    <form th:unless="${inList}" method="post" class="inline" hx-target="#sign-lists"
+                          hx-swap="outerHTML"
+                          th:action="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}"
+                          th:hx-post="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}">
+                        <button type="submit" class="link" th:text="#{sign.addToList}">Add</button>
+                    </form>
+                </li>
+            </ul>
+            <form method="post" hx-target="#sign-lists" hx-swap="outerHTML" class="new-list"
+                  th:action="@{/signs/{uid}/lists(uid=${sign.uid()})}"
+                  th:hx-post="@{/signs/{uid}/lists(uid=${sign.uid()})}">
+                <label for="new-list" th:text="#{sign.newList}">New list with this sign</label>
+                <input type="text" id="new-list" name="name" required th:maxlength="${maxNameLength}">
+                <button type="submit" th:text="#{lists.create}">Create</button>
+            </form>
+        </th:block>
     </section>
 
     <p th:if="${sign.sourceUrl() != null}" class="source">

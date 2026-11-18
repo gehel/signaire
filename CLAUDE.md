@@ -26,7 +26,8 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-model` | Domain types (sign, category, language, bundle manifest) | no |
 | `signaire-bundle` | Read/write category bundles (zip) | no |
 | `signaire-extractor` | Crawl SignSuisse and produce bundles | no |
-| `signaire-core` | Bundle loading, Elasticsearch indexing/search, users and lists, exports | yes |
+| `signaire-core` | Bundle loading, Elasticsearch indexing/search, media of the bundles | yes |
+| `signaire-accounts` | User accounts and word lists in PostgreSQL (JPA, Flyway) | yes |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
 | `android/` (later) | Java Android app, Gradle build, offline-capable | — |
@@ -41,8 +42,15 @@ Key decisions:
   `signaire extraire`, loaded from a configured directory at startup and (re)loadable at runtime; loading
   is idempotent and keyed by SignSuisse `uid`.
 - **Storage**: Elasticsearch holds only the sign corpus (fully rebuildable from bundles). User accounts
-  and lists live in PostgreSQL (JPA). Lists reference signs by SignSuisse `uid`.
-- **Auth**: local accounts (Spring Security form login, bcrypt) plus optional OIDC via configuration.
+  and lists live in PostgreSQL (`signaire-accounts`: JPA, schema by Flyway in `db/migration`, Hibernate
+  only validates it). It's a separate module so that the CLI needs no database. Lists reference signs
+  by SignSuisse `uid`. Entities and repositories are package-private; services expose records and take
+  the id of the acting account, so a list of someone else is "not found".
+- **Auth**: local accounts (Spring Security form login, bcrypt; `signaire.accounts.registration-enabled`)
+  plus OpenID Connect when `spring.security.oauth2.client.registration.*` is configured (an account is
+  created on the first login, keyed by issuer + subject). Controllers get the user with
+  `@AuthenticationPrincipal AccountPrincipal` (`LocalUser` or `OidcAccountUser`). Searching and reading
+  signs is public; `/lists/**` and `/signs/*/lists/**` need a login.
 - **i18n**: French, German, Italian and English, always translated together: a change to a French
   bundle comes with the three translations (tests check that every translation has the keys of the
   French bundle). Never hardcode user-facing strings. The base bundles are French (`messages.properties`),
@@ -128,7 +136,7 @@ java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.ja
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
 
-Running the web UI locally (http://localhost:8080): it loads `signaire.bundles.directory` (default
+Running the web UI locally (http://localhost:8080; `docker compose up -d` also starts PostgreSQL): it loads `signaire.bundles.directory` (default
 `bundles`) in the background at startup, retrying while Elasticsearch starts, and serves the media from
 the bundles.
 
@@ -142,6 +150,18 @@ signs of "religion"); use `--sans-medias` while developing. After changing the i
 (`signaire-signs.json`), reindex with `charger --reindexer`: the bundle registry only notices bundle
 changes.
 
+To add an OpenID Connect provider, give the client and the issuer; providers unknown to Spring also
+need the redirect URI:
+
+```properties
+spring.security.oauth2.client.registration.myidp.client-id=signaire
+spring.security.oauth2.client.registration.myidp.client-secret=...
+spring.security.oauth2.client.registration.myidp.client-name=My IdP
+spring.security.oauth2.client.registration.myidp.scope=openid,profile,email
+spring.security.oauth2.client.registration.myidp.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+spring.security.oauth2.client.provider.myidp.issuer-uri=https://idp.example.org
+```
+
 Web UI gotchas:
 - Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)
   requests get fragments only (`Htmx.isPartialRequest`), except history restoration; the language links
@@ -149,9 +169,16 @@ Web UI gotchas:
 - Thymeleaf 3.1 forbids bean references (`@bean`) in link attributes: `Links` is a model attribute
   (`${links.withPage(2)}`, `${links.media(media)}`); exception handlers must add it themselves.
 - Name `@PathVariable`/`@RequestParam` explicitly: the build doesn't compile with `-parameters`.
+- The services are imported by `ServicesConfiguration`, not by the application class, so that
+  `@WebMvcTest` slices (no Docker) don't load them; mock what the slice needs (`AccountService` for the
+  security configuration).
+- Forms posted with htmx (`hx-post` on a `<form th:action=…>`) carry the CSRF token as a hidden field.
+- Messages rendered with arguments go through `MessageFormat`: write apostrophes `''` there only. Thymeleaf
+  escapes `'` as `&#39;` in the output.
 - Web test properties are in `src/test/resources/config/application.properties` (a second
-  `application.properties` would trip duplicate-finder). Web ITs share one Spring context and one
-  Elasticsearch container: keep their annotations identical.
+  `application.properties` would trip duplicate-finder, so test-jars must not have one either). Web ITs
+  are annotated `@WebIntegrationTest` only, to share one Spring context and the Elasticsearch and
+  PostgreSQL containers.
 
 ## Conventions
 

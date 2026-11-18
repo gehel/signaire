@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{register.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main class="account">
+    <h1 th:text="#{register.title}">Create an account</h1>
+    <p th:if="${error}" class="error" role="alert" th:text="#{${error}(${minPasswordLength})}">Error</p>
+    <form th:action="@{/register}" method="post" th:object="${registration}" class="stacked">
+        <label for="username" th:text="#{account.username}">Username</label>
+        <input type="text" id="username" th:field="*{username}" autocomplete="username" required
+               minlength="3" maxlength="40" pattern="[A-Za-z0-9._\-]+" aria-describedby="username-help">
+        <small id="username-help" th:text="#{register.usernameHelp}">3 to 40 letters or digits</small>
+        <label for="displayName" th:text="#{register.displayName}">Name shown</label>
+        <input type="text" id="displayName" th:field="*{displayName}" autocomplete="name" maxlength="100">
+        <label for="password" th:text="#{account.password}">Password</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" required
+               th:minlength="${minPasswordLength}" aria-describedby="password-help">
+        <small id="password-help" th:text="#{register.passwordHelp(${minPasswordLength})}">8 characters</small>
+        <label for="confirmation" th:text="#{register.confirmation}">Password again</label>
+        <input type="password" id="confirmation" name="confirmation" autocomplete="new-password" required>
+        <button type="submit" th:text="#{register.submit}">Create the account</button>
+    </form>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

@@ -12,16 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SignIndex;
@@ -32,9 +28,7 @@ import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(ElasticsearchTestConfiguration.class)
+@WebIntegrationTest
 class SignPagesIT {
 
     /** A sign whose media were not downloaded, with everything a sign can have. */
