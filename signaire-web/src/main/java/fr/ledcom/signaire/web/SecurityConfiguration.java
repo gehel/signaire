@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import fr.ledcom.signaire.accounts.AccountService;
 
-/** Searching and reading signs is open to all; word lists need an account. */
+/** Searching and reading signs is open to all; word lists need an account, administration an admin. */
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
 
@@ -20,24 +20,25 @@ public class SecurityConfiguration {
      * ({@code spring.security.oauth2.client.registration.*}).
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AccountService accounts,
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AccountService accounts, AdminUsers admins,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
         http.authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/lists/**", "/signs/*/lists/**").authenticated()
+                        .requestMatchers("/admin/**").hasRole(AdminUsers.ADMIN_ROLE)
+                        .requestMatchers("/lists/**", "/signs/*/lists/**", "/requests/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(login -> login.loginPage("/login").defaultSuccessUrl("/"))
                 .logout(logout -> logout.logoutSuccessUrl("/"));
         if (clientRegistrations.getIfAvailable() != null) {
             http.oauth2Login(login -> login.loginPage("/login").defaultSuccessUrl("/")
-                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(new OidcAccounts(accounts))));
+                    .userInfoEndpoint(userInfo -> userInfo.oidcUserService(new OidcAccounts(accounts, admins))));
         }
         return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService(AccountService accounts) {
+    public UserDetailsService userDetailsService(AccountService accounts, AdminUsers admins) {
         return username -> accounts.findLocalCredentials(username)
-                .map(LocalUser::new)
+                .map(credentials -> new LocalUser(credentials, admins))
                 .orElseThrow(() -> new UsernameNotFoundException("No local account " + username));
     }
 }

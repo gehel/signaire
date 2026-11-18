@@ -27,10 +27,11 @@ class StartupLoadingTest {
 
     private final BundleLoader loader = mock(BundleLoader.class);
     private final MediaLibrary media = mock(MediaLibrary.class);
+    private final SignEditor editor = mock(SignEditor.class);
     private final List<Duration> waits = new ArrayList<>();
 
     private StartupLoading startupLoading(int attempts) {
-        return new StartupLoading(loader, media, bundles, true, attempts, Duration.ofSeconds(5), waits::add);
+        return new StartupLoading(loader, media, editor, bundles, true, attempts, Duration.ofSeconds(5), waits::add);
     }
 
     @Test
@@ -47,6 +48,7 @@ class StartupLoadingTest {
         assertThat(reports).containsExactly(loaded);
         assertThat(waits).containsExactly(Duration.ofSeconds(5), Duration.ofSeconds(5));
         verify(media).refresh();
+        verify(editor).reapply();
     }
 
     @Test

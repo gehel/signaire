@@ -53,8 +53,8 @@ class ListPagesIT {
         index.refresh();
         accounts.register("alice", "correct horse", "Alice");
         accounts.register("bob", "correct horse", "Bob");
-        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow());
-        bob = new LocalUser(accounts.findLocalCredentials("bob").orElseThrow());
+        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow(), new AdminUsers(List.of()));
+        bob = new LocalUser(accounts.findLocalCredentials("bob").orElseThrow(), new AdminUsers(List.of()));
     }
 
     @Test

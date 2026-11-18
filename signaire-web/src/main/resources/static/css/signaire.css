@@ -184,3 +184,29 @@ details.export fieldset {
     flex-wrap: wrap;
     gap: 0.5rem 1rem;
 }
+
+table.admin {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table.admin th, table.admin td {
+    border-bottom: 1px solid #ddd;
+    padding: 0.3rem;
+    text-align: left;
+}
+
+.uid {
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.admin-actions {
+    border: 1px dashed var(--accent);
+    margin: 1rem 0;
+    padding: 0.5rem;
+}
+
+form.sign-form {
+    max-width: 40rem;
+}

@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import fr.ledcom.signaire.accounts.Account;
 import fr.ledcom.signaire.accounts.AccountService;
 
 /**
@@ -21,9 +21,11 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
 
     private final OidcUserService delegate = new OidcUserService();
     private final AccountService accounts;
+    private final AdminUsers admins;
 
-    public OidcAccounts(AccountService accounts) {
+    public OidcAccounts(AccountService accounts, AdminUsers admins) {
         this.accounts = accounts;
+        this.admins = admins;
     }
 
     @Override
@@ -32,10 +34,11 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
     }
 
     OidcAccountUser toAccountUser(OidcUser user) {
+        Account account = accounts.findOrCreateOidc(String.valueOf(user.getIssuer()), user.getSubject(),
+                username(user), user.getFullName());
         List<GrantedAuthority> authorities = new ArrayList<>(user.getAuthorities());
-        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        return new OidcAccountUser(user, authorities, accounts.findOrCreateOidc(String.valueOf(user.getIssuer()),
-                user.getSubject(), username(user), user.getFullName()));
+        authorities.addAll(admins.authorities(account.username()));
+        return new OidcAccountUser(user, authorities, account);
     }
 
     /** The username to give to a new account: the preferred one, else from the email address, else the subject. */

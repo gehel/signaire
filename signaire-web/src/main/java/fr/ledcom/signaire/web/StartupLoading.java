@@ -34,6 +34,7 @@ public class StartupLoading {
 
     private final BundleLoader loader;
     private final MediaLibrary media;
+    private final SignEditor editor;
     private final Path directory;
     private final boolean enabled;
     private final int attempts;
@@ -47,16 +48,17 @@ public class StartupLoading {
     }
 
     @Autowired
-    public StartupLoading(BundleLoader loader, MediaLibrary media,
+    public StartupLoading(BundleLoader loader, MediaLibrary media, SignEditor editor,
             @Value("${signaire.bundles.directory:bundles}") Path directory,
             @Value("${signaire.bundles.load-on-startup:true}") boolean enabled) {
-        this(loader, media, directory, enabled, DEFAULT_ATTEMPTS, DEFAULT_RETRY_DELAY, Thread::sleep);
+        this(loader, media, editor, directory, enabled, DEFAULT_ATTEMPTS, DEFAULT_RETRY_DELAY, Thread::sleep);
     }
 
-    StartupLoading(BundleLoader loader, MediaLibrary media, Path directory, boolean enabled, int attempts,
-            Duration retryDelay, Sleeper sleeper) {
+    StartupLoading(BundleLoader loader, MediaLibrary media, SignEditor editor, Path directory, boolean enabled,
+            int attempts, Duration retryDelay, Sleeper sleeper) {
         this.loader = loader;
         this.media = media;
+        this.editor = editor;
         this.directory = directory;
         this.enabled = enabled;
         this.attempts = attempts;
@@ -90,7 +92,7 @@ public class StartupLoading {
         return load();
     }
 
-    /** Loads the bundles of the directory, and reports the outcome in the logs. */
+    /** Loads the bundles of the directory, applies the changes of administrators, reports in the logs. */
     public List<LoadReport> load() {
         try {
             return tryLoad();
@@ -104,6 +106,7 @@ public class StartupLoading {
         if (!Files.isDirectory(directory)) {
             LOG.log(Level.WARNING, "No bundle directory {0}: run \"signaire extraire\" to create bundles",
                     directory.toAbsolutePath());
+            editor.reapply();
             return List.of();
         }
         List<LoadReport> reports = loader.loadDirectory(directory);
@@ -113,6 +116,8 @@ public class StartupLoading {
                     report.signCount(), report.error() == null ? "" : ", " + report.error());
         }
         media.refresh();
+        // the bundles replace the signs changed by administrators
+        editor.reapply();
         return reports;
     }
 }

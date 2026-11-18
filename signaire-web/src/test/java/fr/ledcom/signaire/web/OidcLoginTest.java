@@ -29,7 +29,7 @@ import fr.ledcom.signaire.accounts.AccountService;
     "spring.security.oauth2.client.provider.idp.user-info-uri=https://idp.example.org/userinfo",
     "spring.security.oauth2.client.provider.idp.user-name-attribute=sub",
 })
-@Import(SecurityConfiguration.class)
+@Import({SecurityConfiguration.class, AdminUsers.class})
 @ImportAutoConfiguration(OAuth2ClientAutoConfiguration.class)
 class OidcLoginTest {
 
