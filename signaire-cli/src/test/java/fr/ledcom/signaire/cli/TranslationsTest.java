@@ -26,7 +26,7 @@ import picocli.CommandLine.TypeConversionException;
 
 class TranslationsTest {
 
-    private static final List<String> BUNDLES = List.of("messages", "extract", "load", "search", "categories");
+    private static final List<String> BUNDLES = List.of("messages", "extract", "load", "search", "export", "categories");
 
     static Stream<Arguments> translations() {
         return BUNDLES.stream().flatMap(bundle -> Stream.of("de", "it", "en").map(lang -> Arguments.of(bundle, lang)));

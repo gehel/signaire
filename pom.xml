@@ -22,6 +22,7 @@
         <module>signaire-extractor</module>
         <module>signaire-core</module>
         <module>signaire-accounts</module>
+        <module>signaire-export</module>
         <module>signaire-cli</module>
         <module>signaire-web</module>
     </modules>
@@ -38,11 +39,13 @@
         <maven.compiler.release>27</maven.compiler.release>
         <maven.compiler.source>27</maven.compiler.source>
         <maven.compiler.target>27</maven.compiler.target>
+        <pdfbox.version>3.0.8</pdfbox.version>
         <picocli.version>4.7.7</picocli.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the version from the parent POM cannot read Java 27 class files -->
         <spotbugs.version>4.10.5</spotbugs.version>
         <spring-boot.version>4.1.2</spring-boot.version>
+        <zxing.version>3.5.4</zxing.version>
     </properties>
 
     <dependencyManagement>
@@ -58,6 +61,11 @@
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>${zxing.version}</version>
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
@@ -88,6 +96,11 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-export</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-extractor</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -100,6 +113,11 @@
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli-spring-boot-starter</artifactId>
                 <version>${picocli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jsoup</groupId>

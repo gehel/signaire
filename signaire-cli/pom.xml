@@ -19,6 +19,10 @@
         </dependency>
         <dependency>
             <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-export</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
             <artifactId>signaire-extractor</artifactId>
         </dependency>
         <dependency>

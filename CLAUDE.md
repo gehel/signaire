@@ -28,6 +28,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-extractor` | Crawl SignSuisse and produce bundles | no |
 | `signaire-core` | Bundle loading, Elasticsearch indexing/search, media of the bundles | yes |
 | `signaire-accounts` | User accounts and word lists in PostgreSQL (JPA, Flyway) | yes |
+| `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
 | `android/` (later) | Java Android app, Gradle build, offline-capable | — |
@@ -62,7 +63,14 @@ Key decisions:
   names (`categories*.properties`) are shown in the user's language and accepted in any of them. Tests run
   in French (`argLine` in the root POM); switch with `DefaultLocale` in CLI tests. Build command lines
   with `SignaireCommand.commandLine(...)`.
-- Printed exports (PDF, e-book) show the SignSuisse photo/illustration plus a QR code linking to the video.
+- **Exports** (`signaire-export`, plain Java): the caller gives an `ExportRequest` (title, signs, locale)
+  and a `MediaSource` reading downloaded media (web and CLI adapt `MediaLibrary`). Labels are in
+  `export*.properties`. PDF: A4/A5/A6, 1–12 signs per page, sheets, booklet (half pages imposed in
+  saddle-stitch order on landscape sheets, printed duplex short edge) or flashcards (backs mirrored for
+  duplex long edge); each sign has its image and a QR code to its SignSuisse video. PDF text uses the
+  standard Helvetica fonts (WinAnsi; other characters become `?`). Anki: legacy collection schema 11 (all
+  versions import it), notes keyed by `signaire-<uid>`, stable model and deck ids so re-imports update.
+  EPUB 3: a page per sign, videos linked or included.
 
 ### SignSuisse data source
 
@@ -131,7 +139,11 @@ docker compose up -d                                     # Elasticsearch on loca
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar extraire -c religion -l fr -o bundles
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar charger --bundles bundles
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar chercher dieu
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar exporter -f pdf -o dieu.pdf \
+    --papier a5 --par-page 2 --mise-en-page livret -c religion
 ```
+
+To look at a PDF while working on the layouts: `pdftoppm -r 50 -png -f 1 -l 1 file.pdf page`.
 
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.

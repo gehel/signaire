@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Downloads a list or search results; the search parameters, when on the page, are kept. */-->
+<details th:fragment="export(action)" class="export">
+    <summary th:text="#{export.title}">Export</summary>
+    <form th:action="@{${action}}" method="get" class="stacked">
+        <input th:if="${q != null}" type="hidden" name="q" th:value="${q}">
+        <input th:each="language : ${languages}" type="hidden" name="language" th:value="${language.code()}">
+        <input th:each="category : ${categories}" type="hidden" name="category" th:value="${category.name()}">
+        <fieldset>
+            <legend th:text="#{export.format}">Format</legend>
+            <label th:each="format : ${ {'PDF', 'ANKI', 'EPUB'} }">
+                <input type="radio" name="format" th:value="${format}" th:checked="${format == 'PDF'}">
+                <span th:text="#{'export.format.' + ${format}}">PDF</span>
+            </label>
+        </fieldset>
+        <fieldset>
+            <legend th:text="#{export.pdfOptions}">PDF options</legend>
+            <label for="export-paper" th:text="#{export.paper}">Paper</label>
+            <select id="export-paper" name="paper">
+                <option th:each="paper : ${ {'A4', 'A5', 'A6'} }" th:value="${paper}" th:text="${paper}">A4</option>
+            </select>
+            <label for="export-per-page" th:text="#{export.perPage}">Signs per page</label>
+            <select id="export-per-page" name="perPage">
+                <option th:each="count : ${ {1, 2, 4, 6, 8, 9, 12} }" th:value="${count}" th:text="${count}"
+                        th:selected="${count == 4}">4</option>
+            </select>
+            <label for="export-layout" th:text="#{export.layout}">Layout</label>
+            <select id="export-layout" name="layout">
+                <option th:each="layout : ${ {'SHEETS', 'BOOKLET', 'FLASHCARDS'} }" th:value="${layout}"
+                        th:text="#{'export.layout.' + ${layout}}">Sheets</option>
+            </select>
+        </fieldset>
+        <label>
+            <input type="checkbox" name="videos" value="true">
+            <span th:text="#{export.videos}">Include the videos in the e-book</span>
+        </label>
+        <button type="submit" th:text="#{export.submit}">Download</button>
+    </form>
+</details>
+</body>
+</html>

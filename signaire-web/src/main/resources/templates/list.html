@@ -20,6 +20,7 @@
             </form>
         </li>
     </ul>
+    <details th:replace="~{fragments/export :: export('/lists/' + ${list.id()} + '/export')}"></details>
     <p th:if="${error}" class="error" role="alert" th:text="#{${error}(${maxNameLength})}">Error</p>
     <details>
         <summary th:text="#{lists.rename}">Rename</summary>
