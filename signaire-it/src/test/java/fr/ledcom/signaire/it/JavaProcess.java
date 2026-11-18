@@ -31,6 +31,8 @@ final class JavaProcess implements AutoCloseable {
     static JavaProcess start(Path jar, Path work, String name, List<String> arguments) throws IOException {
         List<String> command = new ArrayList<>(List.of(
                 ProcessHandle.current().info().command().orElse("java"),
+                // short lived: the quick compiler and the serial collector start it faster
+                "-XX:TieredStopAtLevel=1", "-XX:+UseSerialGC",
                 "-Duser.language=fr", "-Duser.country=CH",
                 "-Dhttp.proxyHost=127.0.0.1", "-Dhttp.proxyPort=9", "-Dhttps.proxyHost=127.0.0.1",
                 "-Dhttps.proxyPort=9", "-Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]",
