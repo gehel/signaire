@@ -4,6 +4,15 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
+    <h1 class="visually-hidden" th:text="#{search.label}">Search a sign</h1>
+    <section th:if="${welcome}" class="welcome" aria-labelledby="welcome-title">
+        <h2 id="welcome-title" th:text="#{tour.welcome.title}">Welcome to Signaire</h2>
+        <p th:text="#{tour.welcome.text}">Signaire helps you learn Swiss sign languages.</p>
+        <p class="tour-links">
+            <a th:href="@{/tour/1}" th:text="#{tour.start}">Take the tour</a>
+            <a th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
+        </p>
+    </section>
     <form class="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
           hx-push-url="true" hx-trigger="submit, input delay:300ms, change">
         <p class="words">

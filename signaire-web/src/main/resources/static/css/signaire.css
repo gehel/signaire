@@ -305,3 +305,31 @@ main.help pre {
         grid-template-columns: 1fr;
     }
 }
+
+section.welcome, main.tour {
+    background: #fff8f0;
+    border-left: 4px solid var(--accent);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+}
+
+.tour-links, nav.tour-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+nav.tour-steps .skip-tour {
+    margin-left: auto;
+}
+
+/* Read by screen readers only */
+.visually-hidden {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}

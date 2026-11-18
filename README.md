@@ -92,4 +92,5 @@ first (JUnit 5 and AssertJ), commits that tell a story.
 
 ## License
 
-The license of the code has not been chosen yet.
+The code of Signaire is licensed under the [Apache License 2.0](LICENSE). This covers the code only: the content of
+SignSuisse (videos, images, texts) belongs to the SGB-FSS, and is not part of Signaire.
