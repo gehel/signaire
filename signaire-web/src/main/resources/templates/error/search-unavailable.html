@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{error.searchUnavailable.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <h1 th:text="#{error.searchUnavailable.title}">Search unavailable</h1>
+    <p th:text="#{error.searchUnavailable.text}">The search index does not answer.</p>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

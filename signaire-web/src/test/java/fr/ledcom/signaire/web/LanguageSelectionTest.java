@@ -1,7 +1,12 @@
 package fr.ledcom.signaire.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -10,17 +15,28 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
+import fr.ledcom.signaire.core.search.SearchResults;
+import fr.ledcom.signaire.core.search.SignSearchService;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class HomeControllerTest {
+class LanguageSelectionTest {
+
+    @MockitoBean
+    private SignSearchService search;
 
     @Autowired
     private MockMvcTester mvc;
+
+    @BeforeEach
+    void noSigns() {
+        when(search.search(any())).thenReturn(new SearchResults(0, List.of()));
+    }
 
     @Test
     void homePageIsInFrenchByDefault() {
@@ -84,5 +100,12 @@ class HomeControllerTest {
                 .contains("hreflang=\"it\"", "Italiano")
                 .contains("hreflang=\"en\"", "English")
                 .contains("hreflang=\"fr\"", "Français");
+    }
+
+    @Test
+    void languageLinksKeepTheCurrentSearch() {
+        MvcTestResult result = mvc.get().uri("/?q=chat&language=fr").exchange();
+
+        assertThat(result).bodyText().contains("href=\"/?q=chat&amp;language=fr&amp;lang=de\"");
     }
 }
