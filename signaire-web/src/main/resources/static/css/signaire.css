@@ -259,3 +259,49 @@ details.export form:not(:has(input[name="format"][value="EPUB"]:checked)) :is(.e
         transition: none !important;
     }
 }
+
+a.help-link {
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    font-size: 0.8rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+    text-align: center;
+    text-decoration: none;
+    width: 1.2rem;
+}
+
+main.help {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) 14rem;
+}
+
+main.help > p:first-child {
+    grid-column: 1 / -1;
+}
+
+main.help table {
+    border-collapse: collapse;
+}
+
+main.help th, main.help td {
+    border: 1px solid #ddd;
+    padding: 0.2rem 0.4rem;
+}
+
+main.help code, main.help pre {
+    background: #f4f4f4;
+}
+
+main.help pre {
+    overflow-x: auto;
+    padding: 0.5rem;
+}
+
+@media (max-width: 50rem) {
+    main.help {
+        grid-template-columns: 1fr;
+    }
+}

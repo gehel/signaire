@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* A link from a feature to its page of the manual */-->
+<a th:fragment="link(topic)" class="help-link" th:href="@{/help/{topic}(topic=${topic})}"
+   th:title="#{help.link}" th:aria-label="#{help.link}">?</a>
+</body>
+</html>

@@ -8,6 +8,7 @@
           hx-push-url="true" hx-trigger="submit, input delay:300ms, change">
         <p class="words">
             <label for="q" th:text="#{search.label}">Search a sign</label>
+            <a th:replace="~{fragments/help :: link('search')}"></a>
             <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}" autofocus>
             <button type="submit" th:text="#{search.submit}">Search</button>
         </p>

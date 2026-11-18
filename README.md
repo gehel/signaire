@@ -35,7 +35,8 @@ java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.ja
 java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.accounts.admins=myname
 ```
 
-Then open <http://localhost:8080>, create an account named `myname` (it is an administrator), and search.
+Then open <http://localhost:8080>, create an account named `myname` (it is an administrator), and search. The
+manual is in the application ("Aide", `/help`); its pages are in `signaire-web/src/main/resources/help/`.
 
 ## Command line
 

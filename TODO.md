@@ -7,7 +7,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] Create a README
 - [ ] Choose a license for the code (the README says it is not chosen yet)
   - Apache 2.0 license choosen by Guillaume
-- [ ] documentation / help, available contextually, and as a manual
+- [x] documentation / help, available contextually, and as a manual
 - [ ] integration test in separate module, that runs the full stack, including elasticsearch and DB
 - [x] introduce archunit to document and enforce dependencies
 - [x] Follow XDG specs (<https://specifications.freedesktop.org/basedir/latest/>)

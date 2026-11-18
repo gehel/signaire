@@ -195,6 +195,10 @@ spring.security.oauth2.client.registration.myidp.redirect-uri={baseUrl}/login/oa
 spring.security.oauth2.client.provider.myidp.issuer-uri=https://idp.example.org
 ```
 
+Help: the manual is Markdown, one page per topic and language in `signaire-web/src/main/resources/help/<lang>/`
+(topics in `HelpPages.TOPICS`; a test checks that each exists in the four languages). Features link to their
+topic with `~{fragments/help :: link('topic')}`. Update the manual with the feature it describes.
+
 Web UI gotchas:
 - Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)
   requests get fragments only (`Htmx.isPartialRequest`), except history restoration; the language links
