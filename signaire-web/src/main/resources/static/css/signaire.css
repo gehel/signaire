@@ -31,10 +31,48 @@ header.site .tagline {
     color: var(--muted);
 }
 
-nav.languages {
+nav.account {
+    align-items: baseline;
     display: flex;
     gap: 0.75rem;
     margin-left: auto;
+}
+
+nav.languages {
+    display: flex;
+    gap: 0.75rem;
+}
+
+form.inline {
+    display: inline;
+}
+
+button.link {
+    background: none;
+    border: none;
+    color: LinkText;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+}
+
+form.stacked {
+    display: grid;
+    gap: 0.4rem;
+    max-width: 24rem;
+}
+
+form.stacked small {
+    color: var(--muted);
+}
+
+.error {
+    color: var(--accent);
+}
+
+.success {
+    color: #1e7b34;
 }
 
 nav.languages a[aria-current="true"] {

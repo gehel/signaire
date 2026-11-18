@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{login.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main class="account">
+    <h1 th:text="#{login.title}">Log in</h1>
+    <p th:if="${param.registered}" class="success" th:text="#{login.registered}">Your account is created.</p>
+    <p th:if="${param.error}" class="error" role="alert" th:text="#{login.error}">Wrong username or password.</p>
+    <form th:action="@{/login}" method="post" class="stacked">
+        <label for="username" th:text="#{account.username}">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+        <label for="password" th:text="#{account.password}">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <button type="submit" th:text="#{login.submit}">Log in</button>
+    </form>
+    <p th:if="${registrationEnabled}">
+        <span th:text="#{login.noAccount}">No account yet?</span>
+        <a th:href="@{/register}" th:text="#{register.title}">Create an account</a>
+    </p>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

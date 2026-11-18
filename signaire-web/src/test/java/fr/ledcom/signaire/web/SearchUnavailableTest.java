@@ -6,23 +6,28 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
+import fr.ledcom.signaire.accounts.AccountService;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignSearchService;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+// the web layer only: no Elasticsearch, no database
+@WebMvcTest(SearchController.class)
+@Import(SecurityConfiguration.class)
 class SearchUnavailableTest {
 
     @MockitoBean
     private SignSearchService search;
+
+    @MockitoBean
+    private AccountService accounts;
 
     @Autowired
     private MockMvcTester mvc;

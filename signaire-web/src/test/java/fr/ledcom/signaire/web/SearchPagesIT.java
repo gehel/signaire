@@ -5,21 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(ElasticsearchTestConfiguration.class)
+@WebIntegrationTest
 class SearchPagesIT {
 
     @Autowired

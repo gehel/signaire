@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,6 +11,16 @@
 <header th:fragment="header" class="site">
     <a class="brand" th:href="@{/}" th:text="#{app.name}">Signaire</a>
     <span class="tagline" th:text="#{app.tagline}">Swiss sign language lexicon</span>
+    <nav class="account" th:aria-label="#{account.menu}">
+        <th:block sec:authorize="isAuthenticated()">
+            <span class="user" th:text="${#authentication.principal.displayName()}">Alice</span>
+            <a th:href="@{/lists}" th:text="#{lists.title}">My lists</a>
+            <form th:action="@{/logout}" method="post" class="inline">
+                <button type="submit" class="link" th:text="#{account.logout}">Log out</button>
+            </form>
+        </th:block>
+        <a sec:authorize="!isAuthenticated()" th:href="@{/login}" th:text="#{login.title}">Log in</a>
+    </nav>
     <nav th:replace="~{layout :: languages(false)}"></nav>
 </header>
 

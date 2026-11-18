@@ -11,22 +11,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.bundles.LoadReport;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Category;
 
-@SpringBootTest
-// same configuration as the other ITs, to share their Spring context and Elasticsearch container
-@AutoConfigureMockMvc
-@Import(ElasticsearchTestConfiguration.class)
+@WebIntegrationTest
 class StartupLoadingIT {
 
     @Autowired
