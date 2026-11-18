@@ -15,10 +15,10 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] in the export, only show options relevant to the currently selected export type. For example, don't show "Options du PDF" when we're creating an Anki deck
 - [x] Add links to Anki where it makes sense and document what this export is
 - [x] Add links back to <https://www.sgb-fss.ch/signsuisse/fr> in the footer, and for each sign link back to the original page
-- [ ] Make the web app as accessible as possible (first pass done: skip link, focus outlines, table headers, labelled navigation; to be measured with Lighthouse)
-- [ ] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (workflow written, fails on the budget of `.sitespeed/budget.json`; to check on GitHub, then compare with a baseline rather than fixed budgets)
-- [ ] integration with lighthouse ci (workflow written, thresholds in `.lighthouserc.json`; to check on GitHub)
-- [ ] integration with sonarcloud during the build, failing the build in case of regressions (workflow written; needs the SonarCloud project and the `SONAR_TOKEN` secret)
+- [x] Make the web app as accessible as possible (skip link, focus outlines, table headers, labelled navigation; Lighthouse scores 100 and CI keeps it there)
+- [ ] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (runs in CI and fails on the budget of `.sitespeed/budget.json`; still to do: compare with a baseline rather than fixed budgets)
+- [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
+- [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
 - [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
   - app should be able to run just by double clicking the jar file (if a JRE is present)
   - also provide a version with an embedded JRE
