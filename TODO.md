@@ -4,7 +4,8 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 
 - [x] convert this file to markdown TODO.md
 - [ ] ensure that no automated test ever accesses <https://www.sgb-fss.ch>. For tests, create dummy bundles, or mock the HTTP requests
-- [ ] Create a README
+- [x] Create a README
+- [ ] Choose a license for the code (the README says it is not chosen yet)
 - [ ] documentation / help, available contextually, and as a manual
 - [ ] integration test in separate module, that runs the full stack, including elasticsearch and DB
 - [ ] introduce archunit to document and enforce dependencies
