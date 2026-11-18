@@ -70,6 +70,9 @@ class AdminBundlesIT {
         cleaner.deleteAll();
         index.recreate();
         deleteBundles();
+        // the media of the test signs, which their bundles include
+        Path media = Files.createDirectories(bundles.resolve(".media/media"));
+        Files.writeString(media.resolve("lausanne.mp4"), "video");
         accounts.register("admin", "correct horse", "Admin");
         admin = new LocalUser(accounts.findLocalCredentials("admin").orElseThrow(), admins);
     }
