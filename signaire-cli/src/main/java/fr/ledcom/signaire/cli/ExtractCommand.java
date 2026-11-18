@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
@@ -29,6 +31,8 @@ import picocli.CommandLine.Spec;
 
 /** {@code signaire extraire}: extracts SignSuisse categories into bundles. */
 @Component
+// a new instance per command line: picocli doesn't reset all options (e.g. positional lists) between runs
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Command(name = "extraire", resourceBundle = "fr.ledcom.signaire.cli.extract")
 public class ExtractCommand implements Callable<Integer> {
 

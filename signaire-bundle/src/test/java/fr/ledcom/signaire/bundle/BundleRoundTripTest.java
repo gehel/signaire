@@ -3,9 +3,11 @@ package fr.ledcom.signaire.bundle;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -87,6 +89,16 @@ class BundleRoundTripTest {
             assertThatThrownBy(() -> bundle.openMedia("signs.json")).isInstanceOf(BundleException.class);
             assertThatThrownBy(() -> bundle.openMedia("media/other.mp4")).isInstanceOf(BundleException.class);
         }
+    }
+
+    @Test
+    void bundlesHaveTheUsualPermissions() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"));
+
+        Path zip = writer.write(tmp.resolve("ville.zip"), Category.CITY, List.of(lausanne()), mediaRoot());
+
+        Path usual = Files.writeString(tmp.resolve("usual.txt"), "file created with the umask");
+        assertThat(Files.getPosixFilePermissions(zip)).isEqualTo(Files.getPosixFilePermissions(usual));
     }
 
     @Test
