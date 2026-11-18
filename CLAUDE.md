@@ -162,7 +162,11 @@ shared with the CLI (and web) tests. Run a single IT with
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
 scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
-`.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate.
+`.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
+code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
+integration tests), so code reached only by ITs needs unit tests too (`FakeElasticsearch` in core fakes errors
+of Elasticsearch). Some SonarCloud suggestions clash with the WMF checkstyle rules (unnamed variables `_` are
+forbidden): checkstyle wins.
 
 Running the CLI locally:
 
