@@ -51,7 +51,7 @@ public class SignSearchService {
                     .from(query.from())
                     .size(query.size())
                     .trackTotalHits(t -> t.enabled(Boolean.TRUE))
-                    .sort(query.text() == null ? List.of(BY_NAME) : List.of(BY_SCORE, BY_NAME)),
+                    .sort(sort(query)),
                     Sign.class);
         } catch (IOException e) {
             throw new SearchException("Cannot search signs", e);
@@ -59,6 +59,27 @@ public class SignSearchService {
         long total = response.hits().total() == null ? 0 : response.hits().total().value();
         List<Sign> signs = response.hits().hits().stream().map(Hit::source).filter(Objects::nonNull).toList();
         return new SearchResults(total, signs);
+    }
+
+    /**
+     * The uids of the signs matching a search, in the order of the results, ignoring the page of the query.
+     *
+     * @param max the maximum number of uids to return
+     */
+    public List<String> findUids(SignQuery query, int max) {
+        SearchResponse<Void> response;
+        try {
+            response = client.search(s -> s
+                    .index(SignIndex.SIGNS)
+                    .query(query(query))
+                    .size(max)
+                    .source(source -> source.fetch(Boolean.FALSE))
+                    .sort(sort(query)),
+                    Void.class);
+        } catch (IOException e) {
+            throw new SearchException("Cannot search signs", e);
+        }
+        return response.hits().hits().stream().map(Hit::id).toList();
     }
 
     public Optional<Sign> findByUid(String uid) {
@@ -85,6 +106,10 @@ public class SignSearchService {
         } catch (IOException e) {
             throw new SearchException("Cannot get signs " + uids, e);
         }
+    }
+
+    private static List<SortOptions> sort(SignQuery query) {
+        return query.text() == null ? List.of(BY_NAME) : List.of(BY_SCORE, BY_NAME);
     }
 
     private static Query query(SignQuery query) {

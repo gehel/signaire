@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.core.search;
 
+import static fr.ledcom.signaire.core.TestSigns.CHAT;
 import static fr.ledcom.signaire.core.TestSigns.GATTO;
 import static fr.ledcom.signaire.core.TestSigns.KATZE;
 import static fr.ledcom.signaire.core.TestSigns.LAUSANNE;
@@ -118,6 +119,14 @@ class SignSearchServiceIT {
     void findsSeveralSignsByUidInTheGivenOrder() {
         assertThat(search.findByUids(List.of(GATTO.uid(), "unknown", LAUSANNE.uid()))).containsExactly(GATTO, LAUSANNE);
         assertThat(search.findByUids(List.of())).isEmpty();
+    }
+
+    @Test
+    void findsTheUidsOfAllTheResultsOfASearch() {
+        SignQuery animals = new SignQuery(null, null, Set.of(Category.ANIMALS), 0, 1);
+
+        assertThat(search.findUids(animals, 100)).containsExactly(CHAT.uid(), GATTO.uid(), KATZE.uid());
+        assertThat(search.findUids(animals, 2)).hasSize(2);
     }
 
     @Test

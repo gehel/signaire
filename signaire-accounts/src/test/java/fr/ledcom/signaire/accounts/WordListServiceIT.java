@@ -3,6 +3,8 @@ package fr.ledcom.signaire.accounts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,19 @@ class WordListServiceIT {
         assertThat(lists.add(alice, list.id(), "1")).isFalse();
 
         assertThat(lists.get(alice, list.id()).signUids()).containsExactly("1");
+    }
+
+    @Test
+    void addsSeveralSignsAtOnce() {
+        WordList list = lists.create(alice, "Famille");
+        lists.add(alice, list.id(), "2");
+
+        int added = lists.addAll(alice, list.id(), List.of("1", "2", "3", "1"));
+
+        assertThat(added).isEqualTo(2);
+        assertThat(lists.get(alice, list.id()).signUids()).containsExactly("2", "1", "3");
+        assertThatThrownBy(() -> lists.addAll(bob, list.id(), List.of("4")))
+                .isInstanceOf(WordListException.class);
     }
 
     @Test

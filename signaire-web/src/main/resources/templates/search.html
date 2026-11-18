@@ -30,12 +30,17 @@
         </p>
     </form>
 
+    <p id="add-status" th:fragment="add-status" role="status" th:text="${status}"
+       th:class="${statusError} ? 'error' : 'success'"></p>
+
     <section id="results" th:fragment="results" aria-live="polite">
         <p th:if="${results.total() == 0}" th:text="#{search.none}">No sign found.</p>
         <th:block th:if="${results.total() > 0}">
             <p class="count" th:text="#{search.found(${results.total()})}">1 sign found</p>
             <ul class="signs">
                 <li th:each="sign : ${results.signs()}">
+                    <input th:if="${userLists != null}" type="checkbox" name="uid" th:value="${sign.uid()}"
+                           form="add-to-list" th:aria-label="#{search.addTo.select(${sign.name()})}">
                     <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
                     <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
                           th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
@@ -43,6 +48,27 @@
                         >[[#{'category.' + ${category.name()}}]]<th:block th:unless="${it.last}">, </th:block></th:block></span>
                 </li>
             </ul>
+            <!--/* The checkboxes of the results belong to this form, through their form attribute */-->
+            <form th:if="${userLists != null}" id="add-to-list" class="add-to-list" method="post"
+                  th:action="@{/lists/signs}" th:hx-post="@{/lists/signs}" hx-target="#add-status"
+                  hx-swap="outerHTML">
+                <input type="hidden" name="q" th:value="${q}">
+                <input th:each="language : ${languages}" type="hidden" name="language"
+                       th:value="${language.code()}">
+                <input th:each="category : ${categories}" type="hidden" name="category"
+                       th:value="${category.name()}">
+                <label for="target-list" th:text="#{search.addTo.label}">Add to</label>
+                <select id="target-list" name="list">
+                    <option th:each="list : ${userLists}" th:value="${list.id()}" th:text="${list.name()}">Family</option>
+                    <option value="" th:text="#{search.addTo.newList}">New list…</option>
+                </select>
+                <input type="text" name="newList" th:placeholder="#{search.addTo.newListName}"
+                       th:aria-label="#{search.addTo.newListName}" maxlength="100">
+                <button type="submit" name="scope" value="selection" th:text="#{search.addTo.selection}">
+                    Add the selection</button>
+                <button type="submit" name="scope" value="all" th:text="#{search.addTo.all(${allCount})}">
+                    Add all the results</button>
+            </form>
             <nav class="pages" th:if="${pages > 1}">
                 <a th:if="${page > 1}" rel="prev" th:href="${links.withPage(page - 1)}"
                    th:hx-get="${links.withPage(page - 1)}" hx-target="#results" hx-swap="outerHTML"

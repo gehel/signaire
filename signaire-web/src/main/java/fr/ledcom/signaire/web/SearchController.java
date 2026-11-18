@@ -7,11 +7,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignQuery;
 import fr.ledcom.signaire.core.search.SignSearchService;
@@ -24,11 +26,17 @@ import jakarta.servlet.http.HttpServletResponse;
 @Controller
 public class SearchController {
 
+    /** Most signs added to a list at once, with "add all the results". */
+    static final int MAX_ADDED = 1000;
+
     private final SignSearchService search;
+    private final WordListService lists;
     private final int pageSize;
 
-    public SearchController(SignSearchService search, @Value("${signaire.web.page-size:20}") int pageSize) {
+    public SearchController(SignSearchService search, WordListService lists,
+            @Value("${signaire.web.page-size:20}") int pageSize) {
         this.search = search;
+        this.lists = lists;
         this.pageSize = pageSize;
     }
 
@@ -37,12 +45,18 @@ public class SearchController {
             @RequestParam(name = "language", required = false) Set<Language> languages,
             @RequestParam(name = "category", required = false) Set<Category> categories,
             @RequestParam(name = "page", defaultValue = "1") int page,
+            @AuthenticationPrincipal AccountPrincipal user,
             HttpServletRequest request, HttpServletResponse response, Model model) {
         Set<Language> selectedLanguages = withoutBlanks(languages);
         Set<Category> selectedCategories = withoutBlanks(categories);
         int currentPage = Math.max(page, 1);
-        SearchResults results = search.search(new SignQuery(text, selectedLanguages, selectedCategories,
-                (currentPage - 1) * pageSize, pageSize));
+        SearchResults results = search.search(query(text, languages, categories, (currentPage - 1) * pageSize,
+                pageSize));
+        if (user != null) {
+            // to add the results to a list
+            model.addAttribute("userLists", lists.lists(user.accountId()));
+            model.addAttribute("allCount", Math.min(results.total(), MAX_ADDED));
+        }
         model.addAttribute("q", text);
         model.addAttribute("languages", selectedLanguages);
         model.addAttribute("categories", selectedCategories);
@@ -52,6 +66,12 @@ public class SearchController {
         model.addAttribute("page", currentPage);
         model.addAttribute("pages", (results.total() + pageSize - 1) / pageSize);
         return Htmx.isPartialRequest(request, response) ? "search-results" : "search";
+    }
+
+    /** The search described by the request parameters. */
+    static SignQuery query(String text, Collection<Language> languages, Collection<Category> categories, int from,
+            int size) {
+        return new SignQuery(text, withoutBlanks(languages), withoutBlanks(categories), from, size);
     }
 
     /** Empty parameters ({@code ?category=}) mean no filter. */
