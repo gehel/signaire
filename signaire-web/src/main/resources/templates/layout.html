@@ -15,6 +15,7 @@
         <th:block sec:authorize="isAuthenticated()">
             <span class="user" th:text="${#authentication.principal.displayName()}">Alice</span>
             <a th:href="@{/lists}" th:text="#{lists.title}">My lists</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" th:text="#{admin.title}">Administration</a>
             <form th:action="@{/logout}" method="post" class="inline">
                 <button type="submit" class="link" th:text="#{account.logout}">Log out</button>
             </form>

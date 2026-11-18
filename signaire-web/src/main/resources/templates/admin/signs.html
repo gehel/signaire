@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{admin.signs.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <h1 th:text="#{admin.signs.title}">Changed signs</h1>
+    <p th:text="#{admin.signs.explanation}">These changes are applied again after each load of the bundles.</p>
+    <p><a th:href="@{/admin/signs/new}" th:text="#{admin.signs.new}">New sign</a></p>
+    <p th:if="${overrides.isEmpty()}" th:text="#{admin.signs.none}">No change.</p>
+    <table th:unless="${overrides.isEmpty()}" class="admin">
+        <thead>
+        <tr>
+            <th th:text="#{admin.signs.sign}">Sign</th>
+            <th th:text="#{admin.signs.change}">Change</th>
+            <th th:text="#{admin.signs.when}">When</th>
+            <th th:text="#{admin.signs.who}">Who</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="override : ${overrides}">
+            <td>
+                <a th:unless="${override.deleted()}" th:href="@{/signs/{uid}(uid=${override.uid()})}"
+                   th:text="${override.sign().name()}">LAUSANNE</a>
+                <span class="uid" th:text="${override.uid()}">119158</span>
+            </td>
+            <td th:text="${override.deleted()} ? #{admin.signs.deleted}
+                    : (${override.uid().startsWith('local-')} ? #{admin.signs.added} : #{admin.signs.edited})">
+                Edited</td>
+            <td th:text="${override.updatedAt().toString().substring(0, 16).replace('T', ' ')}">2026-11-18 10:00</td>
+            <td th:text="${override.updatedBy()}">admin</td>
+            <td>
+                <form th:action="@{/admin/signs/{uid}/revert(uid=${override.uid()})}" method="post">
+                    <button type="submit" class="link" th:text="#{admin.signs.revert}">Undo</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

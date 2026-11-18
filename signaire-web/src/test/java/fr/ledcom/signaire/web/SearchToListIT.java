@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +48,7 @@ class SearchToListIT {
         index.index(TestSigns.ALL);
         index.refresh();
         accounts.register("alice", "correct horse", "Alice");
-        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow());
+        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow(), new AdminUsers(List.of()));
         family = lists.create(alice.accountId(), "Famille");
     }
 

@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +15,14 @@ import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleManifest;
 import fr.ledcom.signaire.bundle.BundleReader;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignIndex;
+import fr.ledcom.signaire.model.Sign;
 
 /**
  * Loads bundles into the sign index. Loading is idempotent: a bundle whose signs did not change since it was
@@ -28,6 +32,8 @@ import fr.ledcom.signaire.core.search.SignIndex;
 public class BundleLoader {
 
     private static final String BUNDLE_EXTENSION = ".zip";
+    /** One bundle per category, and a few more. */
+    private static final int MAX_BUNDLES = 1000;
 
     private final SignIndex index;
     private final ElasticsearchClient client;
@@ -47,16 +53,51 @@ public class BundleLoader {
 
     /** Loads all the bundles ({@code *.zip} files) of a directory. */
     public List<LoadReport> loadDirectory(Path directory) {
-        List<Path> bundles;
+        return bundleFiles(directory).stream().map(this::load).toList();
+    }
+
+    /** The bundles loaded into the index, by file name. */
+    public List<BundleRecord> loadedBundles() {
+        index.createIfMissing();
+        try {
+            return client.search(s -> s.index(SignIndex.BUNDLES).size(MAX_BUNDLES), BundleRecord.class)
+                    .hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .sorted(Comparator.comparing(BundleRecord::file))
+                    .toList();
+        } catch (IOException e) {
+            throw new SearchException("Cannot read bundle registry", e);
+        }
+    }
+
+    /**
+     * Finds a sign in the bundles of a directory, as it was extracted: to undo the changes of administrators.
+     * Invalid bundles are skipped.
+     */
+    public Optional<Sign> findInBundles(Path directory, String uid) {
+        for (Path file : bundleFiles(directory)) {
+            try (Bundle bundle = reader.read(file)) {
+                Optional<Sign> sign = bundle.signs().stream().filter(s -> s.uid().equals(uid)).findFirst();
+                if (sign.isPresent()) {
+                    return sign;
+                }
+            } catch (BundleException e) {
+                // an invalid bundle has no sign to offer
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static List<Path> bundleFiles(Path directory) {
         try (Stream<Path> files = Files.list(directory)) {
-            bundles = files.filter(file -> String.valueOf(file.getFileName()).endsWith(BUNDLE_EXTENSION))
+            return files.filter(file -> String.valueOf(file.getFileName()).endsWith(BUNDLE_EXTENSION))
                     .filter(Files::isRegularFile)
                     .sorted()
                     .toList();
         } catch (IOException e) {
             throw new BundleException("Cannot list bundles in " + directory, e);
         }
-        return bundles.stream().map(this::load).toList();
     }
 
     /** Loads a bundle, unless it was already loaded with the same signs. */

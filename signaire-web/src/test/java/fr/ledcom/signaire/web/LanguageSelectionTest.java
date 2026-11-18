@@ -27,7 +27,7 @@ import jakarta.servlet.http.Cookie;
 
 // the web layer only: no Elasticsearch, no database
 @WebMvcTest(SearchController.class)
-@Import(SecurityConfiguration.class)
+@Import({SecurityConfiguration.class, AdminUsers.class})
 class LanguageSelectionTest {
 
     @MockitoBean

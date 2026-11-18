@@ -85,6 +85,15 @@ public class SignIndex {
         }
     }
 
+    /** Removes a sign; nothing happens when it is not in the index. */
+    public void delete(String uid) {
+        try {
+            client.delete(d -> d.index(SIGNS).id(uid));
+        } catch (IOException e) {
+            throw new SearchException("Cannot delete sign " + uid, e);
+        }
+    }
+
     /** Makes the latest changes visible to searches. */
     public void refresh() {
         try {

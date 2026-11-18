@@ -62,6 +62,39 @@ class BundleLoaderIT {
     }
 
     @Test
+    void findsTheOriginalOfASignInTheBundles() throws IOException {
+        write("city.zip", Category.CITY, List.of(TestSigns.LAUSANNE, TestSigns.GENEVE));
+        write("animals.zip", Category.ANIMALS, List.of(TestSigns.CHAT));
+
+        assertThat(loader.findInBundles(bundles, TestSigns.CHAT.uid())).contains(TestSigns.CHAT);
+        assertThat(loader.findInBundles(bundles, "unknown")).isEmpty();
+    }
+
+    @Test
+    void listsTheLoadedBundles() throws IOException {
+        write("city.zip", Category.CITY, List.of(TestSigns.LAUSANNE, TestSigns.GENEVE));
+        loader.loadDirectory(bundles);
+
+        assertThat(loader.loadedBundles()).singleElement().satisfies(bundle -> {
+            assertThat(bundle.file()).isEqualTo("city.zip");
+            assertThat(bundle.category()).isEqualTo(Category.CITY);
+            assertThat(bundle.signCount()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void deletesSignsFromTheIndex() throws IOException {
+        write("city.zip", Category.CITY, List.of(TestSigns.LAUSANNE, TestSigns.GENEVE));
+        loader.loadDirectory(bundles);
+
+        index.delete(TestSigns.LAUSANNE.uid());
+        index.refresh();
+
+        assertThat(search.findByUid(TestSigns.LAUSANNE.uid())).isEmpty();
+        assertThat(search.findByUid(TestSigns.GENEVE.uid())).isPresent();
+    }
+
+    @Test
     void skipsBundlesThatAreAlreadyLoaded() throws IOException {
         Path bundle = write("city.zip", Category.CITY, List.of(TestSigns.LAUSANNE));
         loader.load(bundle);

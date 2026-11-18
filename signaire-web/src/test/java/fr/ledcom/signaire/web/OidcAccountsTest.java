@@ -24,7 +24,7 @@ class OidcAccountsTest {
     private static final String ISSUER = "https://idp.example.org";
 
     private final AccountService accounts = mock(AccountService.class);
-    private final OidcAccounts oidcAccounts = new OidcAccounts(accounts);
+    private final OidcAccounts oidcAccounts = new OidcAccounts(accounts, new AdminUsers(List.of("alice")));
 
     @Test
     void logsInWithTheAccountOfTheOidcUser() {
@@ -37,7 +37,8 @@ class OidcAccountsTest {
         assertThat(user.accountId()).isEqualTo(42);
         assertThat(user.displayName()).isEqualTo("Alice A.");
         assertThat(user.getSubject()).isEqualTo("sub-1");
-        assertThat(user.getAuthorities()).extracting(GrantedAuthority::getAuthority).contains("ROLE_USER");
+        assertThat(user.getAuthorities()).extracting(GrantedAuthority::getAuthority)
+                .contains("ROLE_USER", "ROLE_ADMIN");
     }
 
     @Test

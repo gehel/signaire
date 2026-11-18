@@ -95,6 +95,17 @@
         </th:block>
     </section>
 
+    <div sec:authorize="hasRole('ADMIN')" class="admin-actions">
+        <a th:href="@{/admin/signs/{uid}/edit(uid=${sign.uid()})}" th:text="#{admin.sign.edit}">Edit</a>
+        <details>
+            <summary th:text="#{admin.sign.delete}">Delete the sign</summary>
+            <form th:action="@{/admin/signs/{uid}/delete(uid=${sign.uid()})}" method="post">
+                <p th:text="#{admin.sign.deleteConfirm}">The sign will be hidden, even after reloading.</p>
+                <button type="submit" th:text="#{admin.sign.delete}">Delete the sign</button>
+            </form>
+        </details>
+    </div>
+
     <p th:if="${sign.sourceUrl() != null}" class="source">
         <a th:href="${sign.sourceUrl()}" rel="external" th:text="#{sign.source}">See on SignSuisse</a>
     </p>

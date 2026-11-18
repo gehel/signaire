@@ -1,9 +1,7 @@
 package fr.ledcom.signaire.web;
 
-import java.util.List;
 import java.util.Objects;
 
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import fr.ledcom.signaire.accounts.LocalCredentials;
@@ -16,8 +14,8 @@ public class LocalUser extends User implements AccountPrincipal {
     private final long accountId;
     private final String displayName;
 
-    LocalUser(LocalCredentials credentials) {
-        super(credentials.username(), credentials.passwordHash(), List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    LocalUser(LocalCredentials credentials, AdminUsers admins) {
+        super(credentials.username(), credentials.passwordHash(), admins.authorities(credentials.username()));
         this.accountId = credentials.accountId();
         this.displayName = credentials.displayName();
     }

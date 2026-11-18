@@ -56,8 +56,8 @@ class ExportIT {
         index.refresh();
         accounts.register("alice", "correct horse", "Alice");
         accounts.register("bob", "correct horse", "Bob");
-        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow());
-        bob = new LocalUser(accounts.findLocalCredentials("bob").orElseThrow());
+        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow(), new AdminUsers(List.of()));
+        bob = new LocalUser(accounts.findLocalCredentials("bob").orElseThrow(), new AdminUsers(List.of()));
         family = lists.create(alice.accountId(), "Famille à Lausanne");
         lists.addAll(alice.accountId(), family.id(), List.of("1", "3"));
     }

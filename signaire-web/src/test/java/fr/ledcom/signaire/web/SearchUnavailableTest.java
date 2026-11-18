@@ -21,7 +21,7 @@ import fr.ledcom.signaire.core.search.SignSearchService;
 
 // the web layer only: no Elasticsearch, no database
 @WebMvcTest(SearchController.class)
-@Import(SecurityConfiguration.class)
+@Import({SecurityConfiguration.class, AdminUsers.class})
 class SearchUnavailableTest {
 
     @MockitoBean

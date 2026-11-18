@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(${uid == null} ? #{admin.signs.new} : #{admin.sign.edit})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin/signs}" th:text="#{admin.signs.title}">Changed signs</a></p>
+    <h1 th:text="${uid == null} ? #{admin.signs.new} : #{admin.sign.edit}">Edit the sign</h1>
+    <ul th:if="${errors != null}" class="error" role="alert">
+        <li th:each="error : ${errors}" th:text="#{${error}}">The name is required.</li>
+    </ul>
+    <form th:action="${uid == null} ? @{/admin/signs} : @{/admin/signs/{uid}(uid=${uid})}" method="post"
+          th:object="${form}" class="stacked sign-form">
+        <label for="name" th:text="#{admin.sign.name}">Name</label>
+        <input type="text" id="name" th:field="*{name}" required>
+        <label for="language" th:text="#{admin.sign.language}">Sign language</label>
+        <select id="language" th:field="*{language}">
+            <option th:each="language : ${allLanguages}" th:value="${language.code()}"
+                    th:text="#{'signLanguage.' + ${language.name()}}">LSF</option>
+        </select>
+        <label for="categories" th:text="#{sign.categories}">Categories</label>
+        <select id="categories" th:field="*{categories}" multiple size="8">
+            <option th:each="category : ${allCategories}" th:value="${category}"
+                    th:text="#{'category.' + ${category.name()}}">City</option>
+        </select>
+        <label for="periphrase" th:text="#{sign.periphrase}">Periphrase</label>
+        <input type="text" id="periphrase" th:field="*{periphrase}">
+        <label for="definition" th:text="#{sign.definition}">Definition</label>
+        <textarea id="definition" th:field="*{definition}" rows="3"></textarea>
+        <label for="dialects" th:text="#{admin.sign.dialects}">Dialects (separated by commas)</label>
+        <input type="text" id="dialects" th:field="*{dialects}">
+        <label for="videos" th:text="#{admin.sign.videos}">Videos (one URL per line)</label>
+        <textarea id="videos" th:field="*{videos}" rows="2"></textarea>
+        <label for="images" th:text="#{admin.sign.images}">Images (one URL per line)</label>
+        <textarea id="images" th:field="*{images}" rows="2"></textarea>
+        <label for="examples" th:text="#{admin.sign.examples}">Examples (one per line)</label>
+        <textarea id="examples" th:field="*{examples}" rows="3"></textarea>
+        <label for="sourceUrl" th:text="#{admin.sign.sourceUrl}">SignSuisse page</label>
+        <input type="url" id="sourceUrl" th:field="*{sourceUrl}">
+        <button type="submit" th:text="#{admin.sign.save}">Save</button>
+    </form>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>
