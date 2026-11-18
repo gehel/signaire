@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.web;
 
+import java.awt.AWTError;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
@@ -51,7 +52,8 @@ public class Browser {
                 start(command.get());
                 return;
             }
-        } catch (IOException | UnsupportedOperationException e) {
+        } catch (IOException | UnsupportedOperationException | AWTError e) {
+            // e.g. headless, or a DISPLAY without X server: Signaire works anyway
             LOG.log(Level.DEBUG, "Cannot open the browser", e);
         }
         LOG.log(Level.WARNING, "Open {0} in your browser", uri);
