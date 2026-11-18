@@ -69,6 +69,7 @@
                 <button type="submit" name="scope" value="all" th:text="#{search.addTo.all(${allCount})}">
                     Add all the results</button>
             </form>
+            <details th:replace="~{fragments/export :: export('/export')}"></details>
             <nav class="pages" th:if="${pages > 1}">
                 <a th:if="${page > 1}" rel="prev" th:href="${links.withPage(page - 1)}"
                    th:hx-get="${links.withPage(page - 1)}" hx-target="#results" hx-swap="outerHTML"
