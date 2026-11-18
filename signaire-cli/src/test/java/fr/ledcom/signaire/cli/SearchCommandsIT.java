@@ -5,10 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
+import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,6 +117,61 @@ class SearchCommandsIT {
 
         assertThat(exitCode).isZero();
         assertThat(out.toString()).contains("Aucun signe trouvé.");
+    }
+
+    @Test
+    void exportsSearchResultsAsPdf() throws IOException {
+        execute("charger", "--bundles", bundles.toString());
+        Path pdf = bundles.resolve("villes.pdf");
+
+        int exitCode = execute("exporter", "--format", "pdf", "--sortie", pdf.toString(), "--bundles",
+                bundles.toString(), "--categorie", "ville", "--papier", "A5", "--par-page", "2",
+                "--mise-en-page", "livret");
+
+        assertThat(exitCode).isZero();
+        assertThat(out.toString()).contains("2 signes exportés dans " + pdf);
+        assertThat(Files.readString(pdf, StandardCharsets.ISO_8859_1)).startsWith("%PDF");
+    }
+
+    @Test
+    void exportsAnkiDecksWithTheMediaOfTheBundles() throws IOException {
+        execute("charger", "--bundles", bundles.toString());
+        Path deck = bundles.resolve("lausanne.apkg");
+
+        int exitCode = execute("exporter", "-f", "anki", "-o", deck.toString(), "-b", bundles.toString(),
+                "lausanne");
+
+        assertThat(exitCode).isZero();
+        try (ZipFile zip = new ZipFile(deck.toFile())) {
+            assertThat(zip.getEntry("collection.anki2")).isNotNull();
+            assertThat(new String(zip.getInputStream(zip.getEntry("media")).readAllBytes(), StandardCharsets.UTF_8))
+                    .contains("lausanne.mp4");
+        }
+    }
+
+    @Test
+    void exportsEpubBooks() throws IOException {
+        execute("charger", "--bundles", bundles.toString());
+        Path book = bundles.resolve("animaux.epub");
+
+        int exitCode = execute("exporter", "-f", "epub", "-o", book.toString(), "-c", "animaux", "--titre",
+                "Animaux", "--avec-videos");
+
+        assertThat(exitCode).isZero();
+        try (ZipFile zip = new ZipFile(book.toFile())) {
+            assertThat(zip.getEntry("OEBPS/sign-3.xhtml")).isNotNull();
+        }
+    }
+
+    @Test
+    void layoutsAreNamedInAnyLanguage() {
+        execute("charger", "--bundles", bundles.toString());
+
+        assertThat(execute("exporter", "-f", "pdf", "-o", bundles.resolve("a.pdf").toString(), "--mise-en-page",
+                "flashcards")).isZero();
+        assertThat(execute("exporter", "-f", "pdf", "-o", bundles.resolve("b.pdf").toString(), "--mise-en-page",
+                "xyz")).isEqualTo(2);
+        assertThat(err.toString()).contains("Mise en page inconnue : xyz");
     }
 
     private int execute(String... args) {
