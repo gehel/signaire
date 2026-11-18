@@ -128,10 +128,30 @@ java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.ja
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
 
+Running the web UI locally (http://localhost:8080): it loads `signaire.bundles.directory` (default
+`bundles`) in the background at startup, retrying while Elasticsearch starts, and serves the media from
+the bundles.
+
+```bash
+./mvnw -PnoVerify -pl signaire-web -am package -DskipTests
+java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.bundles.directory=bundles
+```
+
 Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
 signs of "religion"); use `--sans-medias` while developing. After changing the index mapping
 (`signaire-signs.json`), reindex with `charger --reindexer`: the bundle registry only notices bundle
 changes.
+
+Web UI gotchas:
+- Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)
+  requests get fragments only (`Htmx.isPartialRequest`), except history restoration; the language links
+  are refreshed out of band (`hx-swap-oob`).
+- Thymeleaf 3.1 forbids bean references (`@bean`) in link attributes: `Links` is a model attribute
+  (`${links.withPage(2)}`, `${links.media(media)}`); exception handlers must add it themselves.
+- Name `@PathVariable`/`@RequestParam` explicitly: the build doesn't compile with `-parameters`.
+- Web test properties are in `src/test/resources/config/application.properties` (a second
+  `application.properties` would trip duplicate-finder). Web ITs share one Spring context and one
+  Elasticsearch container: keep their annotations identical.
 
 ## Conventions
 
