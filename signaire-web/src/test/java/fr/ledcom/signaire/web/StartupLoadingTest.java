@@ -2,13 +2,11 @@ package fr.ledcom.signaire.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -28,37 +26,38 @@ class StartupLoadingTest {
     private final BundleLoader loader = mock(BundleLoader.class);
     private final MediaLibrary media = mock(MediaLibrary.class);
     private final SignEditor editor = mock(SignEditor.class);
-    private final List<Duration> waits = new ArrayList<>();
-
-    private StartupLoading startupLoading(int attempts) {
-        return new StartupLoading(loader, media, editor, bundles, true, attempts, Duration.ofSeconds(5), waits::add);
-    }
 
     @Test
-    void waitsForElasticsearchToStart() {
+    void loadsTheBundlesThenTheChangesOfAdministrators() {
         LoadReport loaded = new LoadReport(bundles.resolve("city.zip"), Category.CITY, 2, LoadReport.Status.LOADED,
                 null);
-        when(loader.loadDirectory(bundles))
-                .thenThrow(new SearchException("Cannot check index"))
-                .thenThrow(new SearchException("Cannot check index"))
-                .thenReturn(List.of(loaded));
+        when(loader.loadDirectory(bundles)).thenReturn(List.of(loaded));
 
-        List<LoadReport> reports = startupLoading(5).loadWhenReady();
+        List<LoadReport> reports = new StartupLoading(loader, media, editor, bundles, true).load();
 
         assertThat(reports).containsExactly(loaded);
-        assertThat(waits).containsExactly(Duration.ofSeconds(5), Duration.ofSeconds(5));
         verify(media).refresh();
         verify(editor).reapply();
     }
 
     @Test
-    void givesUpAfterSomeAttempts() {
-        when(loader.loadDirectory(bundles)).thenThrow(new SearchException("Cannot check index"));
+    void errorsOfTheIndexAreLogged() {
+        when(loader.loadDirectory(bundles)).thenThrow(new SearchException("Cannot index signs"));
 
-        List<LoadReport> reports = startupLoading(3).loadWhenReady();
+        List<LoadReport> reports = new StartupLoading(loader, media, editor, bundles, true).load();
 
         assertThat(reports).isEmpty();
-        verify(loader, times(3)).loadDirectory(bundles);
-        assertThat(waits).hasSize(2);
+        verify(editor, never()).reapply();
+    }
+
+    @Test
+    void appliesTheChangesOfAdministratorsWithoutBundles() {
+        Path missing = bundles.resolve("missing");
+
+        List<LoadReport> reports = new StartupLoading(loader, media, editor, missing, true).load();
+
+        assertThat(reports).isEmpty();
+        verify(loader, never()).loadDirectory(missing);
+        verify(editor).reapply();
     }
 }

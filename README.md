@@ -25,7 +25,7 @@ written permission. Signaire distributes **code only**: each user extracts the d
 You need Java 27 and Docker.
 
 ```bash
-docker compose up -d                       # Elasticsearch and PostgreSQL for development
+docker compose up -d                       # PostgreSQL for development
 ./mvnw -PnoVerify package -DskipTests      # build everything
 
 # extract a category from SignSuisse into ~/.local/share/signaire/bundles (add --sans-medias for a quick try)
@@ -37,6 +37,22 @@ java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.accounts.
 
 Then open <http://localhost:8080>, create an account named `myname` (it is an administrator), and search. The
 manual is in the application ("Aide", `/help`); its pages are in `signaire-web/src/main/resources/help/`.
+
+## Standalone application
+
+For one computer, without server, Docker nor database to install: the accounts are in an H2 database and the search
+index in Lucene, in the user's directories.
+
+```bash
+./mvnw -PnoVerify -pl signaire-web -am package -DskipTests
+java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar   # or a double click on the jar
+ci/package-standalone.sh signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar target/package  # with its own Java
+```
+
+It listens to <http://localhost:8180> only (`--server.port=…` changes it), opens the browser, and asks on its first run
+whether one person uses it (no account: they are the administrator) or several, and which signs to download from
+SignSuisse. CI builds the package with its Java runtime for Linux, Windows and macOS (`signaire-standalone-*`
+artifacts). The manual has a page about it (`/help/standalone`).
 
 ## Command line
 
@@ -56,25 +72,25 @@ The command line follows the language of the system (`LANG`, or `-Duser.language
 Spring Boot properties, given on the command line (`--name=value`), in `~/.config/signaire/application.properties`
 (read by the command line too), in an `application.properties` next to the jar, or as environment variables.
 Signaire follows the [XDG base directories](https://specifications.freedesktop.org/basedir/latest/) on Linux
-(`$XDG_DATA_HOME`, `$XDG_CONFIG_HOME`, `$XDG_CACHE_HOME`), and the usual directories on macOS
+(`$XDG_DATA_HOME`, `$XDG_CONFIG_HOME`, `$XDG_CACHE_HOME`, `$XDG_STATE_HOME`), and the usual directories on macOS
 (`~/Library/…/Signaire`) and Windows (`%APPDATA%`, `%LOCALAPPDATA%`).
 
 | Property | Default | |
 |---|---|---|
 | `signaire.bundles.directory` | `~/.local/share/signaire/bundles` | Bundles loaded at startup, and source of the media |
 | `signaire.media.cache` | `~/.cache/signaire/media` | Media downloaded by extractions |
+| `signaire.index.directory` | `~/.local/state/signaire/index` | Lucene search index, rebuilt from the bundles when needed |
 | `signaire.bundles.load-on-startup` | `true` | |
 | `signaire.accounts.admins` | | Usernames of the administrators, comma separated |
 | `signaire.accounts.registration-enabled` | `true` | Whether anyone can create an account |
 | `signaire.sync.interval` | `500ms` | Delay between two requests to SignSuisse |
-| `spring.elasticsearch.uris` | `http://localhost:9200` | |
 | `spring.datasource.url`, `.username`, `.password` | local PostgreSQL of `compose.yaml` | |
 | `spring.security.oauth2.client.*` | | OpenID Connect providers, see [CLAUDE.md](CLAUDE.md) |
 
 ## Architecture
 
 A multi-module Maven build: `signaire-model` and `signaire-bundle` (signs and bundles, Android compatible),
-`signaire-extractor` (SignSuisse), `signaire-core` (Elasticsearch search, bundle loading, media),
+`signaire-extractor` (SignSuisse), `signaire-core` (Lucene search, bundle loading, media),
 `signaire-accounts` (PostgreSQL: accounts, lists, changes, requests), `signaire-export` (PDF, Anki, EPUB),
 `signaire-cli` and `signaire-web` (Spring MVC, Thymeleaf, htmx). Signs travel in **bundles**: one zip per
 SignSuisse category with the signs and their media; the search index can always be rebuilt from them.

@@ -19,7 +19,7 @@ import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignSearchService;
 
-// the web layer only: no Elasticsearch, no database
+// the web layer only: no index, no database
 @WebMvcTest(SearchController.class)
 @Import({SecurityConfiguration.class, AdminUsers.class})
 class SearchUnavailableTest {

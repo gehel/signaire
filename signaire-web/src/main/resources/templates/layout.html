@@ -15,13 +15,20 @@
     <span class="tagline" th:text="#{app.tagline}">Swiss sign language lexicon</span>
     <nav class="account" th:aria-label="#{account.menu}">
         <th:block sec:authorize="isAuthenticated()">
-            <span class="user" th:text="${#authentication.principal.displayName()}">Alice</span>
+            <!--/* the single user of the standalone application has no name, and doesn't log out */-->
+            <th:block th:with="alone=${standalone != null and standalone.singleUser()}">
+            <span th:unless="${alone}" class="user" th:text="${#authentication.principal.displayName()}">Alice</span>
             <a th:href="@{/lists}" th:text="#{lists.title}">My lists</a>
             <a th:href="@{/requests}" th:text="#{requests.title}">My requests</a>
             <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" th:text="#{admin.title}">Administration</a>
-            <form th:action="@{/logout}" method="post" class="inline">
+            <form th:unless="${alone}" th:action="@{/logout}" method="post" class="inline">
                 <button type="submit" class="link" th:text="#{account.logout}">Log out</button>
             </form>
+            <form th:if="${standalone != null and standalone.enabled()}" sec:authorize="hasRole('ADMIN')"
+                  th:action="@{/admin/quit}" method="post" class="inline">
+                <button type="submit" class="link" th:text="#{quit.button}">Quit Signaire</button>
+            </form>
+            </th:block>
         </th:block>
         <a sec:authorize="!isAuthenticated()" th:href="@{/login}" th:text="#{login.title}">Log in</a>
     </nav>

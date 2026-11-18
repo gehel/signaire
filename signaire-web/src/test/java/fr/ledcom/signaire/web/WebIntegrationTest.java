@@ -11,17 +11,15 @@ import org.springframework.context.annotation.Import;
 
 import fr.ledcom.signaire.accounts.AccountsCleaner;
 import fr.ledcom.signaire.accounts.PostgresTestConfiguration;
-import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 
 /**
- * The whole application with Elasticsearch and PostgreSQL containers, and a fake SignSuisse. Integration tests use this annotation
- * only, so that they share one Spring context and one set of containers.
+ * The whole application with a PostgreSQL container, a Lucene index under {@code target/}, and a fake SignSuisse.
+ * Integration tests use this annotation only, so that they share one Spring context and one container.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({ElasticsearchTestConfiguration.class, PostgresTestConfiguration.class, AccountsCleaner.class,
-    FakeSignSuisse.class})
+@Import({PostgresTestConfiguration.class, AccountsCleaner.class, FakeSignSuisse.class})
 public @interface WebIntegrationTest {
 }

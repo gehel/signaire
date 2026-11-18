@@ -1,6 +1,6 @@
 package fr.ledcom.signaire.core.search;
 
-/** Elasticsearch cannot be reached or refused a request. */
+/** The index cannot be read or written. */
 public class SearchException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

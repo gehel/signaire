@@ -3,7 +3,7 @@ package fr.ledcom.signaire.core.bundles;
 import fr.ledcom.signaire.model.Category;
 
 /**
- * A loaded bundle, as recorded in the {@link fr.ledcom.signaire.core.search.SignIndex#BUNDLES} index.
+ * A loaded bundle, as recorded in the {@link fr.ledcom.signaire.core.search.SignIndex}.
  *
  * @param file name of the bundle file
  * @param category category of the bundle

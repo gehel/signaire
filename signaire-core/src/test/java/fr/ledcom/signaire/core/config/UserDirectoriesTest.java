@@ -73,6 +73,7 @@ class UserDirectoriesTest {
 
         assertThat(directories.bundles()).isEqualTo(HOME.resolve(".local/share/signaire/bundles"));
         assertThat(directories.mediaCache()).isEqualTo(HOME.resolve(".cache/signaire/media"));
+        assertThat(directories.index()).isEqualTo(HOME.resolve(".local/state/signaire/index"));
         assertThat(directories.configFile()).isEqualTo(HOME.resolve(".config/signaire/application.properties"));
     }
 }

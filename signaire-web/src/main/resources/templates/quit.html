@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{quit.title})}"></head>
+<body>
+<main id="main">
+    <h1 th:text="#{quit.title}">Signaire has stopped</h1>
+    <p th:text="#{quit.text}">You can close this page.</p>
+</main>
+</body>
+</html>

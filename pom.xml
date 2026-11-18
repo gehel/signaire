@@ -51,6 +51,7 @@
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
         <jsoup.version>1.24.1</jsoup.version>
         <lombok.version>1.18.48</lombok.version>
+        <lucene.version>10.6.0</lucene.version>
         <maven.compiler.release>27</maven.compiler.release>
         <maven.compiler.source>27</maven.compiler.source>
         <maven.compiler.target>27</maven.compiler.target>
@@ -144,6 +145,16 @@
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli-spring-boot-starter</artifactId>
                 <version>${picocli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analysis-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.pdfbox</groupId>

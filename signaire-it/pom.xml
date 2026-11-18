@@ -10,7 +10,7 @@
 
     <artifactId>signaire-it</artifactId>
 
-    <description>Tests of the whole stack: the command line and web application jars, run as processes, with Elasticsearch, PostgreSQL and a fake SignSuisse.</description>
+    <description>Tests of the whole stack: the command line and web application jars, run as processes, with PostgreSQL and a fake SignSuisse.</description>
 
     <dependencies>
         <!-- the jars under test: declared so that they are built first; the tests run them as processes -->
@@ -54,11 +54,6 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
@@ -73,6 +68,7 @@
                     <systemPropertyVariables>
                         <signaire.cli.jar>${project.basedir}/../signaire-cli/target/signaire-cli-${project.version}-jar-with-dependencies.jar</signaire.cli.jar>
                         <signaire.web.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}.jar</signaire.web.jar>
+                        <signaire.standalone.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}-standalone.jar</signaire.standalone.jar>
                         <signaire.it.work>${project.build.directory}/it</signaire.it.work>
                     </systemPropertyVariables>
                 </configuration>

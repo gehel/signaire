@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{setup.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main id="main" class="account setup">
+    <h1><span th:text="#{setup.title}">Welcome to Signaire</span> <a th:replace="~{fragments/help :: link('standalone')}"></a></h1>
+    <p th:text="#{setup.intro}">A few choices before starting.</p>
+    <p th:if="${error}" class="error" role="alert" th:text="#{${error}(${minPasswordLength})}">Error</p>
+    <form th:action="@{/setup}" method="post" th:object="${setup}" class="stacked">
+        <fieldset>
+            <legend th:text="#{setup.users}">Who uses Signaire on this computer?</legend>
+            <label>
+                <input type="radio" name="alone" value="true" th:checked="*{alone}">
+                <span th:text="#{setup.alone}">Only me: no account</span>
+            </label>
+            <label>
+                <input type="radio" name="alone" value="false" th:checked="*{!alone}">
+                <span th:text="#{setup.shared}">Several people: everyone has an account</span>
+            </label>
+        </fieldset>
+        <fieldset aria-describedby="admin-help">
+            <legend th:text="#{setup.admin}">The administrator account</legend>
+            <small id="admin-help" th:text="#{setup.adminHelp}">Only for several people.</small>
+            <label for="username" th:text="#{account.username}">Username</label>
+            <input type="text" id="username" th:field="*{username}" autocomplete="username"
+                   minlength="3" maxlength="40" pattern="[A-Za-z0-9._\-]+" aria-describedby="username-help">
+            <small id="username-help" th:text="#{register.usernameHelp}">3 to 40 letters or digits</small>
+            <label for="displayName" th:text="#{register.displayName}">Name shown</label>
+            <input type="text" id="displayName" th:field="*{displayName}" autocomplete="name" maxlength="100">
+            <label for="password" th:text="#{account.password}">Password</label>
+            <input type="password" id="password" name="password" autocomplete="new-password"
+                   th:minlength="${minPasswordLength}" aria-describedby="password-help">
+            <small id="password-help" th:text="#{register.passwordHelp(${minPasswordLength})}">8 characters</small>
+            <label for="confirmation" th:text="#{register.confirmation}">Password again</label>
+            <input type="password" id="confirmation" name="confirmation" autocomplete="new-password">
+        </fieldset>
+        <fieldset aria-describedby="download-help">
+            <legend th:text="#{setup.download}">Signs to download from SignSuisse</legend>
+            <small id="download-help" th:text="#{setup.downloadHelp}">None checked: later.</small>
+            <label th:each="category : ${allCategories}">
+                <input type="checkbox" name="categories" th:value="${category.name()}"
+                       th:checked="${setup.categories().contains(category)}">
+                <span th:text="#{'category.' + ${category.name()}}">City</span>
+            </label>
+        </fieldset>
+        <fieldset>
+            <legend th:text="#{admin.sync.languages}">Sign languages</legend>
+            <label th:each="language : ${allLanguages}">
+                <input type="checkbox" name="languages" th:value="${language.code()}"
+                       th:checked="${setup.languages().contains(language)}">
+                <span th:text="#{'signLanguage.' + ${language.name()}}">LSF</span>
+            </label>
+        </fieldset>
+        <label>
+            <input type="checkbox" name="withMedia" value="true" th:checked="*{withMedia}">
+            <span th:text="#{admin.sync.withMedia}">Download the videos and images</span>
+        </label>
+        <button type="submit" th:text="#{setup.submit}">Start</button>
+    </form>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

@@ -17,7 +17,7 @@ final class ArchitectureTest {
 
     @ArchTest
     static final ArchRule NO_STORE = noClasses().should().dependOnClassesThat()
-            .resideInAnyPackage("co.elastic..", "jakarta.persistence..", "org.springframework.data..",
+            .resideInAnyPackage("org.apache.lucene..", "jakarta.persistence..", "org.springframework.data..",
                     "org.springframework.jdbc..");
 
     @ArchTest

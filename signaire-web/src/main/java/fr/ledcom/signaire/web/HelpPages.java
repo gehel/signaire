@@ -27,7 +27,7 @@ public class HelpPages {
 
     /** The topics, in the order of the manual. */
     static final SequencedSet<String> TOPICS = Collections.unmodifiableSequencedSet(new LinkedHashSet<>(List.of(
-            "search", "signs", "lists", "exports", "requests", "account", "admin", "cli")));
+            "search", "signs", "lists", "exports", "requests", "account", "admin", "cli", "standalone")));
     private static final String DEFAULT_LANGUAGE = "fr";
 
     private final Parser parser = Parser.builder().extensions(List.of(TablesExtension.create())).build();

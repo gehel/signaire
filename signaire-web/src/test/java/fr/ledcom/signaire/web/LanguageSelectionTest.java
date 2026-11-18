@@ -25,7 +25,7 @@ import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import jakarta.servlet.http.Cookie;
 
-// the web layer only: no Elasticsearch, no database
+// the web layer only: no index, no database
 @WebMvcTest(SearchController.class)
 @Import({SecurityConfiguration.class, AdminUsers.class})
 class LanguageSelectionTest {

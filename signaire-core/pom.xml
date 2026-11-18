@@ -10,7 +10,7 @@
 
     <artifactId>signaire-core</artifactId>
 
-    <description>Business services: bundle loading, indexing and search, word lists and exports.</description>
+    <description>Business services: bundle loading, Lucene indexing and search, media of the bundles.</description>
 
     <dependencies>
         <dependency>
@@ -18,22 +18,20 @@
             <artifactId>signaire-bundle</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analysis-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-elasticsearch</artifactId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-testcontainers</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -41,7 +39,7 @@
     <build>
         <plugins>
             <plugin>
-                <!-- the Elasticsearch test configuration and test signs are shared with the CLI and web tests -->
+                <!-- the test signs are shared with the CLI and web tests -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>

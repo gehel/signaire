@@ -13,15 +13,10 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleManifest;
 import fr.ledcom.signaire.bundle.BundleReader;
-import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.model.Sign;
 
@@ -33,22 +28,18 @@ import fr.ledcom.signaire.model.Sign;
 public class BundleLoader {
 
     private static final String BUNDLE_EXTENSION = ".zip";
-    /** One bundle per category, and a few more. */
-    private static final int MAX_BUNDLES = 1000;
 
     private final SignIndex index;
-    private final ElasticsearchClient client;
     private final BundleReader reader = new BundleReader();
     private final Clock clock;
 
     @Autowired
-    public BundleLoader(SignIndex index, ElasticsearchClient client) {
-        this(index, client, Clock.systemUTC());
+    public BundleLoader(SignIndex index) {
+        this(index, Clock.systemUTC());
     }
 
-    BundleLoader(SignIndex index, ElasticsearchClient client, Clock clock) {
+    BundleLoader(SignIndex index, Clock clock) {
         this.index = index;
-        this.client = client;
         this.clock = clock;
     }
 
@@ -59,17 +50,9 @@ public class BundleLoader {
 
     /** The bundles loaded into the index, by file name. */
     public List<BundleRecord> loadedBundles() {
-        index.createIfMissing();
-        try {
-            return client.search(s -> s.index(SignIndex.BUNDLES).size(MAX_BUNDLES), BundleRecord.class)
-                    .hits().hits().stream()
-                    .map(Hit::source)
-                    .filter(Objects::nonNull)
-                    .sorted(Comparator.comparing(BundleRecord::file))
-                    .toList();
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot read bundle registry", e);
-        }
+        return index.findBundles(BundleRecord.class).stream()
+                .sorted(Comparator.comparing(BundleRecord::file))
+                .toList();
     }
 
     /**
@@ -103,41 +86,22 @@ public class BundleLoader {
 
     /** Loads a bundle, unless it was already loaded with the same signs. */
     public LoadReport load(Path file) {
-        index.createIfMissing();
         try (Bundle bundle = reader.read(file)) {
             BundleManifest manifest = bundle.manifest();
             String key = Objects.toString(file.getFileName(), file.toString());
             String checksum = manifest.checksums().get(BundleManifest.SIGNS_ENTRY);
-            BundleRecord previous = loaded(key);
-            if (previous != null && previous.checksum().equals(checksum)) {
+            Optional<BundleRecord> previous = index.findBundle(key, BundleRecord.class);
+            if (previous.isPresent() && previous.get().checksum().equals(checksum)) {
                 return new LoadReport(file, manifest.category(), manifest.signCount(), LoadReport.Status.UNCHANGED,
                         null);
             }
             index.index(bundle.signs());
-            register(key, new BundleRecord(key, manifest.category(), checksum, bundle.signs().size(),
+            index.saveBundle(key, new BundleRecord(key, manifest.category(), checksum, bundle.signs().size(),
                     clock.instant().toString()));
             index.refresh();
             return new LoadReport(file, manifest.category(), bundle.signs().size(), LoadReport.Status.LOADED, null);
         } catch (BundleException e) {
             return LoadReport.failed(file, e.getMessage());
-        }
-    }
-
-    private BundleRecord loaded(String key) {
-        try {
-            GetResponse<BundleRecord> response = client.get(g -> g.index(SignIndex.BUNDLES).id(key),
-                    BundleRecord.class);
-            return response.found() ? response.source() : null;
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot read bundle registry", e);
-        }
-    }
-
-    private void register(String key, BundleRecord bundle) {
-        try {
-            client.index(i -> i.index(SignIndex.BUNDLES).id(key).document(bundle));
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot update bundle registry", e);
         }
     }
 }
