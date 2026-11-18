@@ -130,6 +130,14 @@ class SignSearchServiceIT {
     }
 
     @Test
+    void creatingAnIndexThatAlreadyExistsIsNotAnError() {
+        // the index can appear between the check and the creation, e.g. while Elasticsearch starts
+        index.create(SignIndex.SIGNS);
+
+        assertThat(search.findByUid(GATTO.uid())).contains(GATTO);
+    }
+
+    @Test
     void unknownWordsFindNothing() {
         assertThat(names(SignQuery.forText("xylophone"))).isEmpty();
     }

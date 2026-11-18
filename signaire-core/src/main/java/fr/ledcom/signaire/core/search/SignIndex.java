@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import fr.ledcom.signaire.model.Sign;
@@ -25,6 +26,7 @@ public class SignIndex {
     public static final String BUNDLES = "signaire-bundles";
 
     private static final int BULK_SIZE = 500;
+    private static final String ALREADY_EXISTS = "resource_already_exists_exception";
 
     private final ElasticsearchClient client;
 
@@ -39,7 +41,7 @@ public class SignIndex {
                 if (!client.indices().exists(e -> e.index(index)).value()) {
                     create(index);
                 }
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchException e) {
                 throw new SearchException("Cannot check index " + index, e);
             }
         }
@@ -50,7 +52,7 @@ public class SignIndex {
         for (String index : List.of(SIGNS, BUNDLES)) {
             try {
                 client.indices().delete(d -> d.index(index).ignoreUnavailable(Boolean.TRUE));
-            } catch (IOException e) {
+            } catch (IOException | ElasticsearchException e) {
                 throw new SearchException("Cannot delete index " + index, e);
             }
             create(index);
@@ -73,7 +75,7 @@ public class SignIndex {
         BulkResponse response;
         try {
             response = client.bulk(bulk.build());
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot index signs", e);
         }
         if (response.errors()) {
@@ -89,7 +91,7 @@ public class SignIndex {
     public void delete(String uid) {
         try {
             client.delete(d -> d.index(SIGNS).id(uid));
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot delete sign " + uid, e);
         }
     }
@@ -98,12 +100,13 @@ public class SignIndex {
     public void refresh() {
         try {
             client.indices().refresh(r -> r.index(SIGNS, BUNDLES));
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot refresh indices", e);
         }
     }
 
-    private void create(String index) {
+    /** Creates an index; nothing happens when it already exists. */
+    void create(String index) {
         try (InputStream definition = SignIndex.class.getResourceAsStream(index + ".json")) {
             if (definition == null) {
                 throw new SearchException("No definition for index " + index);
@@ -111,6 +114,11 @@ public class SignIndex {
             client.indices().create(c -> c.index(index).withJson(definition));
         } catch (IOException e) {
             throw new SearchException("Cannot create index " + index, e);
+        } catch (ElasticsearchException e) {
+            // e.g. created between the check and the creation, while Elasticsearch recovers its indices
+            if (!ALREADY_EXISTS.equals(e.error().type())) {
+                throw new SearchException("Cannot create index " + index, e);
+            }
         }
     }
 }
