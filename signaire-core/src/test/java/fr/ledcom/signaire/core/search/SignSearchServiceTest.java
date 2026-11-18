@@ -16,11 +16,12 @@ class SignSearchServiceTest {
         try (FakeElasticsearch elasticsearch = FakeElasticsearch.failing(true, 503, "cluster_block_exception")) {
             SignSearchService service = new SignSearchService(elasticsearch.client());
             SignQuery query = SignQuery.forText("chat");
+            List<String> uids = List.of("3");
 
             assertThatThrownBy(() -> service.search(query)).isInstanceOf(SearchException.class);
             assertThatThrownBy(() -> service.findUids(query, 10)).isInstanceOf(SearchException.class);
             assertThatThrownBy(() -> service.findByUid("3")).isInstanceOf(SearchException.class);
-            assertThatThrownBy(() -> service.findByUids(List.of("3"))).isInstanceOf(SearchException.class);
+            assertThatThrownBy(() -> service.findByUids(uids)).isInstanceOf(SearchException.class);
         }
     }
 }

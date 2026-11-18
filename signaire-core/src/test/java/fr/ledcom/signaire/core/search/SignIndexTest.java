@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import fr.ledcom.signaire.core.FakeElasticsearch;
 import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.Sign;
 
 class SignIndexTest {
 
@@ -38,10 +39,12 @@ class SignIndexTest {
     void errorsOfElasticsearchAreSearchExceptions() throws IOException {
         try (FakeElasticsearch elasticsearch = FakeElasticsearch.failing(true, 503, "cluster_block_exception")) {
             SignIndex index = new SignIndex(elasticsearch.client());
+            List<Sign> signs = List.of(TestSigns.CHAT);
+            String uid = TestSigns.CHAT.uid();
 
             assertThatThrownBy(index::recreate).isInstanceOf(SearchException.class);
-            assertThatThrownBy(() -> index.index(List.of(TestSigns.CHAT))).isInstanceOf(SearchException.class);
-            assertThatThrownBy(() -> index.delete(TestSigns.CHAT.uid())).isInstanceOf(SearchException.class);
+            assertThatThrownBy(() -> index.index(signs)).isInstanceOf(SearchException.class);
+            assertThatThrownBy(() -> index.delete(uid)).isInstanceOf(SearchException.class);
             assertThatThrownBy(index::refresh).isInstanceOf(SearchException.class);
         }
     }
