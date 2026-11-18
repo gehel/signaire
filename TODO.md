@@ -15,8 +15,9 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] in the export, only show options relevant to the currently selected export type. For example, don't show "Options du PDF" when we're creating an Anki deck
 - [x] Add links to Anki where it makes sense and document what this export is
 - [x] Add links back to <https://www.sgb-fss.ch/signsuisse/fr> in the footer, and for each sign link back to the original page
-- [x] Make the web app as accessible as possible (skip link, focus outlines, table headers, labelled navigation; Lighthouse scores 100 and CI keeps it there)
-- [ ] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (runs in CI and fails on the budget of `.sitespeed/budget.json`; still to do: compare with a baseline rather than fixed budgets)
+- [x] Make the web app as accessible as possible (Lighthouse accessibility score 100 on the measured pages, enforced in CI)
+- [x] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (fails when exceeding the budget of `.sitespeed/budget.json`)
+- [ ] compare sitespeed.io measures with a baseline, rather than with fixed budgets
 - [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
 - [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
 - [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
