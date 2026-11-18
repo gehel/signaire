@@ -35,37 +35,38 @@ Key decisions:
 - `signaire-model` and `signaire-bundle` must stay **Android-compatible**: no Spring, Java release 17
   (set per module), small dependency footprint. The Android app reuses them to read the same bundles
   offline.
-- **Bundles**: one zip per SignSuisse category, containing `manifest.json` (format version, category,
-  languages, entry count, checksums), the sign metadata as JSON, and `media/` (videos `.mp4`, photos,
-  illustrations). Bundles are loaded from a configured directory at startup, and can be (re)loaded at
-  runtime; loading is idempotent and keyed by SignSuisse `uid`.
+- **Bundles**: one zip per SignSuisse category (`city.zip`…), containing `manifest.json` (format version,
+  category, sign count, SHA-256 of every entry), `signs.json`, and `media/` (videos, photos, illustrations).
+  A `Media` keeps the SignSuisse URL and, when downloaded, its path in the bundle. Bundles are produced by
+  `signaire extraire`, loaded from a configured directory at startup and (re)loadable at runtime; loading
+  is idempotent and keyed by SignSuisse `uid`.
 - **Storage**: Elasticsearch holds only the sign corpus (fully rebuildable from bundles). User accounts
   and lists live in PostgreSQL (JPA). Lists reference signs by SignSuisse `uid`.
 - **Auth**: local accounts (Spring Security form login, bcrypt) plus optional OIDC via configuration.
 - **i18n**: never hardcode user-facing strings. The base bundles are French (`messages.properties`);
   other languages get `messages_<lang>.properties`. Web uses the Spring `MessageSource`, and the supported
-  locales are listed in `LocaleConfiguration` (add a locale there when adding a translation). CLI help
-  texts use picocli resource bundles (`fr/ledcom/signaire/cli/messages.properties`).
+  locales are listed in `LocaleConfiguration` (add a locale there when adding a translation). The CLI uses
+  one picocli resource bundle per command (`fr/ledcom/signaire/cli/<command>.properties`) for help and
+  messages. Commands, options and values are French (`extraire --sortie --categorie ville`). Category
+  names are in `categories.properties`. Build command lines with `SignaireCommand.commandLine(...)`.
 - Printed exports (PDF, e-book) show the SignSuisse photo/illustration plus a QR code linking to the video.
 
 ### SignSuisse data source
 
-- Search endpoint (JSON, capped at **100 results**):
+- Search endpoint (JSON, capped at **100 results**, no paging):
   `https://www.sgb-fss.ch/signsuisse/index.php?eID=signsuisse_search&sword=<term>&lang=<fr|de|it|all>&category=<id>&curlang=fr`
-  returns `{"items":[{"uid","name","kategorie","sprache","link"}],"count"}`. An empty `sword` returns
-  HTML, not JSON. To enumerate exhaustively, query by prefix per category and refine the prefix when a
-  query hits the cap.
-- Category ids (the `category` filter): 6806 Nation, 6809 Ville, 6812 Circulation, 6815 Profession/École,
-  6818 Famille, 6821 Sport/Temps libre, 6824 Nourriture, 6827 Ménage, 6830 Gens, 6833 Animaux,
-  6836 Nature, 6839 Maison/Bâtiment, 6842 Politique/Droit, 6845 Médecine, 6848 Économie,
-  6851 En général, 6854 Religion, 6857 Verbe, 6860 Propriété, 6863 Événements/Média.
-- Detail pages are static HTML: `/signsuisse/{fr|it/}lexikon/{uid}/{slug}` (German has no language
-  prefix). Each `uid` is one sign in one language: the same concept in DE and FR has different uids.
-  The page has the main video(s) (`/signsuisse/fileadmin/signsuisse_ressources/videos/*.mp4`), the
-  "Périphrase / Synonyme", "Définition", "Statut des signes", "Catégorie", an example sentence plus its
-  example video, and optional photo/illustration/explanation/document blocks (`.photo_doc`,
-  `.illustration_doc`, …).
-- Use plain HTTP + jsoup (no headless browser). Throttle requests and identify with a generic user agent.
+  returns `{"items":[{"uid","name","kategorie","sprache","link"}],"count"}`. Matching is case and accent
+  insensitive and **fuzzy** ("vaud" also finds "BAVARD"). An empty `sword` returns HTML, and `sword=0`
+  answers HTTP 500. `SignEnumerator` copes with all of this: it refines truncated or failed queries
+  character by character, and reports when it hit its query length limit.
+- Category ids are in `Category`. `CategoryLabels` (extractor) maps the FR/DE/IT labels shown on pages.
+- Detail pages are static HTML, reachable only through the `link` given by the search: the slug and the
+  language path must match (`/signsuisse/lexikon/…` for German, `/signsuisse/fr/lexikon/…`,
+  `/signsuisse/it/lexikon/…`). Each `uid` is one sign in one language: the same concept in DE and FR has
+  different uids. Page labels are in the sign's language, so `SignPageParser` recognizes sections by the
+  start of their FR/DE/IT label. German pages also have dialects and dialect variant videos.
+- Plain HTTP + jsoup, throttled (`ThrottledHttpFetcher`, generic user agent). Parser test fixtures copy the
+  page structure with invented text.
 
 ## Build and test
 
@@ -83,6 +84,13 @@ sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Tem
 ./mvnw sortpom:sort                             # fix POM ordering after editing a pom.xml
 ```
 
+Gotchas with Spring Boot and picocli:
+- CLI subcommands are `@Scope("prototype")` beans: picocli doesn't reset every option (positional lists)
+  between runs of the same object.
+- Apps get the core services by importing `SignaireCoreConfiguration`, not by scanning `fr.ledcom.signaire`
+  (that would pick up core's test application from the test-jar). It names the packages it scans as strings,
+  because the no-package-cycles rule also covers test classes.
+
 Gotchas with the WMF ruleset and Java 27:
 - The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
   the parent's versions can't handle Java 27 class files. Check these first when bumping the JDK or the
@@ -93,10 +101,29 @@ Gotchas with the WMF ruleset and Java 27:
   Boot application classes get a `protected` constructor.
 - No trailing spaces, including in `.properties` files: write a significant trailing space as `\u0020`.
 - Silence a spotbugs false positive with `@SuppressFBWarnings(value = ..., justification = ...)`
-  (`spotbugs-annotations`, `provided` scope).
+  (`spotbugs-annotations`, `provided` scope). Silence forbiddenapis with any annotation named
+  `SuppressForbidden` (see the extractor tests). `ResourceBundle.getBundle` and `String.formatted` need an
+  explicit locale.
 
-Integration tests (`*IT.java`, failsafe) will use Testcontainers for Elasticsearch and PostgreSQL, so
-they need Docker.
+Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers and need Docker. The
+Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
+shared with the CLI (and web) tests. Run a single IT with
+`./mvnw -pl signaire-core verify -Dit.test=SignSearchServiceIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
+
+Running the CLI locally:
+
+```bash
+docker compose up -d                                     # Elasticsearch on localhost:9200
+./mvnw -PnoVerify -pl signaire-cli -am package -DskipTests
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar extraire -c religion -l fr -o bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar charger --bundles bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar chercher dieu
+```
+
+Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
+signs of "religion"); use `--sans-medias` while developing. After changing the index mapping
+(`signaire-signs.json`), reindex with `charger --reindexer`: the bundle registry only notices bundle
+changes.
 
 ## Conventions
 

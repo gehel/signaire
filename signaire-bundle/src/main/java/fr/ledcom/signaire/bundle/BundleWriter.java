@@ -5,6 +5,8 @@ import static fr.ledcom.signaire.bundle.BundleManifest.MANIFEST_ENTRY;
 import static fr.ledcom.signaire.bundle.BundleManifest.SIGNS_ENTRY;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.Deflater;
@@ -26,6 +29,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.DialectVariant;
 import fr.ledcom.signaire.model.Example;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
@@ -57,7 +61,9 @@ public class BundleWriter {
         Path directory = Objects.requireNonNull(absoluteTarget.getParent(), "target directory");
         Path tmp = null;
         try {
-            tmp = Files.createTempFile(directory, ".bundle-", ".tmp");
+            // not Files.createTempFile, whose files are only readable by their owner: bundles get the usual
+            // permissions (umask), as they are meant to be read by other processes
+            tmp = directory.resolve(".bundle-" + UUID.randomUUID() + ".tmp");
             writeZip(tmp, category, signs, mediaFiles);
             Files.move(tmp, absoluteTarget, ATOMIC_MOVE, REPLACE_EXISTING);
             return target;
@@ -71,7 +77,8 @@ public class BundleWriter {
     private void writeZip(Path zip, Category category, List<Sign> signs, Map<String, Path> mediaFiles)
             throws IOException {
         Map<String, String> checksums = new LinkedHashMap<>();
-        try (OutputStream out = Files.newOutputStream(zip); ZipOutputStream zipOut = new ZipOutputStream(out)) {
+        try (OutputStream out = Files.newOutputStream(zip, CREATE_NEW, WRITE);
+                ZipOutputStream zipOut = new ZipOutputStream(out)) {
             byte[] signsJson = BundleJson.MAPPER.writeValueAsBytes(signs);
             putEntry(zipOut, SIGNS_ENTRY, signsJson);
             checksums.put(SIGNS_ENTRY, Checksums.sha256(signsJson));
@@ -126,7 +133,8 @@ public class BundleWriter {
         return Stream.of(
                 sign.videos().stream(),
                 sign.examples().stream().map(Example::video).filter(Objects::nonNull),
-                sign.images().stream())
+                sign.images().stream(),
+                sign.dialectVariants().stream().map(DialectVariant::video))
             .flatMap(Function.identity());
     }
 

@@ -4,11 +4,13 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 
-import picocli.CommandLine;
+import fr.ledcom.signaire.core.SignaireCoreConfiguration;
 import picocli.CommandLine.IFactory;
 
 @SpringBootApplication
+@Import(SignaireCoreConfiguration.class)
 public class SignaireCliApplication implements CommandLineRunner, ExitCodeGenerator {
 
     private final IFactory factory;
@@ -26,7 +28,7 @@ public class SignaireCliApplication implements CommandLineRunner, ExitCodeGenera
 
     @Override
     public void run(String... args) {
-        exitCode = new CommandLine(command, factory).execute(args);
+        exitCode = SignaireCommand.commandLine(command, factory).execute(args);
     }
 
     @Override

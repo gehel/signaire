@@ -29,6 +29,7 @@
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
+        <jsoup.version>1.24.1</jsoup.version>
         <lombok.version>1.18.48</lombok.version>
         <maven.compiler.release>27</maven.compiler.release>
         <maven.compiler.source>27</maven.compiler.source>
@@ -66,6 +67,12 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-extractor</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -78,6 +85,11 @@
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli-spring-boot-starter</artifactId>
                 <version>${picocli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -103,6 +115,34 @@
                     <groupId>com.github.spotbugs</groupId>
                     <artifactId>spotbugs-maven-plugin</artifactId>
                     <version>4.10.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>de.thetaphi</groupId>
+                    <artifactId>forbiddenapis</artifactId>
+                    <configuration>
+                        <suppressAnnotations>
+                            <!-- any annotation of that name, with a reason, can justify a forbidden API use -->
+                            <suppressAnnotation>**.SuppressForbidden</suppressAnnotation>
+                        </suppressAnnotations>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <!-- Spring Boot repackages the jar: run the tests on the classes instead -->
+                        <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.basepom.maven</groupId>
+                    <artifactId>duplicate-finder-maven-plugin</artifactId>
+                    <configuration>
+                        <ignoredResourcePatterns>
+                            <!-- public suffix list, shipped by both httpclient5 and docker-java (Testcontainers) -->
+                            <ignoredResourcePattern>org/publicsuffix/list/effective_tld_names\.dat</ignoredResourcePattern>
+                        </ignoredResourcePatterns>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <!-- the version from the parent POM cannot read Java 27 class files -->
