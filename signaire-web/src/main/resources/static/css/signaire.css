@@ -152,3 +152,16 @@ main.sign video {
 main.sign dt {
     font-weight: bold;
 }
+
+ul.lists {
+    padding-left: 1.2rem;
+}
+
+ul.lists .count, .in-list, .note {
+    color: var(--muted);
+}
+
+section.sign-lists {
+    border-top: 1px solid #ddd;
+    margin-top: 1.5rem;
+}
