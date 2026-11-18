@@ -115,6 +115,12 @@ class SignSearchServiceIT {
     }
 
     @Test
+    void findsSeveralSignsByUidInTheGivenOrder() {
+        assertThat(search.findByUids(List.of(GATTO.uid(), "unknown", LAUSANNE.uid()))).containsExactly(GATTO, LAUSANNE);
+        assertThat(search.findByUids(List.of())).isEmpty();
+    }
+
+    @Test
     void unknownWordsFindNothing() {
         assertThat(names(SignQuery.forText("xylophone"))).isEmpty();
     }
