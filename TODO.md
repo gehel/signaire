@@ -16,9 +16,9 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] Add links to Anki where it makes sense and document what this export is
 - [x] Add links back to <https://www.sgb-fss.ch/signsuisse/fr> in the footer, and for each sign link back to the original page
 - [ ] Make the web app as accessible as possible (first pass done: skip link, focus outlines, table headers, labelled navigation; to be measured with Lighthouse)
-- [ ] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression
-- [ ] integration with lighthouse ci
-- [ ] integration with sonarcloud during the build, failing the build in case of regressions
+- [ ] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (workflow written, fails on the budget of `.sitespeed/budget.json`; to check on GitHub, then compare with a baseline rather than fixed budgets)
+- [ ] integration with lighthouse ci (workflow written, thresholds in `.lighthouserc.json`; to check on GitHub)
+- [ ] integration with sonarcloud during the build, failing the build in case of regressions (workflow written; needs the SonarCloud project and the `SONAR_TOKEN` secret)
 - [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
   - app should be able to run just by double clicking the jar file (if a JRE is present)
   - also provide a version with an embedded JRE

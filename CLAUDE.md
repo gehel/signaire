@@ -159,6 +159,11 @@ shared with the CLI (and web) tests. Run a single IT with
 `signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
 -Dsurefire.failIfNoSpecifiedTests=false` (the other modules' ITs run too unless `-Dit.test=FullStackIT`).
 
+Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
+(`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
+scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
+`.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate.
+
 Running the CLI locally:
 
 ```bash
