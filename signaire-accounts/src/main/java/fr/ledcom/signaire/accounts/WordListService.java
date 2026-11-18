@@ -65,6 +65,19 @@ public class WordListService {
         return find(ownerId, listId).add(signUid, Instant.now());
     }
 
+    /** Adds signs to a list, in order. Returns the number of signs that were not in the list yet. */
+    public int addAll(long ownerId, long listId, List<String> signUids) {
+        WordListEntity list = find(ownerId, listId);
+        Instant now = Instant.now();
+        int added = 0;
+        for (String signUid : signUids) {
+            if (list.add(signUid, now)) {
+                added++;
+            }
+        }
+        return added;
+    }
+
     /** Removes a sign from a list. Returns false when the sign was not in the list. */
     public boolean remove(long ownerId, long listId, String signUid) {
         return find(ownerId, listId).remove(signUid, Instant.now());
