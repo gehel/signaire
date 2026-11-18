@@ -70,6 +70,7 @@ public class CategoryExtractor {
      */
     public ExtractionReport extract(Category category, Collection<Language> languages, Path outputDir, Path cache,
             boolean withMedia) {
+        createDirectories(outputDir);
         createDirectories(cache);
         List<Sign> signs = new ArrayList<>();
         List<SearchHit> failures = new ArrayList<>();
