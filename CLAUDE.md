@@ -63,6 +63,15 @@ Key decisions:
   names (`categories*.properties`) are shown in the user's language and accepted in any of them. Tests run
   in French (`argLine` in the root POM); switch with `DefaultLocale` in CLI tests. Build command lines
   with `SignaireCommand.commandLine(...)`.
+- **User directories**: `UserDirectories` (core) follows the XDG base directories, with the usual places on
+  macOS and Windows. Spring applications get them through `UserDirectoriesEnvironment` (registered in
+  `META-INF/spring.factories`): `signaire.bundles.directory` defaults to `$XDG_DATA_HOME/signaire/bundles`,
+  `signaire.media.cache` to `$XDG_CACHE_HOME/signaire/media`, as Spring Boot default properties (any setting
+  wins), and `$XDG_CONFIG_HOME/signaire/application.properties` is read. CLI options get these defaults
+  through `EnvironmentDefaults`. Tests always set both directories under `target/`.
+- **Signs are transient**: bundles and index can be deleted and rebuilt at any time. Everything else refers
+  to signs by uid (SignSuisse uid, or the `local-…` uid of signs added by administrators), never by an id of
+  the index; `TransientSignsIT` checks it. Keep it that way.
 - **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
   signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
   called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.

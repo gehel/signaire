@@ -28,10 +28,10 @@ You need Java 27 and Docker.
 docker compose up -d                       # Elasticsearch and PostgreSQL for development
 ./mvnw -PnoVerify package -DskipTests      # build everything
 
-# extract a category from SignSuisse into ./bundles (add --sans-medias for a quick try)
+# extract a category from SignSuisse into ~/.local/share/signaire/bundles (add --sans-medias for a quick try)
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar extraire -c religion -l fr
 
-# start the web application: it loads ./bundles at startup
+# start the web application: it loads the bundles at startup
 java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.accounts.admins=myname
 ```
 
@@ -42,8 +42,8 @@ Then open <http://localhost:8080>, create an account named `myname` (it is an ad
 ```bash
 alias signaire='java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar'
 signaire --help
-signaire extraire --categorie ville,nature --langue fr --sortie bundles   # SignSuisse → bundles
-signaire charger --bundles bundles                                        # bundles → search index
+signaire extraire --categorie ville,nature --langue fr                     # SignSuisse → bundles
+signaire charger                                                          # bundles → search index
 signaire chercher lac --langue fr                                         # search
 signaire exporter -f pdf -o lac.pdf --papier a5 --mise-en-page livret lac # export
 ```
@@ -52,12 +52,16 @@ The command line follows the language of the system (`LANG`, or `-Duser.language
 
 ## Configuration of the web application
 
-Spring Boot properties, given on the command line (`--name=value`), in an `application.properties` next to
-the jar, or as environment variables.
+Spring Boot properties, given on the command line (`--name=value`), in `~/.config/signaire/application.properties`
+(read by the command line too), in an `application.properties` next to the jar, or as environment variables.
+Signaire follows the [XDG base directories](https://specifications.freedesktop.org/basedir/latest/) on Linux
+(`$XDG_DATA_HOME`, `$XDG_CONFIG_HOME`, `$XDG_CACHE_HOME`), and the usual directories on macOS
+(`~/Library/…/Signaire`) and Windows (`%APPDATA%`, `%LOCALAPPDATA%`).
 
 | Property | Default | |
 |---|---|---|
-| `signaire.bundles.directory` | `bundles` | Bundles loaded at startup, and source of the media |
+| `signaire.bundles.directory` | `~/.local/share/signaire/bundles` | Bundles loaded at startup, and source of the media |
+| `signaire.media.cache` | `~/.cache/signaire/media` | Media downloaded by extractions |
 | `signaire.bundles.load-on-startup` | `true` | |
 | `signaire.accounts.admins` | | Usernames of the administrators, comma separated |
 | `signaire.accounts.registration-enabled` | `true` | Whether anyone can create an account |

@@ -6,11 +6,12 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] ensure that no automated test ever accesses <https://www.sgb-fss.ch>. For tests, create dummy bundles, or mock the HTTP requests
 - [x] Create a README
 - [ ] Choose a license for the code (the README says it is not chosen yet)
+  - Apache 2.0 license choosen by Guillaume
 - [ ] documentation / help, available contextually, and as a manual
 - [ ] integration test in separate module, that runs the full stack, including elasticsearch and DB
 - [x] introduce archunit to document and enforce dependencies
-- [ ] Follow XDG specs (<https://specifications.freedesktop.org/basedir/latest/>)
-- [ ] Ensure that signs data can be treated as transient. Deleting all signs bundles and reloading them from scratch should work out of the box, that means that all IDs should be stable in that context.
+- [x] Follow XDG specs (<https://specifications.freedesktop.org/basedir/latest/>)
+- [x] Ensure that signs data can be treated as transient. Deleting all signs bundles and reloading them from scratch should work out of the box, that means that all IDs should be stable in that context.
 - [x] in the export, only show options relevant to the currently selected export type. For example, don't show "Options du PDF" when we're creating an Anki deck
 - [x] Add links to Anki where it makes sense and document what this export is
 - [x] Add links back to <https://www.sgb-fss.ch/signsuisse/fr> in the footer, and for each sign link back to the original page

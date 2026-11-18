@@ -50,17 +50,20 @@ public class SignSuisseSync {
     private final MediaLibrary media;
     private final SignEditor editor;
     private final Path bundles;
+    private final Path mediaCache;
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.IDLE);
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private Thread worker;
 
     public SignSuisseSync(SignSource source, BundleLoader loader, MediaLibrary media, SignEditor editor,
-            @Value("${signaire.bundles.directory:bundles}") Path bundles) {
+            @Value("${signaire.bundles.directory:bundles}") Path bundles,
+            @Value("${signaire.media.cache:bundles/.media}") Path mediaCache) {
         this.source = source;
         this.loader = loader;
         this.media = media;
         this.editor = editor;
         this.bundles = bundles;
+        this.mediaCache = mediaCache;
     }
 
     /** States of a synchronization. */
@@ -150,7 +153,7 @@ public class SignSuisseSync {
                 new BundleWriter(Clock.systemUTC()), new Listener());
         try {
             for (Category category : categories) {
-                ExtractionReport report = extractor.extract(category, languages, bundles, withMedia);
+                ExtractionReport report = extractor.extract(category, languages, bundles, mediaCache, withMedia);
                 loader.load(report.bundle());
                 progress.updateAndGet(p -> {
                     List<CategoryResult> done = new ArrayList<>(p.done());
