@@ -11,5 +11,5 @@ import fr.ledcom.signaire.model.Category;
  * @param signCount number of signs
  * @param loadedAt when the bundle was loaded (ISO-8601)
  */
-record BundleRecord(String file, Category category, String checksum, int signCount, String loadedAt) {
+public record BundleRecord(String file, Category category, String checksum, int signCount, String loadedAt) {
 }
