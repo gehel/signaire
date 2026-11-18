@@ -52,7 +52,7 @@ final class FakeSignSuisse implements AutoCloseable {
         return URI.create("http://127.0.0.1:" + server.getAddress().getPort());
     }
 
-    private void handle(HttpExchange exchange) throws IOException {
+    private void handle(HttpExchange exchange) {
         String path = exchange.getRequestURI().getPath();
         if (path.equals("/signsuisse/index.php")) {
             search(exchange, query(exchange.getRequestURI().getRawQuery()));

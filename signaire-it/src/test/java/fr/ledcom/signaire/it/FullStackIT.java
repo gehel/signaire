@@ -133,7 +133,8 @@ class FullStackIT {
 
         HttpResponse<String> created = alice.post("/lists", Map.of("name", "Villes"));
         assertThat(created.statusCode()).isEqualTo(302);
-        String list = created.headers().firstValue("Location").orElseThrow().replaceAll(".*/lists/", "");
+        String location = created.headers().firstValue("Location").orElseThrow();
+        String list = location.substring(location.lastIndexOf('/') + 1);
         alice.post("/signs/9001/lists/" + list, Map.of());
         alice.post("/signs/9002/lists/" + list, Map.of());
 

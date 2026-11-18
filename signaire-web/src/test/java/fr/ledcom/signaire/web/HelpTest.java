@@ -51,8 +51,7 @@ class HelpTest {
     void theManualListsAllTheTopics() {
         MvcTestResult result = mvc.get().uri("/help").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK).bodyText()
                 .contains("<h1>Aide</h1>")
                 .contains("href=\"/help/search\"", "href=\"/help/exports\"", "href=\"/help/admin\"",
                         "href=\"/help/cli\"");
