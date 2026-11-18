@@ -47,8 +47,7 @@ public class SignSearchService {
     private static final QueryBuilder FUZZY = new QueryBuilder(SignAnalyzers.searching()) {
         @Override
         protected Query newTermQuery(Term term, float boost) {
-            int length = term.text().codePointCount(0, term.text().length());
-            int edits = length < ONE_EDIT_LENGTH ? 0 : length < TWO_EDITS_LENGTH ? 1 : 2;
+            int edits = maxEdits(term.text().codePointCount(0, term.text().length()));
             return boosted(edits == 0 ? new TermQuery(term) : new FuzzyQuery(term, edits, 1), boost);
         }
     };
@@ -71,7 +70,7 @@ public class SignSearchService {
             StoredFields fields = searcher.storedFields();
             List<Sign> signs = new ArrayList<>();
             for (int i = query.from(); i < docs.length; i++) {
-                signs.add(SignDocuments.sign(fields, docs[i].doc));
+                signs.add(SignDocuments.readSign(fields, docs[i].doc));
             }
             return new SearchResults(total, signs);
         });
@@ -90,7 +89,7 @@ public class SignSearchService {
             StoredFields fields = searcher.storedFields();
             List<String> uids = new ArrayList<>();
             for (ScoreDoc doc : searcher.search(query(query), max, sort(query)).scoreDocs) {
-                uids.add(SignDocuments.uid(fields, doc.doc));
+                uids.add(SignDocuments.readUid(fields, doc.doc));
             }
             return uids;
         });
@@ -110,11 +109,19 @@ public class SignSearchService {
             StoredFields fields = searcher.storedFields();
             Query query = signs(new TermInSetQuery(SignDocuments.UID, uids.stream().map(BytesRef::new).toList()));
             for (ScoreDoc doc : searcher.search(query, uids.size()).scoreDocs) {
-                Sign sign = SignDocuments.sign(fields, doc.doc);
+                Sign sign = SignDocuments.readSign(fields, doc.doc);
                 found.put(sign.uid(), sign);
             }
             return uids.stream().map(found::get).filter(Objects::nonNull).toList();
         });
+    }
+
+    /** The "AUTO" fuzziness of Elasticsearch. */
+    private static int maxEdits(int length) {
+        if (length < ONE_EDIT_LENGTH) {
+            return 0;
+        }
+        return length < TWO_EDITS_LENGTH ? 1 : 2;
     }
 
     private static Sort sort(SignQuery query) {

@@ -18,7 +18,7 @@ public class Standalone {
     static final String SETTINGS = "standalone.properties";
 
     private final boolean enabled;
-    private final Path settings;
+    private final Path settingsFile;
     private volatile boolean singleUser;
     private volatile boolean setupDone;
 
@@ -26,7 +26,7 @@ public class Standalone {
         this.enabled = enabled;
         this.singleUser = singleUser;
         this.setupDone = setupDone;
-        this.settings = configDirectory.resolve(SETTINGS);
+        this.settingsFile = configDirectory.resolve(SETTINGS);
     }
 
     /** Whether this is the standalone application, rather than a server. */
@@ -57,15 +57,15 @@ public class Standalone {
             properties.setProperty("signaire.accounts.admins", admin);
         }
         try {
-            Path directory = settings.toAbsolutePath().getParent();
+            Path directory = settingsFile.toAbsolutePath().getParent();
             if (directory != null) {
                 Files.createDirectories(directory);
             }
-            try (OutputStream out = Files.newOutputStream(settings)) {
+            try (OutputStream out = Files.newOutputStream(settingsFile)) {
                 properties.store(out, "Set up by Signaire on its first run");
             }
         } catch (IOException e) {
-            throw new UncheckedIOException("Cannot save the setup in " + settings, e);
+            throw new UncheckedIOException("Cannot save the setup in " + settingsFile, e);
         }
         this.singleUser = alone;
         this.setupDone = true;

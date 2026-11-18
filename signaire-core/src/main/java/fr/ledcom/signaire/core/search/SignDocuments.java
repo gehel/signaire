@@ -49,7 +49,7 @@ final class SignDocuments {
         return new Term(ID, id(BUNDLE, file));
     }
 
-    static Document sign(Sign sign) {
+    static Document signDocument(Sign sign) {
         Document document = document(SIGN, sign.uid(), sign);
         document.add(new StringField(UID, sign.uid(), Field.Store.YES));
         document.add(new StringField(LANGUAGE, sign.language().name(), Field.Store.NO));
@@ -67,17 +67,17 @@ final class SignDocuments {
         return document;
     }
 
-    static Document bundle(String file, Object entry) {
+    static Document bundleDocument(String file, Object entry) {
         return document(BUNDLE, file, entry);
     }
 
     /** The sign of a document. */
-    static Sign sign(StoredFields fields, int doc) throws IOException {
-        return source(fields, doc, Sign.class);
+    static Sign readSign(StoredFields fields, int doc) throws IOException {
+        return readSource(fields, doc, Sign.class);
     }
 
     /** The uid of the sign of a document. */
-    static String uid(StoredFields fields, int doc) throws IOException {
+    static String readUid(StoredFields fields, int doc) throws IOException {
         return fields.document(doc, Set.of(UID)).get(UID);
     }
 
@@ -86,7 +86,7 @@ final class SignDocuments {
      *
      * @throws SearchException when the object is not of this type
      */
-    static <T> T source(StoredFields fields, int doc, Class<T> type) throws IOException {
+    static <T> T readSource(StoredFields fields, int doc, Class<T> type) throws IOException {
         try {
             return JSON.readValue(fields.document(doc, Set.of(SOURCE)).getBinaryValue(SOURCE).bytes, type);
         } catch (JacksonException e) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,7 +40,7 @@ class SingleUserFilter extends OncePerRequestFilter {
     private final Standalone standalone;
     private final AccountService accounts;
     private final SecurityContextHolderStrategy contexts = SecurityContextHolder.getContextHolderStrategy();
-    private volatile Account owner;
+    private final AtomicReference<Account> owner = new AtomicReference<>();
 
     SingleUserFilter(Standalone standalone, AccountService accounts) {
         this.standalone = standalone;
@@ -70,10 +71,11 @@ class SingleUserFilter extends OncePerRequestFilter {
     }
 
     private Account owner() {
-        Account account = owner;
+        Account account = owner.get();
         if (account == null) {
+            // found or created again by concurrent first requests: the same account
             account = accounts.findOrCreateOidc(ISSUER, SUBJECT, USERNAME, "Signaire");
-            owner = account;
+            owner.set(account);
         }
         return account;
     }

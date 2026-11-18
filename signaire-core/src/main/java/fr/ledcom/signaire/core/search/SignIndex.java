@@ -93,7 +93,7 @@ public class SignIndex implements AutoCloseable {
         List<Sign> all = List.copyOf(signs);
         write("Cannot index signs", writer -> {
             for (Sign sign : all) {
-                writer.updateDocument(SignDocuments.signId(sign.uid()), SignDocuments.sign(sign));
+                writer.updateDocument(SignDocuments.signId(sign.uid()), SignDocuments.signDocument(sign));
             }
         });
     }
@@ -115,7 +115,7 @@ public class SignIndex implements AutoCloseable {
     /** Records a loaded bundle, replacing the previous record of the same file. */
     public void saveBundle(String file, Object entry) {
         write("Cannot record bundle " + file,
-                writer -> writer.updateDocument(SignDocuments.bundleId(file), SignDocuments.bundle(file, entry)));
+                writer -> writer.updateDocument(SignDocuments.bundleId(file), SignDocuments.bundleDocument(file, entry)));
     }
 
     /** The record of a loaded bundle. */
@@ -123,7 +123,7 @@ public class SignIndex implements AutoCloseable {
         return read("Cannot read bundle registry", searcher -> {
             TopDocs top = searcher.search(new TermQuery(SignDocuments.bundleId(file)), 1);
             return top.scoreDocs.length == 0 ? Optional.<T>empty()
-                    : Optional.of(SignDocuments.source(searcher.storedFields(), top.scoreDocs[0].doc, type));
+                    : Optional.of(SignDocuments.readSource(searcher.storedFields(), top.scoreDocs[0].doc, type));
         });
     }
 
@@ -134,7 +134,7 @@ public class SignIndex implements AutoCloseable {
             List<T> bundles = new ArrayList<>();
             TermQuery all = new TermQuery(new Term(SignDocuments.KIND, SignDocuments.BUNDLE));
             for (ScoreDoc doc : searcher.search(all, MAX_BUNDLES).scoreDocs) {
-                bundles.add(SignDocuments.source(fields, doc.doc, type));
+                bundles.add(SignDocuments.readSource(fields, doc.doc, type));
             }
             return bundles;
         });

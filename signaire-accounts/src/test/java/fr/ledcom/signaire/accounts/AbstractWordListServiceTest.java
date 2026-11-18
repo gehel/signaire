@@ -64,8 +64,9 @@ abstract class AbstractWordListServiceTest {
 
         assertThat(added).isEqualTo(2);
         assertThat(lists.get(alice, list.id()).signUids()).containsExactly("2", "1", "3");
-        assertThatThrownBy(() -> lists.addAll(bob, list.id(), List.of("4")))
-                .isInstanceOf(WordListException.class);
+        long id = list.id();
+        List<String> more = List.of("4");
+        assertThatThrownBy(() -> lists.addAll(bob, id, more)).isInstanceOf(WordListException.class);
     }
 
     @Test
@@ -124,13 +125,13 @@ abstract class AbstractWordListServiceTest {
 
     @Test
     void listsAreVisibleToTheirOwnerOnly() {
-        WordList list = lists.create(alice, "Famille");
+        long id = lists.create(alice, "Famille").id();
 
-        assertThatThrownBy(() -> lists.get(bob, list.id())).isInstanceOfSatisfying(WordListException.class,
+        assertThatThrownBy(() -> lists.get(bob, id)).isInstanceOfSatisfying(WordListException.class,
                 e -> assertThat(e.reason()).isEqualTo(WordListException.Reason.NOT_FOUND));
-        assertThatThrownBy(() -> lists.add(bob, list.id(), "1")).isInstanceOf(WordListException.class);
-        assertThatThrownBy(() -> lists.delete(bob, list.id())).isInstanceOf(WordListException.class);
-        assertThat(lists.get(alice, list.id()).signUids()).isEmpty();
+        assertThatThrownBy(() -> lists.add(bob, id, "1")).isInstanceOf(WordListException.class);
+        assertThatThrownBy(() -> lists.delete(bob, id)).isInstanceOf(WordListException.class);
+        assertThat(lists.get(alice, id).signUids()).isEmpty();
     }
 
     @Test

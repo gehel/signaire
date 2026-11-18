@@ -25,6 +25,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 public class SetupController {
 
+    private static final String HOME = "redirect:/";
+    private static final String SETUP = "setup";
+
     private final Standalone standalone;
     private final AccountService accounts;
     private final AdminUsers admins;
@@ -68,26 +71,27 @@ public class SetupController {
     @GetMapping("/setup")
     public String form(HttpServletRequest request, Locale locale, Model model) {
         if (!allowed(request)) {
-            return "redirect:/";
+            return HOME;
         }
-        model.addAttribute("setup", new Setup(Boolean.TRUE, "", "", "", "", List.of(), List.of(signLanguage(locale)),
+        model.addAttribute(SETUP, new Setup(Boolean.TRUE, "", "", "", "", List.of(), List.of(signLanguage(locale)),
                 Boolean.FALSE));
-        return "setup";
+        return SETUP;
     }
 
     @PostMapping("/setup")
-    public String complete(@ModelAttribute("setup") Setup setup, HttpServletRequest request, Model model) {
+    public String complete(@ModelAttribute(SETUP) Setup setup, HttpServletRequest request, Model model) {
         if (!allowed(request)) {
-            return "redirect:/";
+            return HOME;
         }
+        boolean alone = setup.alone();
         String admin = null;
-        if (!setup.alone()) {
+        if (!alone) {
             admin = registerAdmin(setup, model);
             if (admin == null) {
-                return "setup";
+                return SETUP;
             }
         }
-        standalone.completeSetup(setup.alone(), admin);
+        standalone.completeSetup(alone, admin);
         if (!setup.categories().isEmpty()) {
             sync.start(setup.categories(), setup.languages(), setup.withMedia());
         }
@@ -112,10 +116,11 @@ public class SetupController {
 
     /** With several accounts, the administrator logs in; alone, the download goes on in the administration. */
     private static String next(Setup setup) {
-        if (!setup.alone()) {
+        boolean alone = setup.alone();
+        if (!alone) {
             return "redirect:/login?registered";
         }
-        return setup.categories().isEmpty() ? "redirect:/" : "redirect:/admin/sync";
+        return setup.categories().isEmpty() ? HOME : "redirect:/admin/sync";
     }
 
     /** Before the setup, from this computer; never on servers. */

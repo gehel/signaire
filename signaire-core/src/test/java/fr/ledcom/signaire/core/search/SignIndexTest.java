@@ -89,6 +89,7 @@ class SignIndexTest {
             try (Directory lucene = FSDirectory.open(directory);
                     IndexWriter other = new IndexWriter(lucene, new IndexWriterConfig())) {
 
+                assertThat(other.isOpen()).isTrue();
                 assertThatThrownBy(() -> index.index(signs)).isInstanceOf(SearchException.class)
                         .hasMessageContaining("another process");
             }
