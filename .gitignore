@@ -43,3 +43,7 @@ build/
 
 ### Maven ###
 pom.xml.bak
+
+### Signaire ###
+# extracted SignSuisse data must never be committed
+/bundles/

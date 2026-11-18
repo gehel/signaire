@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(${sign.name()})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main class="sign">
+    <p><a th:href="@{/}" th:text="#{sign.newSearch}">New search</a></p>
+    <h1 th:text="${sign.name()}">LAUSANNE</h1>
+    <p class="sign-language" th:text="#{'signLanguage.' + ${sign.language().name()}}">LSF</p>
+
+    <div class="media">
+        <video th:each="video : ${sign.videos()}" controls preload="metadata" th:src="${links.media(video)}"
+               th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
+        <img th:each="image : ${sign.images()}" th:src="${links.media(image)}" th:alt="${sign.name()}">
+    </div>
+
+    <dl>
+        <th:block th:if="${sign.periphrase() != null}">
+            <dt th:text="#{sign.periphrase}">Periphrase</dt>
+            <dd th:text="${sign.periphrase()}">Town on the lake</dd>
+        </th:block>
+        <th:block th:if="${sign.definition() != null}">
+            <dt th:text="#{sign.definition}">Definition</dt>
+            <dd th:text="${sign.definition()}">Capital of the canton of Vaud</dd>
+        </th:block>
+        <th:block th:unless="${sign.categories().isEmpty()}">
+            <dt th:text="#{sign.categories}">Categories</dt>
+            <dd class="categories">
+                <th:block th:each="category, it : ${sign.categories()}">
+                    <a th:href="@{/(category=${category.name()})}" th:text="#{'category.' + ${category.name()}}">City</a>
+                </th:block>
+            </dd>
+        </th:block>
+        <th:block th:unless="${sign.dialects().isEmpty()}">
+            <dt th:text="#{sign.dialects}">Dialects</dt>
+            <dd th:text="${#strings.listJoin(sign.dialects(), ', ')}">BE, ZH</dd>
+        </th:block>
+    </dl>
+
+    <section th:unless="${sign.examples().isEmpty()}" class="examples">
+        <h2 th:text="#{sign.examples}">Examples</h2>
+        <ul>
+            <li th:each="example : ${sign.examples()}">
+                <p th:text="${example.text()}">I work in Lausanne.</p>
+                <video th:if="${example.video() != null}" controls preload="none"
+                       th:src="${links.media(example.video())}" th:text="#{sign.videoUnsupported}"></video>
+            </li>
+        </ul>
+    </section>
+
+    <section th:unless="${sign.dialectVariants().isEmpty()}" class="variants">
+        <h2 th:text="#{sign.dialectVariants}">Regional variants</h2>
+        <ul>
+            <li th:each="variant : ${sign.dialectVariants()}">
+                <p th:text="${#strings.listJoin(variant.dialects(), ', ')}">ZH, SG</p>
+                <video th:if="${variant.video() != null}" controls preload="none"
+                       th:src="${links.media(variant.video())}" th:text="#{sign.videoUnsupported}"></video>
+            </li>
+        </ul>
+    </section>
+
+    <p th:if="${sign.sourceUrl() != null}" class="source">
+        <a th:href="${sign.sourceUrl()}" rel="external" th:text="#{sign.source}">See on SignSuisse</a>
+    </p>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

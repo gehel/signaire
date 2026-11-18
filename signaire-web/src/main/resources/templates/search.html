@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(null)}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <form class="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
+          hx-push-url="true" hx-trigger="submit, input delay:300ms, change">
+        <p class="words">
+            <label for="q" th:text="#{search.label}">Search a sign</label>
+            <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}" autofocus>
+            <button type="submit" th:text="#{search.submit}">Search</button>
+        </p>
+        <fieldset class="languages">
+            <legend th:text="#{search.languages}">Sign languages</legend>
+            <label th:each="language : ${allLanguages}">
+                <input type="checkbox" name="language" th:value="${language.code()}"
+                       th:checked="${languages.contains(language)}">
+                <span th:text="#{'signLanguage.' + ${language.name()}}">LSF</span>
+            </label>
+        </fieldset>
+        <p class="category">
+            <label for="category" th:text="#{search.category}">Category</label>
+            <select id="category" name="category">
+                <option value="" th:text="#{search.allCategories}">All categories</option>
+                <option th:each="category : ${allCategories}" th:value="${category.name()}"
+                        th:selected="${categories.contains(category)}"
+                        th:text="#{'category.' + ${category.name()}}">City</option>
+            </select>
+        </p>
+    </form>
+
+    <section id="results" th:fragment="results" aria-live="polite">
+        <p th:if="${results.total() == 0}" th:text="#{search.none}">No sign found.</p>
+        <th:block th:if="${results.total() > 0}">
+            <p class="count" th:text="#{search.found(${results.total()})}">1 sign found</p>
+            <ul class="signs">
+                <li th:each="sign : ${results.signs()}">
+                    <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
+                    <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
+                          th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
+                    <span class="categories"><th:block th:each="category, it : ${sign.categories()}"
+                        >[[#{'category.' + ${category.name()}}]]<th:block th:unless="${it.last}">, </th:block></th:block></span>
+                </li>
+            </ul>
+            <nav class="pages" th:if="${pages > 1}">
+                <a th:if="${page > 1}" rel="prev" th:href="${links.withPage(page - 1)}"
+                   th:hx-get="${links.withPage(page - 1)}" hx-target="#results" hx-swap="outerHTML"
+                   hx-push-url="true" th:text="#{search.previous}">Previous</a>
+                <span th:text="#{search.page(${page}, ${pages})}">Page 1 of 2</span>
+                <a th:if="${page < pages}" rel="next" th:href="${links.withPage(page + 1)}"
+                   th:hx-get="${links.withPage(page + 1)}" hx-target="#results" hx-swap="outerHTML"
+                   hx-push-url="true" th:text="#{search.next}">Next</a>
+            </nav>
+        </th:block>
+    </section>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>
