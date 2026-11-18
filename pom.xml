@@ -21,6 +21,7 @@
         <module>signaire-bundle</module>
         <module>signaire-extractor</module>
         <module>signaire-core</module>
+        <module>signaire-accounts</module>
         <module>signaire-cli</module>
         <module>signaire-web</module>
     </modules>
@@ -57,6 +58,17 @@
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-accounts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-accounts</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
