@@ -24,7 +24,7 @@ class SignaireCommandTest {
     @Test
     void helpIsDisplayedInFrench() {
         StringWriter out = new StringWriter();
-        CommandLine commandLine = new CommandLine(command, factory);
+        CommandLine commandLine = SignaireCommand.commandLine(command, factory);
         commandLine.setOut(new PrintWriter(out));
 
         int exitCode = commandLine.execute("--help");
@@ -33,6 +33,8 @@ class SignaireCommandTest {
         assertThat(out.toString())
                 .contains("Utilisation : signaire")
                 .contains("Lexique de la langue des signes suisse")
-                .contains("Affiche cette aide et quitte.");
+                .contains("Affiche cette aide et quitte.")
+                .contains("Commandes :")
+                .contains("extraire");
     }
 }

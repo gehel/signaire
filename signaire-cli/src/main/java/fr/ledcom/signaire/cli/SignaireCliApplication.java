@@ -5,7 +5,6 @@ import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
 @SpringBootApplication
@@ -26,7 +25,7 @@ public class SignaireCliApplication implements CommandLineRunner, ExitCodeGenera
 
     @Override
     public void run(String... args) {
-        exitCode = new CommandLine(command, factory).execute(args);
+        exitCode = SignaireCommand.commandLine(command, factory).execute(args);
     }
 
     @Override
