@@ -132,16 +132,28 @@ Key decisions:
 Use the Maven wrapper. The parent POM `org.wikimedia:wmf-jvm-parent-pom` enforces quality gates during
 the build: checkstyle (validate phase), forbiddenapis (compile), spotbugs with findsecbugs and sb-contrib,
 the no-package-cycles enforcer rule, duplicate-finder (verify), and sortpom (POM elements must be in
-sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Temurin 27.
+sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Temurin 27, without the build cache.
 
 ```bash
-./mvnw verify                                   # full build with all quality checks
+./mvnw verify                                   # full build with all quality checks; unchanged modules come from the cache
+./mvnw verify -Dmaven.build.cache.enabled=false # really everything (CI does this)
 ./mvnw -PnoVerify verify                        # skip the static analysis for a quick loop
 ./mvnw -pl signaire-web -am test                # one module and the modules it depends on
 ./mvnw -pl signaire-web -am test -Dtest=HomeControllerTest -Dsurefire.failIfNoSpecifiedTests=false
 ./mvnw -pl signaire-web -am test -Dtest='HomeControllerTest#homePageIsInFrenchByDefault' -Dsurefire.failIfNoSpecifiedTests=false
 ./mvnw sortpom:sort                             # fix POM ordering after editing a pom.xml
 ```
+
+Build time (about 5 min for everything on 4 cores, two thirds of it tests, a quarter spotbugs; building modules in
+parallel gains little: the build is CPU bound):
+- The Maven build cache extension (`.mvn/extensions.xml`, `.mvn/maven-build-cache-config.xml`, cache in
+  `~/.m2/build-cache`) skips the modules whose sources, POM and dependencies did not change, tests and static
+  analysis included, and restores their jars, `classes` and `test-classes` into `target/`: after a change in web,
+  only web and signaire-it build. It reruns tests when the selection changes (`-Dtest=…`, `-Dit.test=…`), and a
+  build without tests never replaces one with tests. Files read by the build from outside `src/` and the POM are not
+  inputs: if one matters, add it to the cache configuration.
+- Test JVMs (`argLine`, and the jars run by `JavaProcess`) use the quick compiler and the serial collector: they
+  start faster than the optimizing compiler pays back.
 
 Gotchas with Spring Boot and picocli:
 - CLI subcommands are `@Scope("prototype")` beans: picocli doesn't reset every option (positional lists)
