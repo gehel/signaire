@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.ledcom</groupId>
+        <artifactId>signaire</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>signaire-it</artifactId>
+
+    <description>Tests of the whole stack: the command line and web application jars, run as processes, with Elasticsearch, PostgreSQL and a fake SignSuisse.</description>
+
+    <dependencies>
+        <!-- the jars under test: declared so that they are built first; the tests run them as processes -->
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-cli</artifactId>
+            <classifier>jar-with-dependencies</classifier>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-web</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-elasticsearch</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <signaire.cli.jar>${project.basedir}/../signaire-cli/target/signaire-cli-${project.version}-jar-with-dependencies.jar</signaire.cli.jar>
+                        <signaire.web.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}.jar</signaire.web.jar>
+                        <signaire.it.work>${project.build.directory}/it</signaire.it.work>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- the jars under test are run, not used as a class path: their classes may repeat -->
+                <groupId>org.basepom.maven</groupId>
+                <artifactId>duplicate-finder-maven-plugin</artifactId>
+                <configuration>
+                    <ignoredDependencies>
+                        <dependency>
+                            <groupId>fr.ledcom</groupId>
+                            <artifactId>signaire-cli</artifactId>
+                        </dependency>
+                        <dependency>
+                            <groupId>fr.ledcom</groupId>
+                            <artifactId>signaire-web</artifactId>
+                        </dependency>
+                    </ignoredDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

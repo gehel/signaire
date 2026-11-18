@@ -31,6 +31,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
+| `signaire-it` | Tests of the whole stack: CLI and web jars as processes | — |
 | `android/` (later) | Java Android app, Gradle build, offline-capable | — |
 
 Key decisions:
@@ -151,6 +152,12 @@ Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers a
 Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
 shared with the CLI (and web) tests. Run a single IT with
 `./mvnw -pl signaire-core verify -Dit.test=SignSearchServiceIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
+
+`signaire-it` tests the whole stack as users run it: the CLI and web jars as processes (XDG directories under
+`target/it`), Elasticsearch and PostgreSQL in containers, and a fake SignSuisse served locally
+(`signaire.signsuisse.url`): extraction → bundles → web app → HTTP user journeys. Logs of the processes are in
+`signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
+-Dsurefire.failIfNoSpecifiedTests=false` (the other modules' ITs run too unless `-Dit.test=FullStackIT`).
 
 Running the CLI locally:
 

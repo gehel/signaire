@@ -25,6 +25,7 @@
         <module>signaire-export</module>
         <module>signaire-cli</module>
         <module>signaire-web</module>
+        <module>signaire-it</module>
     </modules>
 
     <properties>
@@ -95,6 +96,12 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-cli</artifactId>
+                <version>${project.version}</version>
+                <classifier>jar-with-dependencies</classifier>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -117,6 +124,11 @@
             <dependency>
                 <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
