@@ -74,6 +74,19 @@ class CategoryExtractorTest {
     }
 
     @Test
+    void writesIntoNewDirectoriesWithTheMediaCacheElsewhere() {
+        Path newOutput = output.resolve("new/bundles");
+        Path cache = output.resolve("cache/media");
+
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), newOutput, cache,
+                true);
+
+        assertThat(report.bundle()).exists().hasParent(newOutput);
+        assertThat(cache).isDirectory();
+        assertThat(newOutput.resolve(CategoryExtractor.MEDIA_CACHE)).doesNotExist();
+    }
+
+    @Test
     void reusesMediaDownloadedByAPreviousRun() throws IOException {
         Path cached = output.resolve(CategoryExtractor.MEDIA_CACHE).resolve("media/LAUSANNE.mp4");
         Files.createDirectories(cached.getParent());

@@ -1,5 +1,7 @@
 package fr.ledcom.signaire.core;
 
+import java.time.Duration;
+
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,8 @@ public class ElasticsearchTestConfiguration {
     ElasticsearchContainer elasticsearch() {
         return new ElasticsearchContainer(DockerImageName.parse(IMAGE))
                 .withEnv("xpack.security.enabled", "false")
-                .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+                .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+                // slow machines, busy CI runners
+                .withStartupTimeout(Duration.ofMinutes(5));
     }
 }
