@@ -11,6 +11,7 @@
     </ul>
     <form th:action="${uid == null} ? @{/admin/signs} : @{/admin/signs/{uid}(uid=${uid})}" method="post"
           th:object="${form}" class="stacked sign-form">
+        <input th:if="${requestId != null}" type="hidden" name="request" th:value="${requestId}">
         <label for="name" th:text="#{admin.sign.name}">Name</label>
         <input type="text" id="name" th:field="*{name}" required>
         <label for="language" th:text="#{admin.sign.language}">Sign language</label>

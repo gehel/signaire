@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{admin.requests.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin/requests}" th:text="#{admin.requests.title}">Sign requests</a></p>
+    <h1 th:text="#{admin.requests.results(${request.word()})}">SignSuisse results for Zoug</h1>
+    <p th:if="${error}" class="error" role="alert" th:text="${error}">SignSuisse doesn't answer.</p>
+    <p th:if="${hits.isEmpty()}" th:text="#{admin.requests.noResult}">SignSuisse doesn't know this word.</p>
+    <table th:unless="${hits.isEmpty()}" class="admin">
+        <tbody>
+        <tr th:each="hit : ${hits}">
+            <td><a th:href="${hit.url()}" rel="external" th:text="${hit.name()}">ZOUG</a></td>
+            <td th:if="${inLexicon.contains(hit.uid())}">
+                <span class="note" th:text="#{admin.requests.inLexicon}">already in the lexicon</span>
+                <form th:action="@{/admin/requests/{id}/link(id=${request.id()})}" method="post" class="inline">
+                    <input type="hidden" name="uid" th:value="${hit.uid()}">
+                    <button type="submit" class="link" th:text="#{admin.requests.link}">Link to the request</button>
+                </form>
+            </td>
+            <td th:unless="${inLexicon.contains(hit.uid())}">
+                <form th:action="@{/admin/requests/{id}/import(id=${request.id()})}" method="post" class="inline">
+                    <input type="hidden" name="uid" th:value="${hit.uid()}">
+                    <input type="hidden" name="name" th:value="${hit.name()}">
+                    <input type="hidden" name="language" th:value="${hit.language().code()}">
+                    <input type="hidden" name="url" th:value="${hit.url()}">
+                    <button type="submit" th:text="#{admin.requests.import}">Import</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p><a th:href="@{/admin/signs/new(request=${request.id()})}" th:text="#{admin.requests.create}">Create</a></p>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{requests.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <h1 th:text="#{requests.title}">My requests</h1>
+    <p th:if="${status}" class="success" role="status" th:text="${status}">Request sent.</p>
+
+    <h2 th:text="#{requests.new}">Request a sign</h2>
+    <p th:text="#{requests.help}">A sign is missing? Ask the administrators.</p>
+    <p th:if="${error}" class="error" role="alert" th:text="#{${error}}">The word is required.</p>
+    <form th:action="@{/requests}" method="post" class="stacked">
+        <label for="word" th:text="#{requests.word}">Word or expression</label>
+        <input type="text" id="word" name="word" th:value="${word}" required maxlength="100">
+        <label for="language" th:text="#{requests.language}">Sign language</label>
+        <select id="language" name="language">
+            <option th:each="language : ${allLanguages}" th:value="${language.code()}"
+                    th:selected="${language.code() == #locale.language}"
+                    th:text="#{'signLanguage.' + ${language.name()}}">LSF</option>
+        </select>
+        <label for="comment" th:text="#{requests.comment}">Comment</label>
+        <textarea id="comment" name="comment" rows="3" maxlength="1000"></textarea>
+        <button type="submit" th:text="#{requests.submit}">Send the request</button>
+    </form>
+
+    <h2 th:text="#{requests.mine}">My requests</h2>
+    <p th:if="${requests.isEmpty()}" th:text="#{requests.none}">No request.</p>
+    <table th:unless="${requests.isEmpty()}" class="admin">
+        <tbody>
+        <tr th:each="request : ${requests}">
+            <td>
+                <strong th:text="${request.word()}">Zoug</strong>
+                <abbr th:text="#{'signLanguage.short.' + ${request.language().name()}}">LSF</abbr>
+                <div class="note" th:if="${request.comment() != null}" th:text="${request.comment()}">Comment</div>
+            </td>
+            <td th:text="#{'requests.status.' + ${request.status().name()}}">Waiting</td>
+            <td>
+                <a th:if="${request.signUid() != null}" th:href="@{/signs/{uid}(uid=${request.signUid()})}"
+                   th:text="#{requests.see}">See the sign</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

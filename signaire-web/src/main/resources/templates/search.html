@@ -35,6 +35,9 @@
 
     <section id="results" th:fragment="results" aria-live="polite">
         <p th:if="${results.total() == 0}" th:text="#{search.none}">No sign found.</p>
+        <p th:if="${requestWord != null}">
+            <a th:href="@{/requests(word=${requestWord})}" th:text="#{search.request(${requestWord})}">Request it</a>
+        </p>
         <th:block th:if="${results.total() > 0}">
             <p class="count" th:text="#{search.found(${results.total()})}">1 sign found</p>
             <ul class="signs">
