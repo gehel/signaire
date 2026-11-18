@@ -26,6 +26,8 @@ import jakarta.servlet.http.HttpServletResponse;
 public class TourController {
 
     static final String COOKIE = "signaire-tour";
+    /** How long the end of the tour is remembered. */
+    private static final Duration REMEMBERED = Duration.ofDays(5L * 365);
     /** The steps: the topic of the manual each presents, and a page to try it. */
     static final List<Step> STEPS = List.of(
             new Step("search", "/?q=lac"),
@@ -64,7 +66,7 @@ public class TourController {
     @GetMapping("/tour/done")
     public String done(HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(COOKIE, "done")
-                .path("/").maxAge(Duration.ofDays(365 * 5)).httpOnly(true).sameSite("Lax").build().toString());
+                .path("/").maxAge(REMEMBERED).httpOnly(true).sameSite("Lax").build().toString());
         return "redirect:/";
     }
 }

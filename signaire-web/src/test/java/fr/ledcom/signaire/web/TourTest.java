@@ -65,8 +65,7 @@ class TourTest {
     void theTourPresentsTheFeaturesStepByStep() {
         MvcTestResult first = mvc.get().uri("/tour/1").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
-        assertThat(first).hasStatus(HttpStatus.OK);
-        assertThat(first).bodyText()
+        assertThat(first).hasStatus(HttpStatus.OK).bodyText()
                 .contains("<html lang=\"de\">", "1 / 5", "href=\"/tour/2\"", "href=\"/help/search\"")
                 .doesNotContain("href=\"/tour/0\"");
         assertThat(mvc.get().uri("/tour/5").exchange()).bodyText()
