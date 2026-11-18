@@ -27,7 +27,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-bundle` | Read/write category bundles (zip) | no |
 | `signaire-extractor` | Crawl SignSuisse and produce bundles | no |
 | `signaire-core` | Bundle loading, Elasticsearch indexing/search, media of the bundles | yes |
-| `signaire-accounts` | User accounts and word lists in PostgreSQL (JPA, Flyway) | yes |
+| `signaire-accounts` | PostgreSQL (JPA, Flyway): accounts, word lists, sign changes, sign requests | yes |
 | `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
@@ -63,6 +63,14 @@ Key decisions:
   names (`categories*.properties`) are shown in the user's language and accepted in any of them. Tests run
   in French (`argLine` in the root POM); switch with `DefaultLocale` in CLI tests. Build command lines
   with `SignaireCommand.commandLine(...)`.
+- **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
+  signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
+  called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.
+  New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
+  and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
+  cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web ITs replace it with
+  `FakeSignSuisse`). Users request missing signs (`sign_request`); admins import them from SignSuisse
+  (media linked, not downloaded), link an existing sign, create it, or reject the request.
 - **Exports** (`signaire-export`, plain Java): the caller gives an `ExportRequest` (title, signs, locale)
   and a `MediaSource` reading downloaded media (web and CLI adapt `MediaLibrary`). Labels are in
   `export*.properties`. PDF: A4/A5/A6, 1–12 signs per page, sheets, booklet (half pages imposed in
