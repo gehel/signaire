@@ -14,13 +14,14 @@ import fr.ledcom.signaire.accounts.PostgresTestConfiguration;
 import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 
 /**
- * The whole application with Elasticsearch and PostgreSQL containers. Integration tests use this annotation
+ * The whole application with Elasticsearch and PostgreSQL containers, and a fake SignSuisse. Integration tests use this annotation
  * only, so that they share one Spring context and one set of containers.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({ElasticsearchTestConfiguration.class, PostgresTestConfiguration.class, AccountsCleaner.class})
+@Import({ElasticsearchTestConfiguration.class, PostgresTestConfiguration.class, AccountsCleaner.class,
+    FakeSignSuisse.class})
 public @interface WebIntegrationTest {
 }

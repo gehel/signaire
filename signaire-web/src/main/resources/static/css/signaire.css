@@ -210,3 +210,15 @@ table.admin th, table.admin td {
 form.sign-form {
     max-width: 40rem;
 }
+
+form.sync fieldset {
+    border: 1px solid #ddd;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
+}
+
+section.sync-status {
+    background: #f6f6f6;
+    padding: 0.5rem 1rem;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{admin.sync.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <h1 th:text="#{admin.sync.title}">Synchronization with SignSuisse</h1>
+    <p th:if="${status}" class="error" role="status" th:text="${status}">Already running.</p>
+
+    <!--/* Refreshed every 2 seconds while the synchronization runs */-->
+    <section id="sync-status" th:fragment="status" class="sync-status" aria-live="polite"
+             th:hx-get="${progress.running()} ? @{/admin/sync/status}"
+             th:hx-trigger="${progress.running()} ? 'every 2s'" hx-swap="outerHTML">
+        <p><strong th:text="#{'admin.sync.state.' + ${progress.state().name()}(${progress.error()})}">Done</strong></p>
+        <p th:if="${progress.category() != null}"
+           th:text="#{admin.sync.current(#{'category.' + ${progress.category().name()}},
+                    ${progress.language().code()}, ${progress.found()})}">City (fr): 12 signs found</p>
+        <p th:if="${progress.state().name() != 'IDLE'}"
+           th:text="#{admin.sync.counts(${progress.extracted()}, ${progress.failed()})}">10 extracted, 0 failed</p>
+        <ul th:unless="${progress.done().isEmpty()}">
+            <li th:each="result : ${progress.done()}">
+                <span th:text="#{admin.sync.category(#{'category.' + ${result.category().name()}}, ${result.signs()})}">
+                    City: 2 signs</span>
+                <span th:unless="${result.complete()}" class="note" th:text="#{admin.sync.incomplete}">
+                    the search may have missed signs</span>
+            </li>
+        </ul>
+        <form th:if="${progress.running()}" th:action="@{/admin/sync/cancel}" method="post">
+            <button type="submit" th:text="#{admin.sync.cancel}">Stop</button>
+        </form>
+    </section>
+
+    <form th:action="@{/admin/sync}" method="post" class="stacked sync">
+        <p th:text="#{admin.sync.help}">Extracts categories from SignSuisse.</p>
+        <fieldset>
+            <legend th:text="#{admin.sync.categories}">Categories</legend>
+            <label th:each="category : ${allCategories}">
+                <input type="checkbox" name="categories" th:value="${category.name()}">
+                <span th:text="#{'category.' + ${category.name()}}">City</span>
+            </label>
+        </fieldset>
+        <fieldset>
+            <legend th:text="#{admin.sync.languages}">Sign languages</legend>
+            <label th:each="language : ${allLanguages}">
+                <input type="checkbox" name="languages" th:value="${language.code()}">
+                <span th:text="#{'signLanguage.' + ${language.name()}}">LSF</span>
+            </label>
+        </fieldset>
+        <label>
+            <input type="checkbox" name="withMedia" value="true">
+            <span th:text="#{admin.sync.withMedia}">Download the videos and images</span>
+        </label>
+        <button type="submit" th:disabled="${progress.running()}" th:text="#{admin.sync.start}">Start</button>
+    </form>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>
