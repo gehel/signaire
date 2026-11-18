@@ -20,12 +20,12 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [ ] compare sitespeed.io measures with a baseline, rather than with fixed budgets
 - [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
 - [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
-- [ ] (deferred: modern Elasticsearch can no longer be embedded in a JVM, the search engine of this package is to be decided) Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
+- [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
   - app should be able to run just by double clicking the jar file (if a JRE is present)
   - also provide a version with an embedded JRE
-  - elasticsearch runs embedded in the same jar, no need to run a docker image or connect to an external instance
+  - search runs embedded in the same jar (done: Lucene), no need to run a docker image or connect to an external instance
   - embedded DB
-  - state (DB, elasticsearch) should be persisted in a reasonable location, OS specific
+  - state (DB, search index) should be persisted in a reasonable location, OS specific
   - uses the same logic / implementation, this is mostly a repackaging, not a new implementation
   - option to run single user, without having to create a user at all
   - first run should guide the user through the setup, choosing single user mode or multi user, downloading sign bundles, etc...

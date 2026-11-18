@@ -26,7 +26,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-model` | Domain types (sign, category, language, bundle manifest) | no |
 | `signaire-bundle` | Read/write category bundles (zip) | no |
 | `signaire-extractor` | Crawl SignSuisse and produce bundles | no |
-| `signaire-core` | Bundle loading, Elasticsearch indexing/search, media of the bundles | yes |
+| `signaire-core` | Bundle loading, Lucene indexing/search, media of the bundles | yes |
 | `signaire-accounts` | PostgreSQL (JPA, Flyway): accounts, word lists, sign changes, sign requests | yes |
 | `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
@@ -43,8 +43,14 @@ Key decisions:
   A `Media` keeps the SignSuisse URL and, when downloaded, its path in the bundle. Bundles are produced by
   `signaire extraire`, loaded from a configured directory at startup and (re)loadable at runtime; loading
   is idempotent and keyed by SignSuisse `uid`.
-- **Storage**: Elasticsearch holds only the sign corpus (fully rebuildable from bundles). User accounts
-  and lists live in PostgreSQL (`signaire-accounts`: JPA, schema by Flyway in `db/migration`, Hibernate
+- **Search**: an embedded Lucene index (`SignIndex`, in `signaire.index.directory`) holds only the sign corpus
+  and the registry of loaded bundles, fully rebuildable from bundles; no search server to run. Each write
+  opens a writer, commits and closes it, so the CLI and the web application can share the index (a writer
+  waits up to 30 s for the lock), and searches see the commits of other processes. The analysis
+  (`SignAnalyzers`: folding, prefixes, light FR/DE/IT stemmers) is versioned by `SignIndex.SCHEMA`: bump it
+  when fields or analysis change, an index of another schema is emptied on opening and the bundles reload.
+  Lucene stays in `core.search` (ArchUnit).
+- **Storage**: user accounts and lists live in PostgreSQL (`signaire-accounts`: JPA, schema by Flyway in `db/migration`, Hibernate
   only validates it). It's a separate module so that the CLI needs no database. Lists reference signs
   by SignSuisse `uid`. Entities and repositories are package-private; services expose records and take
   the id of the acting account, so a list of someone else is "not found".
@@ -67,9 +73,10 @@ Key decisions:
 - **User directories**: `UserDirectories` (core) follows the XDG base directories, with the usual places on
   macOS and Windows. Spring applications get them through `UserDirectoriesEnvironment` (registered in
   `META-INF/spring.factories`): `signaire.bundles.directory` defaults to `$XDG_DATA_HOME/signaire/bundles`,
-  `signaire.media.cache` to `$XDG_CACHE_HOME/signaire/media`, as Spring Boot default properties (any setting
+  `signaire.media.cache` to `$XDG_CACHE_HOME/signaire/media`, `signaire.index.directory` to
+  `$XDG_STATE_HOME/signaire/index`, as Spring Boot default properties (any setting
   wins), and `$XDG_CONFIG_HOME/signaire/application.properties` is read. CLI options get these defaults
-  through `EnvironmentDefaults`. Tests always set both directories under `target/`.
+  through `EnvironmentDefaults`. Tests always set these directories under `target/`.
 - **Signs are transient**: bundles and index can be deleted and rebuilt at any time. Everything else refers
   to signs by uid (SignSuisse uid, or the `local-…` uid of signs added by administrators), never by an id of
   the index; `TransientSignsIT` checks it. Keep it that way.
@@ -127,7 +134,7 @@ Gotchas with Spring Boot and picocli:
 - CLI subcommands are `@Scope("prototype")` beans: picocli doesn't reset every option (positional lists)
   between runs of the same object.
 - Apps get the core services by importing `SignaireCoreConfiguration`, not by scanning `fr.ledcom.signaire`
-  (that would pick up core's test application from the test-jar). It names the packages it scans as strings,
+  (that would pick up test applications from test-jars). It names the packages it scans as strings,
   because the no-package-cycles rule also covers test classes.
 
 Gotchas with the WMF ruleset and Java 27:
@@ -148,13 +155,13 @@ Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a cl
 localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
 ITs, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
 
-Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers and need Docker. The
-Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
-shared with the CLI (and web) tests. Run a single IT with
-`./mvnw -pl signaire-core verify -Dit.test=SignSearchServiceIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
+Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers (PostgreSQL) and need Docker.
+The search needs no container: core tests open a `SignIndex` on a `@TempDir`, Spring tests use
+`target/test-index`. `TestSigns` lives in core's test-jar, shared with the CLI and web tests. Run a single IT with
+`./mvnw -pl signaire-web -am verify -Dit.test=SearchPagesIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
 
 `signaire-it` tests the whole stack as users run it: the CLI and web jars as processes (XDG directories under
-`target/it`), Elasticsearch and PostgreSQL in containers, and a fake SignSuisse served locally
+`target/it`, so both share the index), PostgreSQL in a container, and a fake SignSuisse served locally
 (`signaire.signsuisse.url`): extraction → bundles → web app → HTTP user journeys. Logs of the processes are in
 `signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
 -Dsurefire.failIfNoSpecifiedTests=false` (the other modules' ITs run too unless `-Dit.test=FullStackIT`).
@@ -164,14 +171,12 @@ Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web ja
 scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
 `.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
 code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
-integration tests), so code reached only by ITs needs unit tests too (`FakeElasticsearch` in core fakes errors
-of Elasticsearch). Some SonarCloud suggestions clash with the WMF checkstyle rules (unnamed variables `_` are
-forbidden): checkstyle wins.
+integration tests), so code reached only by ITs needs unit tests too. Some SonarCloud suggestions clash with the
+WMF checkstyle rules (unnamed variables `_` are forbidden): checkstyle wins.
 
 Running the CLI locally:
 
 ```bash
-docker compose up -d                                     # Elasticsearch on localhost:9200
 ./mvnw -PnoVerify -pl signaire-cli -am package -DskipTests
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar extraire -c religion -l fr -o bundles
 java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar charger --bundles bundles
@@ -185,9 +190,8 @@ To look at a PDF while working on the layouts: `pdftoppm -r 50 -png -f 1 -l 1 fi
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
 
-Running the web UI locally (http://localhost:8080; `docker compose up -d` also starts PostgreSQL): it loads `signaire.bundles.directory` (default
-`bundles`) in the background at startup, retrying while Elasticsearch starts, and serves the media from
-the bundles.
+Running the web UI locally (http://localhost:8080; `docker compose up -d` starts PostgreSQL): it loads `signaire.bundles.directory` (default
+`bundles`) in the background at startup, and serves the media from the bundles.
 
 ```bash
 ./mvnw -PnoVerify -pl signaire-web -am package -DskipTests
@@ -195,9 +199,9 @@ java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.bundles.d
 ```
 
 Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
-signs of "religion"); use `--sans-medias` while developing. After changing the index mapping
-(`signaire-signs.json`), reindex with `charger --reindexer`: the bundle registry only notices bundle
-changes.
+signs of "religion"); use `--sans-medias` while developing. After changing the fields or the analysis of the
+index, bump `SignIndex.SCHEMA`: the bundle registry only notices bundle changes, the schema version empties the
+index so that everything is loaded again.
 
 To add an OpenID Connect provider, give the client and the issuer; providers unknown to Spring also
 need the redirect URI:
@@ -230,13 +234,13 @@ Web UI gotchas:
   escapes `'` as `&#39;` in the output.
 - Web test properties are in `src/test/resources/config/application.properties` (a second
   `application.properties` would trip duplicate-finder, so test-jars must not have one either). Web ITs
-  are annotated `@WebIntegrationTest` only, to share one Spring context and the Elasticsearch and
-  PostgreSQL containers.
+  are annotated `@WebIntegrationTest` only, to share one Spring context and the PostgreSQL
+  container.
 
 Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
 model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
 depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
-the CLI and web never reach Elasticsearch or JPA directly. Change the rules there when the architecture changes.
+the CLI and web never reach Lucene or JPA directly. Change the rules there when the architecture changes.
 
 ## Conventions
 

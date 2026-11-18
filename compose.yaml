@@ -1,16 +1,5 @@
 # Services for local development: docker compose up -d
 services:
-  elasticsearch:
-    # keep in line with the Elasticsearch client version and ElasticsearchTestConfiguration
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.8
-    environment:
-      discovery.type: single-node
-      xpack.security.enabled: "false"
-      ES_JAVA_OPTS: -Xms1g -Xmx1g
-    ports:
-      - "127.0.0.1:9200:9200"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
   postgres:
     # keep in line with PostgresTestConfiguration
     image: postgres:18-alpine
@@ -24,5 +13,4 @@ services:
       - postgres-data:/var/lib/postgresql
 
 volumes:
-  elasticsearch-data:
   postgres-data:
