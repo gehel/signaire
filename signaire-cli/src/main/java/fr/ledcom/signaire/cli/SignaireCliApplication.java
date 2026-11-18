@@ -1,5 +1,7 @@
 package fr.ledcom.signaire.cli;
 
+import java.util.Arrays;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
@@ -28,7 +30,21 @@ public class SignaireCliApplication implements CommandLineRunner, ExitCodeGenera
 
     @Override
     public void run(String... args) {
-        exitCode = SignaireCommand.commandLine(command, factory).execute(args);
+        exitCode = SignaireCommand.commandLine(command, factory).execute(commandArguments(args));
+    }
+
+    /**
+     * The arguments for picocli: without the Spring properties ({@code --spring.elasticsearch.uris=…}), which
+     * Spring Boot has already read. No option of the commands has a dot in its name.
+     */
+    static String[] commandArguments(String... args) {
+        return Arrays.stream(args).filter(arg -> !isSpringProperty(arg)).toArray(String[]::new);
+    }
+
+    /** Whether the argument is a Spring property: {@code --name.with.dots=value}. */
+    private static boolean isSpringProperty(String arg) {
+        int equals = arg.indexOf('=');
+        return arg.startsWith("--") && equals > 2 && arg.substring(2, equals).contains(".");
     }
 
     @Override

@@ -24,6 +24,7 @@
         </th:block>
         <a sec:authorize="!isAuthenticated()" th:href="@{/login}" th:text="#{login.title}">Log in</a>
     </nav>
+    <a class="help" th:href="@{/help}" th:text="#{help.title}">Help</a>
     <nav th:replace="~{layout :: languages(false)}"></nav>
 </header>
 

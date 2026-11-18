@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <h1 th:text="#{lists.title}">My lists</h1>
+    <h1><span th:text="#{lists.title}">My lists</span> <a th:replace="~{fragments/help :: link('lists')}"></a></h1>
     <p th:if="${lists.isEmpty()}" th:text="#{lists.none}">You have no list yet.</p>
     <ul class="lists" th:unless="${lists.isEmpty()}">
         <li th:each="list : ${lists}">

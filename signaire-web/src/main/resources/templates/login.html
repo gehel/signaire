@@ -5,6 +5,7 @@
 <header th:replace="~{layout :: header}"></header>
 <main id="main" class="account">
     <h1 th:text="#{login.title}">Log in</h1>
+    <p><a th:href="@{/help/account}" th:text="#{help.account}">About accounts</a></p>
     <p th:if="${param.registered}" class="success" th:text="#{login.registered}">Your account is created.</p>
     <p th:if="${param.error}" class="error" role="alert" th:text="#{login.error}">Wrong username or password.</p>
     <form th:action="@{/login}" method="post" class="stacked">

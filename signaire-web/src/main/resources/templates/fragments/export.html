@@ -3,7 +3,8 @@
 <body>
 <!--/* Downloads a list or search results; the search parameters, when on the page, are kept. */-->
 <details th:fragment="export(action)" class="export">
-    <summary th:text="#{export.title}">Export</summary>
+    <summary><span th:text="#{export.title}">Export</span>
+        <a th:replace="~{fragments/help :: link('exports')}"></a></summary>
     <form th:action="@{${action}}" method="get" class="stacked">
         <input th:if="${q != null}" type="hidden" name="q" th:value="${q}">
         <input th:each="language : ${languages}" type="hidden" name="language" th:value="${language.code()}">

@@ -25,6 +25,7 @@
         <module>signaire-export</module>
         <module>signaire-cli</module>
         <module>signaire-web</module>
+        <module>signaire-it</module>
     </modules>
 
     <properties>
@@ -34,6 +35,7 @@
           network, SignSuisse least of all: HTTP goes to a closed local port, except for localhost (containers).
         -->
         <argLine>-Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
+        <commonmark.version>0.32.0</commonmark.version>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <htmx.version>4.0.1</htmx.version>
@@ -94,6 +96,12 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-cli</artifactId>
+                <version>${project.version}</version>
+                <classifier>jar-with-dependencies</classifier>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -119,6 +127,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>info.picocli</groupId>
                 <artifactId>picocli-spring-boot-starter</artifactId>
                 <version>${picocli.version}</version>
@@ -127,6 +140,16 @@
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>pdfbox</artifactId>
                 <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.commonmark</groupId>
+                <artifactId>commonmark</artifactId>
+                <version>${commonmark.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.commonmark</groupId>
+                <artifactId>commonmark-ext-gfm-tables</artifactId>
+                <version>${commonmark.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jsoup</groupId>

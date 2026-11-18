@@ -69,6 +69,12 @@ class PageContentTest {
     }
 
     @Test
+    void featuresLinkToTheirHelp() {
+        assertThat(mvc.get().uri("/").exchange()).bodyText()
+                .contains("href=\"/help\"", "href=\"/help/search\"", "href=\"/help/exports\"");
+    }
+
+    @Test
     void exportsAreExplainedAndShowOnlyTheirOptions() {
         assertThat(mvc.get().uri("/").exchange()).bodyText()
                 .contains("class=\"format-options pdf-options\"", "class=\"format-options epub-options\"")

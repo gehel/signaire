@@ -4,7 +4,8 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <h1 th:text="#{admin.title}">Administration</h1>
+    <h1><span th:text="#{admin.title}">Administration</span>
+        <a th:replace="~{fragments/help :: link('admin')}"></a></h1>
     <ul class="admin-menu">
         <li>
             <a th:href="@{/admin/requests}" th:text="#{admin.requests.title}">Sign requests</a>

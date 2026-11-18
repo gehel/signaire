@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{help.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main id="main" class="help">
+    <h1 th:text="#{help.title}">Help</h1>
+    <p th:text="#{help.intro}">The manual of Signaire.</p>
+    <ul class="help-topics">
+        <li th:each="page : ${pages}">
+            <a th:href="@{/help/{topic}(topic=${page.topic()})}" th:text="${page.title()}">Search</a>
+        </li>
+    </ul>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

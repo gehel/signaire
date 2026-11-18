@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import fr.ledcom.signaire.bundle.Bundle;
@@ -66,7 +67,7 @@ public class BundleLoader {
                     .filter(Objects::nonNull)
                     .sorted(Comparator.comparing(BundleRecord::file))
                     .toList();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot read bundle registry", e);
         }
     }
@@ -127,7 +128,7 @@ public class BundleLoader {
             GetResponse<BundleRecord> response = client.get(g -> g.index(SignIndex.BUNDLES).id(key),
                     BundleRecord.class);
             return response.found() ? response.source() : null;
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot read bundle registry", e);
         }
     }
@@ -135,7 +136,7 @@ public class BundleLoader {
     private void register(String key, BundleRecord bundle) {
         try {
             client.index(i -> i.index(SignIndex.BUNDLES).id(key).document(bundle));
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot update bundle registry", e);
         }
     }

@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.web;
 
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 
@@ -19,14 +20,15 @@ public class ExtractionConfiguration {
 
     /**
      * @param interval minimum delay between two requests to SignSuisse, to stay polite
+     * @param baseUri the address of SignSuisse; another one for tests
      */
     @Bean
-    public SignSource signSuisse(@Value("${signaire.sync.interval:500ms}") Duration interval) {
+    public SignSource signSuisse(@Value("${signaire.sync.interval:500ms}") Duration interval,
+            @Value("${signaire.signsuisse.url:https://www.sgb-fss.ch}") URI baseUri) {
         HttpClient client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
-        return new SignSuisseClient(new ThrottledHttpFetcher(client, interval, MAX_ATTEMPTS),
-                SignSuisseClient.DEFAULT_BASE_URI);
+        return new SignSuisseClient(new ThrottledHttpFetcher(client, interval, MAX_ATTEMPTS), baseUri);
     }
 }

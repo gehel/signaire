@@ -4,7 +4,8 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <h1 th:text="#{requests.title}">My requests</h1>
+    <h1><span th:text="#{requests.title}">My requests</span>
+        <a th:replace="~{fragments/help :: link('requests')}"></a></h1>
     <p th:if="${status}" class="success" role="status" th:text="${status}">Request sent.</p>
 
     <h2 th:text="#{requests.new}">Request a sign</h2>

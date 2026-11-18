@@ -31,6 +31,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
+| `signaire-it` | Tests of the whole stack: CLI and web jars as processes | — |
 | `android/` (later) | Java Android app, Gradle build, offline-capable | — |
 
 Key decisions:
@@ -152,6 +153,21 @@ Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns`
 shared with the CLI (and web) tests. Run a single IT with
 `./mvnw -pl signaire-core verify -Dit.test=SignSearchServiceIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
 
+`signaire-it` tests the whole stack as users run it: the CLI and web jars as processes (XDG directories under
+`target/it`), Elasticsearch and PostgreSQL in containers, and a fake SignSuisse served locally
+(`signaire.signsuisse.url`): extraction → bundles → web app → HTTP user journeys. Logs of the processes are in
+`signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
+-Dsurefire.failIfNoSpecifiedTests=false` (the other modules' ITs run too unless `-Dit.test=FullStackIT`).
+
+Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
+(`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
+scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
+`.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
+code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
+integration tests), so code reached only by ITs needs unit tests too (`FakeElasticsearch` in core fakes errors
+of Elasticsearch). Some SonarCloud suggestions clash with the WMF checkstyle rules (unnamed variables `_` are
+forbidden): checkstyle wins.
+
 Running the CLI locally:
 
 ```bash
@@ -194,6 +210,10 @@ spring.security.oauth2.client.registration.myidp.scope=openid,profile,email
 spring.security.oauth2.client.registration.myidp.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
 spring.security.oauth2.client.provider.myidp.issuer-uri=https://idp.example.org
 ```
+
+Help: the manual is Markdown, one page per topic and language in `signaire-web/src/main/resources/help/<lang>/`
+(topics in `HelpPages.TOPICS`; a test checks that each exists in the four languages). Features link to their
+topic with `~{fragments/help :: link('topic')}`. Update the manual with the feature it describes.
 
 Web UI gotchas:
 - Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)

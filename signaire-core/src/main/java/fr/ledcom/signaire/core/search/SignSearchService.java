@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -53,7 +54,7 @@ public class SignSearchService {
                     .trackTotalHits(t -> t.enabled(Boolean.TRUE))
                     .sort(sort(query)),
                     Sign.class);
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot search signs", e);
         }
         long total = response.hits().total() == null ? 0 : response.hits().total().value();
@@ -76,7 +77,7 @@ public class SignSearchService {
                     .source(source -> source.fetch(Boolean.FALSE))
                     .sort(sort(query)),
                     Void.class);
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot search signs", e);
         }
         return response.hits().hits().stream().map(Hit::id).toList();
@@ -86,7 +87,7 @@ public class SignSearchService {
         try {
             GetResponse<Sign> response = client.get(g -> g.index(SignIndex.SIGNS).id(uid), Sign.class);
             return response.found() ? Optional.ofNullable(response.source()) : Optional.empty();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot get sign " + uid, e);
         }
     }
@@ -103,7 +104,7 @@ public class SignSearchService {
                     .map(item -> item.result().source())
                     .filter(Objects::nonNull)
                     .toList();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new SearchException("Cannot get signs " + uids, e);
         }
     }
