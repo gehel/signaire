@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{admin.bundles.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <h1 th:text="#{admin.bundles.title}">Bundles</h1>
+    <p th:if="${status}" class="success" role="status" th:text="${status}">Bundles loaded: 2.</p>
+    <p class="note" th:text="#{admin.bundles.directory(${directory})}">Directory: bundles</p>
+    <p th:if="${files.isEmpty()}" th:text="#{admin.bundles.none}">No bundle.</p>
+    <table th:unless="${files.isEmpty()}" class="admin">
+        <thead>
+        <tr>
+            <th th:text="#{admin.bundles.file}">File</th>
+            <th th:text="#{sign.categories}">Category</th>
+            <th th:text="#{admin.bundles.signs}">Signs</th>
+            <th th:text="#{admin.bundles.loadedAt}">Loaded</th>
+            <th th:text="#{admin.bundles.size}">Size</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="file : ${files}">
+            <td th:text="${file.name()}">city.zip</td>
+            <th:block th:if="${file.loaded() != null}">
+                <td th:text="#{'category.' + ${file.loaded().category().name()}}">City</td>
+                <td th:text="${file.loaded().signCount()}">2</td>
+                <td th:text="${file.loaded().loadedAt().substring(0, 16).replace('T', ' ')}">2026-11-18 10:00</td>
+            </th:block>
+            <td th:if="${file.loaded() == null}" colspan="3" class="note" th:text="#{admin.bundles.notLoaded}">
+                not loaded</td>
+            <td th:text="${file.size() / 1048576} + ' Mo'">104 MB</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 th:text="#{admin.bundles.upload}">Add a bundle</h2>
+    <form th:action="@{/admin/bundles}" method="post" enctype="multipart/form-data" class="stacked">
+        <label for="bundle" th:text="#{admin.bundles.uploadHelp}">A zip made by signaire extraire.</label>
+        <input type="file" id="bundle" name="bundle" accept=".zip" required>
+        <button type="submit" th:text="#{admin.bundles.send}">Send</button>
+    </form>
+
+    <h2 th:text="#{admin.bundles.reload}">Reload the bundles</h2>
+    <form th:action="@{/admin/bundles/reload}" method="post">
+        <p th:text="#{admin.bundles.reloadHelp}">Loads the new and changed bundles.</p>
+        <button type="submit" th:text="#{admin.bundles.reload}">Reload the bundles</button>
+    </form>
+    <form th:action="@{/admin/bundles/reindex}" method="post">
+        <p th:text="#{admin.bundles.reindexHelp}">Empties the index and loads all the bundles.</p>
+        <button type="submit" th:text="#{admin.bundles.reindex}">Reindex everything</button>
+    </form>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

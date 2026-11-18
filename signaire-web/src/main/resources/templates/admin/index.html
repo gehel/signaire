@@ -11,6 +11,8 @@
             <span class="count" th:text="#{admin.signs.count(${changedSigns})}">2 changed signs</span>
         </li>
         <li><a th:href="@{/admin/signs/new}" th:text="#{admin.signs.new}">New sign</a></li>
+        <li><a th:href="@{/admin/bundles}" th:text="#{admin.bundles.title}">Bundles</a></li>
+        <li><a th:href="@{/admin/sync}" th:text="#{admin.sync.title}">Synchronization with SignSuisse</a></li>
     </ul>
 </main>
 <footer th:replace="~{layout :: footer}"></footer>
