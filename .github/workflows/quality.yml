@@ -34,7 +34,10 @@ jobs:
       - name: Start Signaire on demo signs
         run: ci/start-demo.sh target/demo
       - name: Lighthouse
-        run: npx --yes @lhci/cli@0.16.1 autorun
+        # no install scripts: Lighthouse CI uses the Chrome of the runner
+        run: |
+          npm install --global --ignore-scripts @lhci/cli@0.16.1
+          lhci autorun
       - name: sitespeed.io
         run: >
           docker run --rm --network host -v "$PWD:/sitespeed.io" sitespeedio/sitespeed.io:43.0.0
