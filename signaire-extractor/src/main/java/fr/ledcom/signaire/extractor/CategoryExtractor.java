@@ -60,7 +60,16 @@ public class CategoryExtractor {
      */
     public ExtractionReport extract(Category category, Collection<Language> languages, Path outputDir,
             boolean withMedia) {
-        Path cache = outputDir.resolve(MEDIA_CACHE);
+        return extract(category, languages, outputDir, outputDir.resolve(MEDIA_CACHE), withMedia);
+    }
+
+    /**
+     * Extracts a category, with the media cache in a directory of its own.
+     *
+     * @param cache where media are downloaded, and found when already downloaded
+     */
+    public ExtractionReport extract(Category category, Collection<Language> languages, Path outputDir, Path cache,
+            boolean withMedia) {
         createDirectories(cache);
         List<Sign> signs = new ArrayList<>();
         List<SearchHit> failures = new ArrayList<>();
