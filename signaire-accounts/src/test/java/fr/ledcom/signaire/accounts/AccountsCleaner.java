@@ -14,6 +14,11 @@ public class AccountsCleaner {
     }
 
     public void deleteAll() {
-        jdbc.sql("TRUNCATE account, word_list, word_list_entry, sign_override, sign_request RESTART IDENTITY CASCADE").update();
+        // children first; DELETE works on every database
+        jdbc.sql("DELETE FROM word_list_entry").update();
+        jdbc.sql("DELETE FROM word_list").update();
+        jdbc.sql("DELETE FROM sign_override").update();
+        jdbc.sql("DELETE FROM sign_request").update();
+        jdbc.sql("DELETE FROM account").update();
     }
 }
