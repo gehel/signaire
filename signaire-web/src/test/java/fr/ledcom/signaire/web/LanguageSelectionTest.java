@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import fr.ledcom.signaire.accounts.AccountService;
+import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import jakarta.servlet.http.Cookie;
@@ -34,6 +35,9 @@ class LanguageSelectionTest {
 
     @MockitoBean
     private AccountService accounts;
+
+    @MockitoBean
+    private WordListService lists;
 
     @Autowired
     private MockMvcTester mvc;
