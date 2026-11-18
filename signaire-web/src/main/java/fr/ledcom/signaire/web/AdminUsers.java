@@ -3,7 +3,7 @@ package fr.ledcom.signaire.web;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,10 +21,16 @@ public class AdminUsers {
     private final Set<String> usernames;
 
     public AdminUsers(@Value("${signaire.accounts.admins:}") List<String> usernames) {
-        this.usernames = usernames.stream()
+        this.usernames = ConcurrentHashMap.newKeySet();
+        usernames.stream()
                 .map(username -> username.strip().toLowerCase(Locale.ROOT))
                 .filter(username -> !username.isEmpty())
-                .collect(Collectors.toUnmodifiableSet());
+                .forEach(this.usernames::add);
+    }
+
+    /** Makes a user an administrator, until the application stops: the setup of the standalone application. */
+    void add(String username) {
+        usernames.add(username.toLowerCase(Locale.ROOT));
     }
 
     public boolean isAdmin(String username) {

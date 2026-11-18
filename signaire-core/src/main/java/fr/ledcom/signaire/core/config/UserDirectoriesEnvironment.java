@@ -20,6 +20,10 @@ public class UserDirectoriesEnvironment implements EnvironmentPostProcessor, Ord
     static final String BUNDLES = "signaire.bundles.directory";
     static final String MEDIA_CACHE = "signaire.media.cache";
     static final String INDEX = "signaire.index.directory";
+    /** State of the standalone application: its database. */
+    static final String STATE = "signaire.state.directory";
+    /** Configuration of the user, and the choices of the setup of the standalone application. */
+    static final String CONFIG = "signaire.config.directory";
     private static final String ADDITIONAL_LOCATION = "spring.config.additional-location";
 
     private final UserDirectories directories;
@@ -38,6 +42,8 @@ public class UserDirectoriesEnvironment implements EnvironmentPostProcessor, Ord
         defaults.put(BUNDLES, directories.bundles().toString());
         defaults.put(MEDIA_CACHE, directories.mediaCache().toString());
         defaults.put(INDEX, directories.index().toString());
+        defaults.put(STATE, directories.state().toString());
+        defaults.put(CONFIG, directories.config().toString());
         if (!environment.containsProperty(ADDITIONAL_LOCATION)) {
             defaults.put(ADDITIONAL_LOCATION, "optional:file:" + directories.config() + "/");
         }

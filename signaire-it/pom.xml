@@ -68,6 +68,7 @@
                     <systemPropertyVariables>
                         <signaire.cli.jar>${project.basedir}/../signaire-cli/target/signaire-cli-${project.version}-jar-with-dependencies.jar</signaire.cli.jar>
                         <signaire.web.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}.jar</signaire.web.jar>
+                        <signaire.standalone.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}-standalone.jar</signaire.standalone.jar>
                         <signaire.it.work>${project.build.directory}/it</signaire.it.work>
                     </systemPropertyVariables>
                 </configuration>

@@ -28,6 +28,10 @@ class UserDirectoriesEnvironmentTest {
                 .isEqualTo(home.resolve(".cache/signaire/media").toString());
         assertThat(environment.getProperty("signaire.index.directory"))
                 .isEqualTo(home.resolve(".local/state/signaire/index").toString());
+        assertThat(environment.getProperty("signaire.state.directory"))
+                .isEqualTo(home.resolve(".local/state/signaire").toString());
+        assertThat(environment.getProperty("signaire.config.directory"))
+                .isEqualTo(home.resolve(".config/signaire").toString());
         assertThat(environment.getProperty("spring.config.additional-location"))
                 .isEqualTo("optional:file:" + home.resolve(".config/signaire") + "/");
     }

@@ -61,7 +61,8 @@ public class StartupLoading {
 
     private List<LoadReport> tryLoad() {
         if (!Files.isDirectory(directory)) {
-            LOG.log(Level.WARNING, "No bundle directory {0}: run \"signaire extraire\" to create bundles",
+            LOG.log(Level.WARNING, "No bundle directory {0} yet: download signs with the synchronization of the "
+                    + "administration, or \"signaire extraire\"",
                     directory.toAbsolutePath());
             editor.reapply();
             return List.of();
