@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,12 +41,14 @@ public class ExtractCommand implements Callable<Integer> {
     private static final int MAX_QUERY_LENGTH = 6;
 
     private final SignSourceFactory sourceFactory;
+    private final Path mediaCache;
     private final Messages messages = Messages.of("fr.ledcom.signaire.cli.extract");
 
     @Spec
     private CommandSpec spec;
 
-    @Option(names = {"-o", "--sortie"}, descriptionKey = "output", defaultValue = "bundles", paramLabel = "<dir>")
+    // default: signaire.bundles.directory (EnvironmentDefaults)
+    @Option(names = {"-o", "--sortie"}, descriptionKey = "output", paramLabel = "<dir>")
     private Path output;
 
     @Option(names = {"-c", "--categorie"}, descriptionKey = "category", split = ",", paramLabel = "<categorie>",
@@ -65,8 +68,12 @@ public class ExtractCommand implements Callable<Integer> {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public ExtractCommand(SignSourceFactory sourceFactory) {
+    /**
+     * @param mediaCache where media are downloaded: the cache directory of the user
+     */
+    public ExtractCommand(SignSourceFactory sourceFactory, @Value("${signaire.media.cache}") Path mediaCache) {
         this.sourceFactory = sourceFactory;
+        this.mediaCache = mediaCache;
     }
 
     @Override
@@ -82,7 +89,7 @@ public class ExtractCommand implements Callable<Integer> {
                 ? Arrays.asList(Category.values()) : categories;
         for (Category category : selectedCategories) {
             out.println(messages.get("progress.start", CategoryNames.name(category), codes(selectedLanguages)));
-            ExtractionReport report = extractor.extract(category, selectedLanguages, output, !noMedia);
+            ExtractionReport report = extractor.extract(category, selectedLanguages, output, mediaCache, !noMedia);
             out.println(messages.get("progress.done", CategoryNames.name(category), report.signCount(),
                     report.bundle().toString()));
             if (!report.failures().isEmpty()) {

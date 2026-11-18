@@ -59,4 +59,15 @@ class SignaireCommandTest {
         assertThat(exitCode).isZero();
         assertThat(out.toString()).contains(usage, description, commands, "extraire");
     }
+
+    @Test
+    void bundlesAreInTheConfiguredDirectoryByDefault() {
+        StringWriter out = new StringWriter();
+        CommandLine commandLine = SignaireCommand.commandLine(command, factory);
+        commandLine.setOut(new PrintWriter(out));
+
+        commandLine.execute("charger", "--help");
+
+        assertThat(out.toString()).contains("(défaut : target/test-bundles)");
+    }
 }

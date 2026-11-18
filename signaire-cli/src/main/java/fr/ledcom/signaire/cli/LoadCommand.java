@@ -34,7 +34,8 @@ public class LoadCommand implements Callable<Integer> {
     @Spec
     private CommandSpec spec;
 
-    @Option(names = {"-b", "--bundles"}, descriptionKey = "bundles", defaultValue = "bundles", paramLabel = "<dir>")
+    // default: signaire.bundles.directory (EnvironmentDefaults)
+    @Option(names = {"-b", "--bundles"}, descriptionKey = "bundles", paramLabel = "<dir>")
     private Path bundles;
 
     @Option(names = "--reindexer", descriptionKey = "reindex")

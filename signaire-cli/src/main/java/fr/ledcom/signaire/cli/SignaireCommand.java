@@ -2,6 +2,7 @@ package fr.ledcom.signaire.cli;
 
 import java.util.List;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import fr.ledcom.signaire.bundle.BundleException;
@@ -37,6 +38,12 @@ public class SignaireCommand implements Runnable {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
+    private final Environment environment;
+
+    public SignaireCommand(Environment environment) {
+        this.environment = environment;
+    }
+
     /**
      * Creates the command line for this command. Conversion errors are reported with the converter's
      * (localized) message only, without picocli's English prefix.
@@ -45,6 +52,7 @@ public class SignaireCommand implements Runnable {
         CommandLine commandLine = new CommandLine(command, factory);
         // formats and paper sizes: --format pdf, --papier a5
         commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+        commandLine.setDefaultValueProvider(new EnvironmentDefaults(command.environment));
         commandLine.setParameterExceptionHandler((ParameterException e, String[] args) -> {
             CommandLine failing = e.getCommandLine();
             Throwable cause = e.getCause();

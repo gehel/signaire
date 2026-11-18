@@ -76,7 +76,8 @@ public class ExportCommand implements Callable<Integer> {
     @Option(names = "--avec-videos", descriptionKey = "withVideos")
     private boolean withVideos;
 
-    @Option(names = {"-b", "--bundles"}, descriptionKey = "bundles", defaultValue = "bundles",
+    // default: signaire.bundles.directory (EnvironmentDefaults)
+    @Option(names = {"-b", "--bundles"}, descriptionKey = "bundles",
             paramLabel = "<repertoire>")
     private Path bundles;
 
