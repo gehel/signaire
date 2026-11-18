@@ -43,12 +43,17 @@ Key decisions:
 - **Storage**: Elasticsearch holds only the sign corpus (fully rebuildable from bundles). User accounts
   and lists live in PostgreSQL (JPA). Lists reference signs by SignSuisse `uid`.
 - **Auth**: local accounts (Spring Security form login, bcrypt) plus optional OIDC via configuration.
-- **i18n**: never hardcode user-facing strings. The base bundles are French (`messages.properties`);
-  other languages get `messages_<lang>.properties`. Web uses the Spring `MessageSource`, and the supported
-  locales are listed in `LocaleConfiguration` (add a locale there when adding a translation). The CLI uses
-  one picocli resource bundle per command (`fr/ledcom/signaire/cli/<command>.properties`) for help and
-  messages. Commands, options and values are French (`extraire --sortie --categorie ville`). Category
-  names are in `categories.properties`. Build command lines with `SignaireCommand.commandLine(...)`.
+- **i18n**: French, German, Italian and English, always translated together: a change to a French
+  bundle comes with the three translations (tests check that every translation has the keys of the
+  French bundle). Never hardcode user-facing strings. The base bundles are French (`messages.properties`),
+  others are `messages_<lang>.properties`. Web uses the Spring `MessageSource`; the language comes from
+  `?lang=` (kept in a cookie), then `Accept-Language`, then French (`LocaleConfiguration`). The CLI uses
+  one picocli resource bundle per command (`fr/ledcom/signaire/cli/<command>.properties`) and follows the
+  JVM default locale (`LANG`, or `-Duser.language=de`); unsupported languages fall back to French.
+  Commands and options stay French in every language (`extraire --sortie --categorie ville`); category
+  names (`categories*.properties`) are shown in the user's language and accepted in any of them. Tests run
+  in French (`argLine` in the root POM); switch with `DefaultLocale` in CLI tests. Build command lines
+  with `SignaireCommand.commandLine(...)`.
 - Printed exports (PDF, e-book) show the SignSuisse photo/illustration plus a QR code linking to the video.
 
 ### SignSuisse data source

@@ -3,12 +3,16 @@ package fr.ledcom.signaire.cli;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 import fr.ledcom.signaire.model.Category;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.TypeConversionException;
 
-/** Names of the categories on the command line, defined in the {@code categories} resource bundle. */
+/**
+ * Names of the categories on the command line, defined in the {@code categories} resource bundles. The names
+ * are shown in the user's language, and accepted in any language.
+ */
 final class CategoryNames {
 
     private static final Messages NAMES = Messages.of("fr.ledcom.signaire.cli.categories");
@@ -27,7 +31,9 @@ final class CategoryNames {
         public Category convert(String value) {
             String normalized = value.strip().toLowerCase(Locale.ROOT);
             return Arrays.stream(Category.values())
-                    .filter(category -> name(category).equals(normalized))
+                    // the base bundle (ROOT) is French
+                    .filter(category -> Stream.of(Locale.ROOT, Locale.GERMAN, Locale.ITALIAN, Locale.ENGLISH)
+                            .anyMatch(language -> NAMES.bundle(language).getString(category.name()).equals(normalized)))
                     .findFirst()
                     .orElseThrow(() -> new TypeConversionException(ERRORS.get("error.unknownCategory", value)));
         }
