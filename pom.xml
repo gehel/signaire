@@ -26,6 +26,8 @@
     </modules>
 
     <properties>
+        <!-- tests run in French, the base language, whatever the locale of the machine -->
+        <argLine>-Duser.language=fr -Duser.country=CH</argLine>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->

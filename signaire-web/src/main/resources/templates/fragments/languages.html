@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="languages" class="languages" th:aria-label="#{language.label}">
+    <a th:each="language : ${ {'fr', 'de', 'it', 'en'} }"
+       th:href="@{''(lang=${language})}" th:hreflang="${language}" th:lang="${language}"
+       th:text="#{'language.' + ${language}}"
+       th:attr="aria-current=${language == #locale.language} ? 'true' : null">Français</a>
+</nav>
+</body>
+</html>

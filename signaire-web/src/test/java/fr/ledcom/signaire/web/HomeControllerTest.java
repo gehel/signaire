@@ -3,6 +3,8 @@ package fr.ledcom.signaire.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -10,6 +12,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
+
+import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -29,11 +33,56 @@ class HomeControllerTest {
                 .contains("Lexique de la langue des signes suisse");
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            de-CH | de | Lexikon der Schweizer Gebärdensprache
+            it    | it | Lessico della lingua dei segni svizzera
+            en-GB | en | Swiss sign language lexicon
+            """)
+    void homePageFollowsTheBrowserLanguage(String acceptLanguage, String language, String tagline) {
+        MvcTestResult result = mvc.get().uri("/").header(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage).exchange();
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyText().contains("<html lang=\"" + language + "\">").contains(tagline);
+    }
+
     @Test
     void unsupportedLanguagesFallBackToFrench() {
-        MvcTestResult result = mvc.get().uri("/").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
+        MvcTestResult result = mvc.get().uri("/").header(HttpHeaders.ACCEPT_LANGUAGE, "es").exchange();
 
         assertThat(result).hasStatus(HttpStatus.OK);
         assertThat(result).bodyText().contains("<html lang=\"fr\">");
+    }
+
+    @Test
+    void languageChosenByTheUserIsRememberedInACookie() {
+        MvcTestResult chosen = mvc.get().uri("/?lang=it").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
+
+        assertThat(chosen).bodyText().contains("<html lang=\"it\">");
+        assertThat(chosen).cookies().containsCookie(LocaleConfiguration.COOKIE);
+
+        Cookie cookie = chosen.getResponse().getCookie(LocaleConfiguration.COOKIE);
+        MvcTestResult next = mvc.get().uri("/").cookie(cookie).header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
+
+        assertThat(next).bodyText().contains("<html lang=\"it\">");
+    }
+
+    @Test
+    void unsupportedLanguagesCannotBeChosen() {
+        MvcTestResult result = mvc.get().uri("/?lang=es").exchange();
+
+        assertThat(result).hasStatus(HttpStatus.OK);
+        assertThat(result).bodyText().contains("<html lang=\"fr\">");
+    }
+
+    @Test
+    void pagesLinkToEveryLanguage() {
+        MvcTestResult result = mvc.get().uri("/").exchange();
+
+        assertThat(result).bodyText()
+                .contains("hreflang=\"de\"", "Deutsch")
+                .contains("hreflang=\"it\"", "Italiano")
+                .contains("hreflang=\"en\"", "English")
+                .contains("hreflang=\"fr\"", "Français");
     }
 }
