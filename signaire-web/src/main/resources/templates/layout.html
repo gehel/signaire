@@ -9,6 +9,7 @@
 </head>
 <body>
 <header th:fragment="header" class="site">
+    <a class="skip" href="#main" th:text="#{a11y.skip}">Skip to content</a>
     <a class="brand" th:href="@{/}" th:text="#{app.name}">Signaire</a>
     <span class="tagline" th:text="#{app.tagline}">Swiss sign language lexicon</span>
     <nav class="account" th:aria-label="#{account.menu}">
@@ -40,7 +41,10 @@
 </nav>
 
 <footer th:fragment="footer" class="site">
-    <p th:text="#{app.credit}">SignSuisse data</p>
+    <p>
+        <span th:text="#{app.credit}">SignSuisse data</span>
+        <a th:href="#{footer.signsuisseUrl}" rel="external" th:text="#{footer.signsuisse}">SignSuisse</a>
+    </p>
 </footer>
 </body>
 </html>

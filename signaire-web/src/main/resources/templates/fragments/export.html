@@ -15,7 +15,14 @@
                 <span th:text="#{'export.format.' + ${format}}">PDF</span>
             </label>
         </fieldset>
-        <fieldset>
+        <!--/* Only the help and options of the chosen format are shown (CSS :has) */-->
+        <p class="format-help pdf-help" th:text="#{export.help.PDF}">A document to print.</p>
+        <p class="format-help anki-help">
+            <span th:text="#{export.help.ANKI}">A deck for Anki.</span>
+            <a href="https://apps.ankiweb.net" rel="external" th:text="#{export.ankiLink}">Get Anki</a>
+        </p>
+        <p class="format-help epub-help" th:text="#{export.help.EPUB}">A book for e-readers.</p>
+        <fieldset class="format-options pdf-options">
             <legend th:text="#{export.pdfOptions}">PDF options</legend>
             <label for="export-paper" th:text="#{export.paper}">Paper</label>
             <select id="export-paper" name="paper">
@@ -32,10 +39,12 @@
                         th:text="#{'export.layout.' + ${layout}}">Sheets</option>
             </select>
         </fieldset>
-        <label>
-            <input type="checkbox" name="videos" value="true">
-            <span th:text="#{export.videos}">Include the videos in the e-book</span>
-        </label>
+        <p class="format-options epub-options">
+            <label>
+                <input type="checkbox" name="videos" value="true">
+                <span th:text="#{export.videos}">Include the videos in the e-book</span>
+            </label>
+        </p>
         <button type="submit" th:text="#{export.submit}">Download</button>
     </form>
 </details>

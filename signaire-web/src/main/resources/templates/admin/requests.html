@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{admin.requests.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.requests.title}">Sign requests</h1>
     <p th:if="${status}" class="error" role="status" th:text="${status}">Import failed.</p>

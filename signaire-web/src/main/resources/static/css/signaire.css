@@ -222,3 +222,40 @@ section.sync-status {
     background: #f6f6f6;
     padding: 0.5rem 1rem;
 }
+
+/* Accessibility: the link to skip to the content shows when focused with the keyboard */
+a.skip {
+    left: -999px;
+    position: absolute;
+}
+
+a.skip:focus {
+    background: white;
+    left: 1rem;
+    padding: 0.5rem;
+    top: 0.5rem;
+    z-index: 10;
+}
+
+:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+a.source {
+    font-size: 0.85rem;
+}
+
+/* Exports: only the help and options of the chosen format */
+details.export form:not(:has(input[name="format"][value="PDF"]:checked)) :is(.pdf-options, .pdf-help),
+details.export form:not(:has(input[name="format"][value="ANKI"]:checked)) .anki-help,
+details.export form:not(:has(input[name="format"][value="EPUB"]:checked)) :is(.epub-options, .epub-help) {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}

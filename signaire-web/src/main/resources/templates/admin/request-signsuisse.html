@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{admin.requests.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <p><a th:href="@{/admin/requests}" th:text="#{admin.requests.title}">Sign requests</a></p>
     <h1 th:text="#{admin.requests.results(${request.word()})}">SignSuisse results for Zoug</h1>
     <p th:if="${error}" class="error" role="alert" th:text="${error}">SignSuisse doesn't answer.</p>

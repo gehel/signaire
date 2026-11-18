@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(${list.name()})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <p><a th:href="@{/lists}" th:text="#{lists.title}">My lists</a></p>
     <h1 th:text="${list.name()}">Family</h1>
     <p class="count" th:text="#{lists.size(${list.size()})}">2 signs</p>

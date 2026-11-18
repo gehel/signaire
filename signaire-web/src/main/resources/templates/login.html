@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{login.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main class="account">
+<main id="main" class="account">
     <h1 th:text="#{login.title}">Log in</h1>
     <p th:if="${param.registered}" class="success" th:text="#{login.registered}">Your account is created.</p>
     <p th:if="${param.error}" class="error" role="alert" th:text="#{login.error}">Wrong username or password.</p>

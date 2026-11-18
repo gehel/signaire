@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{requests.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <h1 th:text="#{requests.title}">My requests</h1>
     <p th:if="${status}" class="success" role="status" th:text="${status}">Request sent.</p>
 
@@ -27,6 +27,13 @@
     <h2 th:text="#{requests.mine}">My requests</h2>
     <p th:if="${requests.isEmpty()}" th:text="#{requests.none}">No request.</p>
     <table th:unless="${requests.isEmpty()}" class="admin">
+        <thead>
+        <tr>
+            <th scope="col" th:text="#{requests.word}">Word</th>
+            <th scope="col" th:text="#{requests.state}">State</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
         <tbody>
         <tr th:each="request : ${requests}">
             <td>

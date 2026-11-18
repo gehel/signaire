@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(null)}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <form class="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
           hx-push-url="true" hx-trigger="submit, input delay:300ms, change">
         <p class="words">
@@ -47,6 +47,8 @@
                     <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
                     <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
                           th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
+                    <a th:if="${sign.sourceUrl() != null}" class="source" th:href="${sign.sourceUrl()}"
+                       rel="external" th:aria-label="#{search.signSuisse(${sign.name()})}">SignSuisse</a>
                     <span class="categories"><th:block th:each="category, it : ${sign.categories()}"
                         >[[#{'category.' + ${category.name()}}]]<th:block th:unless="${it.last}">, </th:block></th:block></span>
                 </li>
@@ -73,7 +75,7 @@
                     Add all the results</button>
             </form>
             <details th:replace="~{fragments/export :: export('/export')}"></details>
-            <nav class="pages" th:if="${pages > 1}">
+            <nav class="pages" th:if="${pages > 1}" th:aria-label="#{search.pages}">
                 <a th:if="${page > 1}" rel="prev" th:href="${links.withPage(page - 1)}"
                    th:hx-get="${links.withPage(page - 1)}" hx-target="#results" hx-swap="outerHTML"
                    hx-push-url="true" th:text="#{search.previous}">Previous</a>

@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{admin.signs.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.signs.title}">Changed signs</h1>
     <p th:text="#{admin.signs.explanation}">These changes are applied again after each load of the bundles.</p>
@@ -12,11 +12,11 @@
     <table th:unless="${overrides.isEmpty()}" class="admin">
         <thead>
         <tr>
-            <th th:text="#{admin.signs.sign}">Sign</th>
-            <th th:text="#{admin.signs.change}">Change</th>
-            <th th:text="#{admin.signs.when}">When</th>
-            <th th:text="#{admin.signs.who}">Who</th>
-            <th></th>
+            <th scope="col" th:text="#{admin.signs.sign}">Sign</th>
+            <th scope="col" th:text="#{admin.signs.change}">Change</th>
+            <th scope="col" th:text="#{admin.signs.when}">When</th>
+            <th scope="col" th:text="#{admin.signs.who}">Who</th>
+            <th scope="col"></th>
         </tr>
         </thead>
         <tbody>
