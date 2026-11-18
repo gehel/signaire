@@ -1,5 +1,7 @@
 package fr.ledcom.signaire.export;
 
+import java.util.Locale;
+
 /** Escaping for the HTML (Anki, EPUB) and JSON (Anki) written by the exporters. */
 final class Markup {
 
@@ -37,7 +39,7 @@ final class Markup {
                 case '\t' -> escaped.append("\\t");
                 default -> {
                     if (c < 0x20) {
-                        escaped.append(String.format(java.util.Locale.ROOT, "\\u%04x", (int) c));
+                        escaped.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
                     } else {
                         escaped.append(c);
                     }
