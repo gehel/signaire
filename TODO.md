@@ -8,7 +8,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [ ] Choose a license for the code (the README says it is not chosen yet)
 - [ ] documentation / help, available contextually, and as a manual
 - [ ] integration test in separate module, that runs the full stack, including elasticsearch and DB
-- [ ] introduce archunit to document and enforce dependencies
+- [x] introduce archunit to document and enforce dependencies
 - [ ] Follow XDG specs (<https://specifications.freedesktop.org/basedir/latest/>)
 - [ ] Ensure that signs data can be treated as transient. Deleting all signs bundles and reloading them from scratch should work out of the box, that means that all IDs should be stable in that context.
 - [x] in the export, only show options relevant to the currently selected export type. For example, don't show "Options du PDF" when we're creating an Anki deck

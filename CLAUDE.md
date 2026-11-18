@@ -204,6 +204,11 @@ Web UI gotchas:
   are annotated `@WebIntegrationTest` only, to share one Spring context and the Elasticsearch and
   PostgreSQL containers.
 
+Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
+model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
+depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
+the CLI and web never reach Elasticsearch or JPA directly. Change the rules there when the architecture changes.
+
 ## Conventions
 
 - **Test first**: write the failing test before the implementation, JUnit 5 + AssertJ (no Hamcrest, no
