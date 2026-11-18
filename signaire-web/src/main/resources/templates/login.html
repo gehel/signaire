@@ -14,6 +14,12 @@
         <input type="password" id="password" name="password" autocomplete="current-password" required>
         <button type="submit" th:text="#{login.submit}">Log in</button>
     </form>
+    <ul th:unless="${oidcProviders.isEmpty()}" class="oidc">
+        <li th:each="provider : ${oidcProviders}">
+            <a th:href="@{/oauth2/authorization/{id}(id=${provider.id()})}"
+               th:text="#{login.with(${provider.name()})}">Log in with Example</a>
+        </li>
+    </ul>
     <p th:if="${registrationEnabled}">
         <span th:text="#{login.noAccount}">No account yet?</span>
         <a th:href="@{/register}" th:text="#{register.title}">Create an account</a>

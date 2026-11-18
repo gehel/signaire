@@ -44,7 +44,8 @@ class AccountPagesIT {
 
         assertThat(result).hasStatus(HttpStatus.OK);
         assertThat(result).bodyText().contains("<h1>Anmelden</h1>", "name=\"username\"", "name=\"password\"",
-                "name=\"_csrf\"", "href=\"/register\"");
+                "name=\"_csrf\"", "href=\"/register\"")
+                .doesNotContain("/oauth2/authorization");
     }
 
     @Test

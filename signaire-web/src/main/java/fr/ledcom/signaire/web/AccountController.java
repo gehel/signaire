@@ -1,6 +1,12 @@
 package fr.ledcom.signaire.web;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +22,36 @@ public class AccountController {
 
     private final AccountService accounts;
     private final boolean registrationEnabled;
+    private final List<OidcProvider> oidcProviders;
 
     public AccountController(AccountService accounts,
-            @Value("${signaire.accounts.registration-enabled:true}") boolean registrationEnabled) {
+            @Value("${signaire.accounts.registration-enabled:true}") boolean registrationEnabled,
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations) {
         this.accounts = accounts;
         this.registrationEnabled = registrationEnabled;
+        this.oidcProviders = oidcProviders(clientRegistrations.getIfAvailable());
+    }
+
+    /**
+     * An OpenID Connect provider users can log in with.
+     *
+     * @param id the registration id, in the login URL
+     * @param name the name shown to users
+     */
+    public record OidcProvider(String id, String name) {
+    }
+
+    private static List<OidcProvider> oidcProviders(ClientRegistrationRepository registrations) {
+        List<OidcProvider> providers = new ArrayList<>();
+        // Spring Boot's repository lists its registrations; others can't be listed
+        if (registrations instanceof Iterable<?> iterable) {
+            for (Object registration : iterable) {
+                if (registration instanceof ClientRegistration client) {
+                    providers.add(new OidcProvider(client.getRegistrationId(), client.getClientName()));
+                }
+            }
+        }
+        return List.copyOf(providers);
     }
 
     /**
@@ -37,7 +68,8 @@ public class AccountController {
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        model.addAttribute("oidcProviders", oidcProviders);
         return "login";
     }
 
