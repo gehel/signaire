@@ -30,6 +30,6 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
   - first run should guide the user through the setup, choosing single user mode or multi user, downloading sign bundles, etc...
   - automatically open browser when the app start
   - should work on Linux, Windows and MacOS
-- [ ] guided presentation: on first use, the user is guided through the various features of the app
+- [x] guided presentation: on first use, the user is guided through the various features of the app
 - [ ] Android app (on hold)
 - [ ] iOS app (to be decided)
