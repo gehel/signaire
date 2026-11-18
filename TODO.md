@@ -3,7 +3,7 @@
 Tasks to come, roughly in the order they will be done. Check an item when it is merged.
 
 - [x] convert this file to markdown TODO.md
-- [ ] ensure that no automated test ever accesses <https://www.sgb-fss.ch>. For tests, create dummy bundles, or mock the HTTP requests
+- [x] ensure that no automated test ever accesses <https://www.sgb-fss.ch>. For tests, create dummy bundles, or mock the HTTP requests
 - [x] Create a README
 - [ ] Choose a license for the code (the README says it is not chosen yet)
 - [ ] documentation / help, available contextually, and as a manual

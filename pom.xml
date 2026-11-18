@@ -28,8 +28,11 @@
     </modules>
 
     <properties>
-        <!-- tests run in French, the base language, whatever the locale of the machine -->
-        <argLine>-Duser.language=fr -Duser.country=CH</argLine>
+        <!--
+          Tests run in French, the base language, whatever the locale of the machine. They never reach the
+          network, SignSuisse least of all: HTTP goes to a closed local port, except for localhost (containers).
+        -->
+        <argLine>-Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <htmx.version>4.0.1</htmx.version>

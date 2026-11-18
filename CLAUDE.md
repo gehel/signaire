@@ -134,6 +134,10 @@ Gotchas with the WMF ruleset and Java 27:
   `SuppressForbidden` (see the extractor tests). `ResourceBundle.getBundle` and `String.formatted` need an
   explicit locale.
 
+Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a closed local port, except for
+localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
+ITs, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
+
 Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers and need Docker. The
 Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
 shared with the CLI (and web) tests. Run a single IT with
