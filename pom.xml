@@ -16,6 +16,15 @@
     <name>Signaire</name>
     <description>Swiss sign language lexicon: search, personal word lists and learning material, based on SignSuisse data.</description>
 
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>The code only: the SignSuisse data belongs to the SGB-FSS and is never distributed.</comments>
+        </license>
+    </licenses>
+
     <modules>
         <module>signaire-model</module>
         <module>signaire-bundle</module>

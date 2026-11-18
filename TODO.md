@@ -5,7 +5,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] convert this file to markdown TODO.md
 - [x] ensure that no automated test ever accesses <https://www.sgb-fss.ch>. For tests, create dummy bundles, or mock the HTTP requests
 - [x] Create a README
-- [ ] Choose a license for the code (the README says it is not chosen yet)
+- [x] Choose a license for the code (Apache 2.0)
   - Apache 2.0 license choosen by Guillaume
 - [x] documentation / help, available contextually, and as a manual
 - [x] integration test in separate module, that runs the full stack, including elasticsearch and DB
@@ -20,7 +20,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [ ] compare sitespeed.io measures with a baseline, rather than with fixed budgets
 - [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
 - [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
-- [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
+- [ ] (deferred: modern Elasticsearch can no longer be embedded in a JVM, the search engine of this package is to be decided) Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
   - app should be able to run just by double clicking the jar file (if a JRE is present)
   - also provide a version with an embedded JRE
   - elasticsearch runs embedded in the same jar, no need to run a docker image or connect to an external instance
