@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{error.listNotFound.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <h1 th:text="#{error.listNotFound.title}">List not found</h1>
     <p th:text="#{error.listNotFound.text}">This list doesn't exist.</p>
     <p><a th:href="@{/lists}" th:text="#{lists.title}">My lists</a></p>

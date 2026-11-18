@@ -4,7 +4,7 @@
 <head th:replace="~{layout :: head(${sign.name()})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main class="sign">
+<main id="main" class="sign">
     <p><a th:href="@{/}" th:text="#{sign.newSearch}">New search</a></p>
     <h1 th:text="${sign.name()}">LAUSANNE</h1>
     <p class="sign-language" th:text="#{'signLanguage.' + ${sign.language().name()}}">LSF</p>

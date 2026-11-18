@@ -134,6 +134,10 @@ Gotchas with the WMF ruleset and Java 27:
   `SuppressForbidden` (see the extractor tests). `ResourceBundle.getBundle` and `String.formatted` need an
   explicit locale.
 
+Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a closed local port, except for
+localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
+ITs, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
+
 Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers and need Docker. The
 Elasticsearch container setup (`ElasticsearchTestConfiguration`) and `TestSigns` live in core's test-jar,
 shared with the CLI (and web) tests. Run a single IT with
@@ -199,6 +203,11 @@ Web UI gotchas:
   `application.properties` would trip duplicate-finder, so test-jars must not have one either). Web ITs
   are annotated `@WebIntegrationTest` only, to share one Spring context and the Elasticsearch and
   PostgreSQL containers.
+
+Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
+model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
+depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
+the CLI and web never reach Elasticsearch or JPA directly. Change the rules there when the architecture changes.
 
 ## Conventions
 

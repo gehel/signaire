@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(${uid == null} ? #{admin.signs.new} : #{admin.sign.edit})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <p><a th:href="@{/admin/signs}" th:text="#{admin.signs.title}">Changed signs</a></p>
     <h1 th:text="${uid == null} ? #{admin.signs.new} : #{admin.sign.edit}">Edit the sign</h1>
     <ul th:if="${errors != null}" class="error" role="alert">

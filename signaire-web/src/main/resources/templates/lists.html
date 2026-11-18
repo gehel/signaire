@@ -3,7 +3,7 @@
 <head th:replace="~{layout :: head(#{lists.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
-<main>
+<main id="main">
     <h1 th:text="#{lists.title}">My lists</h1>
     <p th:if="${lists.isEmpty()}" th:text="#{lists.none}">You have no list yet.</p>
     <ul class="lists" th:unless="${lists.isEmpty()}">

@@ -28,8 +28,12 @@
     </modules>
 
     <properties>
-        <!-- tests run in French, the base language, whatever the locale of the machine -->
-        <argLine>-Duser.language=fr -Duser.country=CH</argLine>
+        <archunit.version>1.5.1</archunit.version>
+        <!--
+          Tests run in French, the base language, whatever the locale of the machine. They never reach the
+          network, SignSuisse least of all: HTTP goes to a closed local port, except for localhost (containers).
+        -->
+        <argLine>-Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <htmx.version>4.0.1</htmx.version>
@@ -66,6 +70,11 @@
                 <groupId>com.google.zxing</groupId>
                 <artifactId>core</artifactId>
                 <version>${zxing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
@@ -133,6 +142,11 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
