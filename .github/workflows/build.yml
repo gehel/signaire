@@ -30,9 +30,43 @@ jobs:
           name: signaire-cli
           path: signaire-cli/target/signaire-cli-*-jar-with-dependencies.jar
           if-no-files-found: error
+      - name: Upload the standalone jar
+        uses: actions/upload-artifact@v7
+        with:
+          name: signaire-standalone-jar
+          path: signaire-web/target/signaire-web-*-standalone.jar
+          if-no-files-found: error
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: test-reports
           path: '**/target/surefire-reports/'
+
+  # The standalone application with its own Java runtime, for each system: jpackage only packages for the system
+  # it runs on.
+  standalone:
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '27'
+      - uses: actions/download-artifact@v7
+        with:
+          name: signaire-standalone-jar
+          path: jar
+      - name: Package with a Java runtime
+        shell: bash
+        run: ci/package-standalone.sh jar/signaire-web-*-standalone.jar package
+      - name: Upload the package
+        uses: actions/upload-artifact@v7
+        with:
+          name: signaire-standalone-${{ runner.os }}
+          path: package/
+          if-no-files-found: error
