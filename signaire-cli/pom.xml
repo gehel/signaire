@@ -62,6 +62,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- the self-contained jar is a separate artifact; the plain jar stays usable as a dependency -->
+                    <classifier>jar-with-dependencies</classifier>
+                </configuration>
             </plugin>
         </plugins>
     </build>

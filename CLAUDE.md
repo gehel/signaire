@@ -115,10 +115,13 @@ Running the CLI locally:
 ```bash
 docker compose up -d                                     # Elasticsearch on localhost:9200
 ./mvnw -PnoVerify -pl signaire-cli -am package -DskipTests
-java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar extraire -c religion -l fr -o bundles
-java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar charger --bundles bundles
-java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT.jar chercher dieu
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar extraire -c religion -l fr -o bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar charger --bundles bundles
+java -jar signaire-cli/target/signaire-cli-1.0-SNAPSHOT-jar-with-dependencies.jar chercher dieu
 ```
+
+The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
+`signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
 
 Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
 signs of "religion"); use `--sans-medias` while developing. After changing the index mapping
