@@ -33,7 +33,7 @@ public class SignSuisseClient implements SignSource {
         URI uri = baseUri.resolve("/signsuisse/index.php?eID=signsuisse_search"
                 + "&sword=" + encode(term)
                 + "&lang=" + language.code()
-                + "&category=" + category.signSuisseId()
+                + "&category=" + (category == null ? "" : String.valueOf(category.signSuisseId()))
                 + "&curlang=fr");
         return searchParser.parse(fetcher.fetchText(uri));
     }

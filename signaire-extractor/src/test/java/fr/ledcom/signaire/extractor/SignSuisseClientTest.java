@@ -34,6 +34,16 @@ class SignSuisseClientTest {
     }
 
     @Test
+    void searchesAllCategoriesWithoutCategory() {
+        fetcher.response = "{\"items\":[]}";
+
+        client.search("zoug", Language.GERMAN, null);
+
+        assertThat(fetcher.requested).containsExactly(URI.create("https://www.sgb-fss.ch/signsuisse/index.php"
+                + "?eID=signsuisse_search&sword=zoug&lang=de&category=&curlang=fr"));
+    }
+
+    @Test
     void fetchesSigns() {
         fetcher.response = PAGE;
         SearchHit hit = new SearchHit("1", "LAUSANNE", Language.FRENCH,
