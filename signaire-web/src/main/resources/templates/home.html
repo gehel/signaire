@@ -5,6 +5,9 @@
     <title th:text="#{app.name}">Signaire</title>
 </head>
 <body>
+<header>
+    <nav th:replace="~{fragments/languages :: languages}"></nav>
+</header>
 <h1 th:text="#{app.name}">Signaire</h1>
 <p th:text="#{app.tagline}">Swiss sign language lexicon</p>
 </body>

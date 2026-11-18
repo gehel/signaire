@@ -3,26 +3,34 @@ package fr.ledcom.signaire.cli;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.ResourceBundle.Control;
 
-/** Formats the messages of a resource bundle, in the locale of the bundle. */
+/**
+ * Formats the messages of a resource bundle in the user's language: the default locale when the message is
+ * formatted, like picocli does for the help. The base bundles are French, and the fallback for languages
+ * without a translation.
+ */
 final class Messages {
 
-    private final ResourceBundle bundle;
+    /** Falls back to the base (French) bundle rather than to the bundle of the default locale. */
+    private static final Control BASE_FALLBACK = Control.getNoFallbackControl(Control.FORMAT_PROPERTIES);
 
-    Messages(ResourceBundle bundle) {
-        this.bundle = bundle;
+    private final String bundleName;
+
+    private Messages(String bundleName) {
+        this.bundleName = bundleName;
     }
 
     static Messages of(String bundleName) {
-        // the user's locale, like picocli does for the help
-        return new Messages(ResourceBundle.getBundle(bundleName, Locale.getDefault()));
+        return new Messages(bundleName);
     }
 
     String get(String key, Object... arguments) {
-        return new MessageFormat(bundle.getString(key), bundle.getLocale()).format(arguments);
+        Locale locale = Locale.getDefault();
+        return new MessageFormat(bundle(locale).getString(key), locale).format(arguments);
     }
 
-    boolean contains(String key) {
-        return bundle.containsKey(key);
+    ResourceBundle bundle(Locale locale) {
+        return ResourceBundle.getBundle(bundleName, locale, BASE_FALLBACK);
     }
 }
