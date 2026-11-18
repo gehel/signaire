@@ -34,7 +34,7 @@ public class SignaireCliApplication implements CommandLineRunner, ExitCodeGenera
     }
 
     /**
-     * The arguments for picocli: without the Spring properties ({@code --spring.elasticsearch.uris=…}), which
+     * The arguments for picocli: without the Spring properties ({@code --signaire.index.directory=…}), which
      * Spring Boot has already read. No option of the commands has a dot in its name.
      */
     static String[] commandArguments(String... args) {

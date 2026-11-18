@@ -87,6 +87,11 @@ public final class UserDirectories {
         return cache().resolve("media");
     }
 
+    /** The search index of the signs, rebuilt from the bundles when needed. */
+    public Path index() {
+        return state().resolve("index");
+    }
+
     /** The configuration file of the user, read by the command line and the web application. */
     public Path configFile() {
         return config().resolve("application.properties");

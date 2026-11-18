@@ -17,10 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.ElasticsearchTestConfiguration;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.model.Category;
@@ -28,8 +26,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
 @SpringBootTest
-@Import(ElasticsearchTestConfiguration.class)
-class SearchCommandsIT {
+class SearchCommandsTest {
 
     @TempDir
     Path bundles;

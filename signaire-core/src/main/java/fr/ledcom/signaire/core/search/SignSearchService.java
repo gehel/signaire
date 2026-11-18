@@ -1,65 +1,80 @@
 package fr.ledcom.signaire.core.search;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.lucene.index.StoredFields;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
+import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermInSetQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.QueryBuilder;
 import org.springframework.stereotype.Service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.elasticsearch.core.MgetResponse;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.mget.MultiGetResponseItem;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import fr.ledcom.signaire.model.Sign;
 
-/** Searches signs in the {@link SignIndex#SIGNS} index. */
+/** Searches the signs of the {@link SignIndex}. */
 @Service
 public class SignSearchService {
 
-    /** The name, stemmed in each language: "chats" finds "CHAT". */
-    private static final List<String> NAME_STEMMED_FIELDS = List.of("name.fr", "name.de", "name.it");
-    /** Free text fields, with their language specific sub-fields. */
-    private static final List<String> TEXT_FIELDS = List.of(
-            "periphrase^2", "periphrase.fr", "periphrase.de", "periphrase.it",
-            "definition", "definition.fr", "definition.de", "definition.it",
-            "examples.text", "examples.text.fr", "examples.text.de", "examples.text.it");
-    private static final SortOptions BY_NAME = SortOptions.of(s -> s.field(f -> f.field("name.sort").order(SortOrder.Asc)));
-    private static final SortOptions BY_SCORE = SortOptions.of(s -> s.score(sc -> sc.order(SortOrder.Desc)));
+    private static final float NAME_BOOST = 5f;
+    private static final float NAME_STEMMED_BOOST = 3f;
+    private static final float NAME_PREFIX_BOOST = 2f;
+    private static final float PERIPHRASE_BOOST = 2f;
+    /** Below this length, a word must match exactly; up to the next one, with one edit; beyond, with two. */
+    private static final int ONE_EDIT_LENGTH = 3;
+    private static final int TWO_EDITS_LENGTH = 6;
 
-    private final ElasticsearchClient client;
+    private static final Sort BY_NAME = new Sort(new SortField(SignAnalyzers.NAME_SORT, SortField.Type.STRING));
+    private static final Sort BY_SCORE = new Sort(SortField.FIELD_SCORE,
+            new SortField(SignAnalyzers.NAME_SORT, SortField.Type.STRING));
+    private static final QueryBuilder EXACT = new QueryBuilder(SignAnalyzers.searching());
+    /** Fuzzy, but with the right first letter: otherwise "laus" finds "Maus" and "eau". */
+    private static final QueryBuilder FUZZY = new QueryBuilder(SignAnalyzers.searching()) {
+        @Override
+        protected Query newTermQuery(Term term, float boost) {
+            int length = term.text().codePointCount(0, term.text().length());
+            int edits = length < ONE_EDIT_LENGTH ? 0 : length < TWO_EDITS_LENGTH ? 1 : 2;
+            return boosted(edits == 0 ? new TermQuery(term) : new FuzzyQuery(term, edits, 1), boost);
+        }
+    };
 
-    public SignSearchService(ElasticsearchClient client) {
-        this.client = client;
+    private final SignIndex index;
+
+    public SignSearchService(SignIndex index) {
+        this.index = index;
     }
 
     public SearchResults search(SignQuery query) {
-        SearchResponse<Sign> response;
-        try {
-            response = client.search(s -> s
-                    .index(SignIndex.SIGNS)
-                    .query(query(query))
-                    .from(query.from())
-                    .size(query.size())
-                    .trackTotalHits(t -> t.enabled(Boolean.TRUE))
-                    .sort(sort(query)),
-                    Sign.class);
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot search signs", e);
-        }
-        long total = response.hits().total() == null ? 0 : response.hits().total().value();
-        List<Sign> signs = response.hits().hits().stream().map(Hit::source).filter(Objects::nonNull).toList();
-        return new SearchResults(total, signs);
+        return index.read("Cannot search signs", searcher -> {
+            Query lucene = query(query);
+            int total = searcher.count(lucene);
+            int wanted = Math.min(query.from() + query.size(), total);
+            if (wanted <= query.from()) {
+                return new SearchResults(total, List.of());
+            }
+            ScoreDoc[] docs = searcher.search(lucene, wanted, sort(query)).scoreDocs;
+            StoredFields fields = searcher.storedFields();
+            List<Sign> signs = new ArrayList<>();
+            for (int i = query.from(); i < docs.length; i++) {
+                signs.add(SignDocuments.sign(fields, docs[i].doc));
+            }
+            return new SearchResults(total, signs);
+        });
     }
 
     /**
@@ -68,28 +83,21 @@ public class SignSearchService {
      * @param max the maximum number of uids to return
      */
     public List<String> findUids(SignQuery query, int max) {
-        SearchResponse<Void> response;
-        try {
-            response = client.search(s -> s
-                    .index(SignIndex.SIGNS)
-                    .query(query(query))
-                    .size(max)
-                    .source(source -> source.fetch(Boolean.FALSE))
-                    .sort(sort(query)),
-                    Void.class);
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot search signs", e);
+        if (max <= 0) {
+            return List.of();
         }
-        return response.hits().hits().stream().map(Hit::id).toList();
+        return index.read("Cannot search signs", searcher -> {
+            StoredFields fields = searcher.storedFields();
+            List<String> uids = new ArrayList<>();
+            for (ScoreDoc doc : searcher.search(query(query), max, sort(query)).scoreDocs) {
+                uids.add(SignDocuments.uid(fields, doc.doc));
+            }
+            return uids;
+        });
     }
 
     public Optional<Sign> findByUid(String uid) {
-        try {
-            GetResponse<Sign> response = client.get(g -> g.index(SignIndex.SIGNS).id(uid), Sign.class);
-            return response.found() ? Optional.ofNullable(response.source()) : Optional.empty();
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot get sign " + uid, e);
-        }
+        return findByUids(List.of(uid)).stream().findFirst();
     }
 
     /** The signs with the given uids, in the same order; unknown uids are skipped. */
@@ -97,45 +105,87 @@ public class SignSearchService {
         if (uids.isEmpty()) {
             return List.of();
         }
-        try {
-            MgetResponse<Sign> response = client.mget(m -> m.index(SignIndex.SIGNS).ids(uids), Sign.class);
-            return response.docs().stream()
-                    .filter(MultiGetResponseItem::isResult)
-                    .map(item -> item.result().source())
-                    .filter(Objects::nonNull)
-                    .toList();
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot get signs " + uids, e);
-        }
+        return index.read("Cannot get signs " + uids, searcher -> {
+            Map<String, Sign> found = new HashMap<>();
+            StoredFields fields = searcher.storedFields();
+            Query query = signs(new TermInSetQuery(SignDocuments.UID, uids.stream().map(BytesRef::new).toList()));
+            for (ScoreDoc doc : searcher.search(query, uids.size()).scoreDocs) {
+                Sign sign = SignDocuments.sign(fields, doc.doc);
+                found.put(sign.uid(), sign);
+            }
+            return uids.stream().map(found::get).filter(Objects::nonNull).toList();
+        });
     }
 
-    private static List<SortOptions> sort(SignQuery query) {
-        return query.text() == null ? List.of(BY_NAME) : List.of(BY_SCORE, BY_NAME);
+    private static Sort sort(SignQuery query) {
+        return query.text() == null ? BY_NAME : BY_SCORE;
     }
 
     private static Query query(SignQuery query) {
-        BoolQuery.Builder bool = new BoolQuery.Builder();
+        BooleanQuery.Builder bool = new BooleanQuery.Builder();
+        bool.add(new TermQuery(new Term(SignDocuments.KIND, SignDocuments.SIGN)), Occur.FILTER);
         if (!query.languages().isEmpty()) {
-            bool.filter(f -> f.terms(t -> t.field("language").terms(v -> v.value(values(query.languages())))));
+            bool.add(terms(SignDocuments.LANGUAGE, query.languages()), Occur.FILTER);
         }
         if (!query.categories().isEmpty()) {
-            bool.filter(f -> f.terms(t -> t.field("categories").terms(v -> v.value(values(query.categories())))));
+            bool.add(terms(SignDocuments.CATEGORIES, query.categories()), Occur.FILTER);
         }
         String text = query.text();
-        if (text != null) {
-            bool.should(s -> s.match(m -> m.field("name").query(text).boost(5f)));
-            bool.should(s -> s.match(m -> m.field("name.prefix").query(text).operator(Operator.And).boost(2f)));
-            bool.should(s -> s.multiMatch(m -> m.query(text).fields(NAME_STEMMED_FIELDS).operator(Operator.And)
-                    .boost(3f)));
-            // fuzzy, but with the right first letter: otherwise "laus" finds "Maus" and "eau"
-            bool.should(s -> s.multiMatch(m -> m.query(text).fields(TEXT_FIELDS).operator(Operator.And)
-                    .fuzziness("AUTO").prefixLength(1)));
-            bool.minimumShouldMatch("1");
+        if (text == null) {
+            // the filters alone
+            return bool.build();
         }
-        return Query.of(q -> q.bool(bool.build()));
+        should(bool, boosted(EXACT.createBooleanQuery(SignAnalyzers.NAME, text), NAME_BOOST));
+        should(bool, boosted(EXACT.createBooleanQuery(SignAnalyzers.NAME_PREFIX, text, Occur.MUST),
+                NAME_PREFIX_BOOST));
+        should(bool, boosted(bestField(EXACT, text, stemmed(SignAnalyzers.NAME), Map.of()), NAME_STEMMED_BOOST));
+        List<String> textFields = new ArrayList<>();
+        for (String field : List.of(SignAnalyzers.PERIPHRASE, SignAnalyzers.DEFINITION, SignAnalyzers.EXAMPLES)) {
+            textFields.add(field);
+            textFields.addAll(stemmed(field));
+        }
+        should(bool, bestField(FUZZY, text, textFields, Map.of(SignAnalyzers.PERIPHRASE, PERIPHRASE_BOOST)));
+        bool.setMinimumNumberShouldMatch(1);
+        return bool.build();
     }
 
-    private static List<FieldValue> values(Collection<? extends Enum<?>> values) {
-        return values.stream().map(value -> FieldValue.of(value.name())).toList();
+    /** Signs only, not the records of bundles. */
+    private static Query signs(Query query) {
+        return new BooleanQuery.Builder()
+                .add(query, Occur.MUST)
+                .add(new TermQuery(new Term(SignDocuments.KIND, SignDocuments.SIGN)), Occur.FILTER)
+                .build();
+    }
+
+    /** All the words in one of the fields; the score is the best of the fields. */
+    private static Query bestField(QueryBuilder builder, String text, Iterable<String> fields,
+            Map<String, Float> boosts) {
+        List<Query> perField = new ArrayList<>();
+        for (String field : fields) {
+            Query query = builder.createBooleanQuery(field, text, Occur.MUST);
+            if (query != null) {
+                perField.add(boosted(query, boosts.getOrDefault(field, 1f)));
+            }
+        }
+        return perField.isEmpty() ? null : new DisjunctionMaxQuery(perField, 0f);
+    }
+
+    private static List<String> stemmed(String field) {
+        return SignAnalyzers.LANGUAGES.stream().map(language -> SignAnalyzers.stemmed(field, language)).toList();
+    }
+
+    /** Adds a clause, unless the text has no word for it. */
+    private static void should(BooleanQuery.Builder bool, Query query) {
+        if (query != null) {
+            bool.add(query, Occur.SHOULD);
+        }
+    }
+
+    private static Query boosted(Query query, float boost) {
+        return query == null || boost == 1f ? query : new BoostQuery(query, boost);
+    }
+
+    private static Query terms(String field, Collection<? extends Enum<?>> values) {
+        return new TermInSetQuery(field, values.stream().map(value -> new BytesRef(value.name())).toList());
     }
 }

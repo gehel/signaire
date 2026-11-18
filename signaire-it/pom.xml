@@ -10,7 +10,7 @@
 
     <artifactId>signaire-it</artifactId>
 
-    <description>Tests of the whole stack: the command line and web application jars, run as processes, with Elasticsearch, PostgreSQL and a fake SignSuisse.</description>
+    <description>Tests of the whole stack: the command line and web application jars, run as processes, with PostgreSQL and a fake SignSuisse.</description>
 
     <dependencies>
         <!-- the jars under test: declared so that they are built first; the tests run them as processes -->
@@ -50,11 +50,6 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

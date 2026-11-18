@@ -11,14 +11,15 @@ import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
- * Applies the {@link UserDirectories} to Spring applications: the bundles and the media cache default to the
- * user's directories, and the user's configuration file is read too (after the application's own
+ * Applies the {@link UserDirectories} to Spring applications: the bundles, the media cache and the search index
+ * default to the user's directories, and the user's configuration file is read too (after the application's own
  * {@code application.properties}, before the command line). Settings of the application always win.
  */
 public class UserDirectoriesEnvironment implements EnvironmentPostProcessor, Ordered {
 
     static final String BUNDLES = "signaire.bundles.directory";
     static final String MEDIA_CACHE = "signaire.media.cache";
+    static final String INDEX = "signaire.index.directory";
     private static final String ADDITIONAL_LOCATION = "spring.config.additional-location";
 
     private final UserDirectories directories;
@@ -36,6 +37,7 @@ public class UserDirectoriesEnvironment implements EnvironmentPostProcessor, Ord
         Map<String, Object> defaults = new HashMap<>();
         defaults.put(BUNDLES, directories.bundles().toString());
         defaults.put(MEDIA_CACHE, directories.mediaCache().toString());
+        defaults.put(INDEX, directories.index().toString());
         if (!environment.containsProperty(ADDITIONAL_LOCATION)) {
             defaults.put(ADDITIONAL_LOCATION, "optional:file:" + directories.config() + "/");
         }

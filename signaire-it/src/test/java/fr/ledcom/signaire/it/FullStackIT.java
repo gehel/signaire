@@ -29,25 +29,22 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
  * The whole stack, as users run it: the command line extracts signs from a (fake) SignSuisse into bundles, and the
- * web application, a separate process with Elasticsearch and PostgreSQL, loads them; the tests are users of the
+ * web application, a separate process with its Lucene index and PostgreSQL, loads them; the tests are users of the
  * web application, through HTTP.
  */
 class FullStackIT {
 
     /** Keep in line with compose.yaml. */
-    private static final String ELASTICSEARCH = "docker.elastic.co/elasticsearch/elasticsearch:9.4.8";
     private static final String POSTGRES = "postgres:18-alpine";
     private static final Pattern CSRF = Pattern.compile("name=\"_csrf\" value=\"([^\"]+)\"");
 
     private static Path work;
     private static FakeSignSuisse signSuisse;
-    private static ElasticsearchContainer elasticsearch;
     private static PostgreSQLContainer postgres;
     private static JavaProcess web;
     private static URI base;
@@ -58,18 +55,12 @@ class FullStackIT {
         deleteRecursively(work);
         Files.createDirectories(work);
         signSuisse = new FakeSignSuisse();
-        elasticsearch = new ElasticsearchContainer(DockerImageName.parse(ELASTICSEARCH))
-                .withEnv("xpack.security.enabled", "false")
-                .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-                .withStartupTimeout(Duration.ofMinutes(5));
         postgres = new PostgreSQLContainer(DockerImageName.parse(POSTGRES));
-        elasticsearch.start();
         postgres.start();
 
         Path bundles = work.resolve("bundles");
         try (JavaProcess cli = JavaProcess.start(jar("signaire.cli.jar"), work, "cli", List.of(
                 "--signaire.signsuisse.url=" + signSuisse.uri(),
-                "--spring.elasticsearch.uris=http://" + elasticsearch.getHttpHostAddress(),
                 "extraire", "--categorie", "ville", "--langue", "fr", "--sortie", bundles.toString(),
                 "--intervalle", "0"))) {
             assertThat(cli.await(Duration.ofMinutes(2))).as("extraction, see %s", cli.log()).isZero();
@@ -83,7 +74,6 @@ class FullStackIT {
         base = URI.create("http://127.0.0.1:" + port);
         web = JavaProcess.start(jar("signaire.web.jar"), work, "web", List.of(
                 "--server.port=" + port,
-                "--spring.elasticsearch.uris=http://" + elasticsearch.getHttpHostAddress(),
                 "--spring.datasource.url=" + postgres.getJdbcUrl(),
                 "--spring.datasource.username=" + postgres.getUsername(),
                 "--spring.datasource.password=" + postgres.getPassword(),
@@ -103,9 +93,6 @@ class FullStackIT {
         }
         if (postgres != null) {
             postgres.stop();
-        }
-        if (elasticsearch != null) {
-            elasticsearch.stop();
         }
     }
 

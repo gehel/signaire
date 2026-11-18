@@ -1,124 +1,210 @@
 package fr.ledcom.signaire.core.search;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.StoredFields;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import fr.ledcom.signaire.model.Sign;
 
 /**
- * The Elasticsearch indices of Signaire: the signs, and the registry of loaded bundles. Both can be rebuilt from
- * the bundles at any time.
+ * The Lucene index of Signaire, in a directory: the signs, and the registry of the loaded bundles. It can be
+ * rebuilt from the bundles at any time, and it is when its {@link #SCHEMA} changes.
+ *
+ * <p>Several processes can share the index (the web application and the command line): writes are short, each
+ * one commits, and waits while another process writes. Searches see the commits of all processes.
  */
 @Service
-public class SignIndex {
+public class SignIndex implements AutoCloseable {
 
-    /** Index of the signs; documents are complete signs, keyed by uid. */
-    public static final String SIGNS = "signaire-signs";
-    /** Index of the bundles loaded into {@link #SIGNS}. */
-    public static final String BUNDLES = "signaire-bundles";
+    /**
+     * Version of the fields and their analysis ({@link SignDocuments}, {@link SignAnalyzers}): an index of another
+     * version is emptied when it is opened, and the bundles are loaded again.
+     */
+    static final String SCHEMA = "1";
 
-    private static final int BULK_SIZE = 500;
-    private static final String ALREADY_EXISTS = "resource_already_exists_exception";
+    private static final Duration DEFAULT_LOCK_TIMEOUT = Duration.ofSeconds(30);
+    /** One bundle per category, and a few more. */
+    private static final int MAX_BUNDLES = 1000;
 
-    private final ElasticsearchClient client;
+    private final Path path;
+    private final IndexWriters writers;
+    /** Lucene allows one writer at a time, in this process too. */
+    private final ReentrantLock writing = new ReentrantLock();
+    private Directory directory;
+    private SearcherManager searchers;
 
-    public SignIndex(ElasticsearchClient client) {
-        this.client = client;
+    /** A step of a write. */
+    @FunctionalInterface
+    private interface Write {
+        void apply(IndexWriter writer) throws IOException;
     }
 
-    /** Creates the indices that don't exist yet. */
+    /** A read of the index. */
+    @FunctionalInterface
+    interface Read<T> {
+        T apply(IndexSearcher searcher) throws IOException;
+    }
+
+    @Autowired
+    public SignIndex(@Value("${signaire.index.directory}") Path path) {
+        this(path, DEFAULT_LOCK_TIMEOUT);
+    }
+
+    /**
+     * @param lockTimeout how long to wait for the writes of other processes
+     */
+    public SignIndex(Path path, Duration lockTimeout) {
+        this.path = path;
+        this.writers = new IndexWriters(path, SCHEMA, lockTimeout);
+    }
+
+    /** Opens the index, creating it when it doesn't exist or has another schema. */
     public void createIfMissing() {
-        for (String index : List.of(SIGNS, BUNDLES)) {
-            try {
-                if (!client.indices().exists(e -> e.index(index)).value()) {
-                    create(index);
-                }
-            } catch (IOException | ElasticsearchException e) {
-                throw new SearchException("Cannot check index " + index, e);
-            }
-        }
+        searchers();
     }
 
-    /** Deletes and creates the indices, which empties them. */
+    /** Empties the index: signs and bundles. */
     public void recreate() {
-        for (String index : List.of(SIGNS, BUNDLES)) {
-            try {
-                client.indices().delete(d -> d.index(index).ignoreUnavailable(Boolean.TRUE));
-            } catch (IOException | ElasticsearchException e) {
-                throw new SearchException("Cannot delete index " + index, e);
-            }
-            create(index);
-        }
+        write("Cannot empty index", IndexWriter::deleteAll);
     }
 
     /** Adds or replaces signs. */
     public void index(Collection<Sign> signs) {
         List<Sign> all = List.copyOf(signs);
-        for (int start = 0; start < all.size(); start += BULK_SIZE) {
-            indexBatch(all.subList(start, Math.min(start + BULK_SIZE, all.size())));
-        }
-    }
-
-    private void indexBatch(List<Sign> batch) {
-        BulkRequest.Builder bulk = new BulkRequest.Builder();
-        for (Sign sign : batch) {
-            bulk.operations(op -> op.index(i -> i.index(SIGNS).id(sign.uid()).document(sign)));
-        }
-        BulkResponse response;
-        try {
-            response = client.bulk(bulk.build());
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot index signs", e);
-        }
-        if (response.errors()) {
-            String reason = response.items().stream()
-                    .filter(item -> item.error() != null)
-                    .map(item -> item.id() + ": " + item.error().reason())
-                    .findFirst().orElse("unknown");
-            throw new SearchException("Cannot index signs, first error: " + reason);
-        }
+        write("Cannot index signs", writer -> {
+            for (Sign sign : all) {
+                writer.updateDocument(SignDocuments.signId(sign.uid()), SignDocuments.sign(sign));
+            }
+        });
     }
 
     /** Removes a sign; nothing happens when it is not in the index. */
     public void delete(String uid) {
-        try {
-            client.delete(d -> d.index(SIGNS).id(uid));
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot delete sign " + uid, e);
-        }
+        write("Cannot delete sign " + uid, writer -> writer.deleteDocuments(SignDocuments.signId(uid)));
     }
 
-    /** Makes the latest changes visible to searches. */
+    /** Makes the latest changes visible to searches, those of other processes too. */
     public void refresh() {
         try {
-            client.indices().refresh(r -> r.index(SIGNS, BUNDLES));
-        } catch (IOException | ElasticsearchException e) {
-            throw new SearchException("Cannot refresh indices", e);
+            searchers().maybeRefreshBlocking();
+        } catch (IOException e) {
+            throw new SearchException("Cannot refresh index " + path, e);
         }
     }
 
-    /** Creates an index; nothing happens when it already exists. */
-    void create(String index) {
-        try (InputStream definition = SignIndex.class.getResourceAsStream(index + ".json")) {
-            if (definition == null) {
-                throw new SearchException("No definition for index " + index);
+    /** Records a loaded bundle, replacing the previous record of the same file. */
+    public void saveBundle(String file, Object entry) {
+        write("Cannot record bundle " + file,
+                writer -> writer.updateDocument(SignDocuments.bundleId(file), SignDocuments.bundle(file, entry)));
+    }
+
+    /** The record of a loaded bundle. */
+    public <T> Optional<T> findBundle(String file, Class<T> type) {
+        return read("Cannot read bundle registry", searcher -> {
+            TopDocs top = searcher.search(new TermQuery(SignDocuments.bundleId(file)), 1);
+            return top.scoreDocs.length == 0 ? Optional.<T>empty()
+                    : Optional.of(SignDocuments.source(searcher.storedFields(), top.scoreDocs[0].doc, type));
+        });
+    }
+
+    /** The records of all the loaded bundles. */
+    public <T> List<T> findBundles(Class<T> type) {
+        return read("Cannot read bundle registry", searcher -> {
+            StoredFields fields = searcher.storedFields();
+            List<T> bundles = new ArrayList<>();
+            TermQuery all = new TermQuery(new Term(SignDocuments.KIND, SignDocuments.BUNDLE));
+            for (ScoreDoc doc : searcher.search(all, MAX_BUNDLES).scoreDocs) {
+                bundles.add(SignDocuments.source(fields, doc.doc, type));
             }
-            client.indices().create(c -> c.index(index).withJson(definition));
+            return bundles;
+        });
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+        if (searchers != null) {
+            searchers.close();
+            searchers = null;
+        }
+        if (directory != null) {
+            directory.close();
+            directory = null;
+        }
+    }
+
+    /** Reads the index, with the latest commits. */
+    <T> T read(String error, Read<T> read) {
+        SearcherManager manager = searchers();
+        try {
+            manager.maybeRefresh();
+            IndexSearcher searcher = manager.acquire();
+            try {
+                return read.apply(searcher);
+            } finally {
+                manager.release(searcher);
+            }
         } catch (IOException e) {
-            throw new SearchException("Cannot create index " + index, e);
-        } catch (ElasticsearchException e) {
-            // e.g. created between the check and the creation, while Elasticsearch recovers its indices
-            if (!ALREADY_EXISTS.equals(e.error().type())) {
-                throw new SearchException("Cannot create index " + index, e);
+            throw new SearchException(error, e);
+        }
+    }
+
+    private void write(String error, Write write) {
+        Directory opened = directory();
+        writing.lock();
+        try (IndexWriter writer = writers.open(opened)) {
+            write.apply(writer);
+            writers.commit(writer);
+        } catch (IOException e) {
+            throw new SearchException(error + " in " + path, e);
+        } finally {
+            writing.unlock();
+        }
+    }
+
+    private synchronized Directory directory() {
+        if (directory == null) {
+            try {
+                Files.createDirectories(path);
+                directory = FSDirectory.open(path);
+            } catch (IOException e) {
+                throw new SearchException("Cannot open index " + path, e);
             }
         }
+        return directory;
+    }
+
+    private synchronized SearcherManager searchers() {
+        if (searchers == null) {
+            Directory opened = directory();
+            try {
+                if (!writers.hasCurrentSchema(opened)) {
+                    write("Cannot create index", IndexWriter::deleteAll);
+                }
+                searchers = new SearcherManager(opened, null);
+            } catch (IOException e) {
+                throw new SearchException("Cannot open index " + path, e);
+            }
+        }
+        return searchers;
     }
 }

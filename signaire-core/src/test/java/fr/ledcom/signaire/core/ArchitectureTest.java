@@ -8,7 +8,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * The packages of core: {@code search} (the index) knows nothing of the others; {@code bundles} loads bundles
+ * The packages of core: {@code search} (the Lucene index, which no other package sees) knows nothing of the others; {@code bundles} loads bundles
  * into the index; {@code media} reads bundles by itself.
  */
 @AnalyzeClasses(packages = "fr.ledcom.signaire.core", importOptions = ImportOption.DoNotIncludeTests.class)
@@ -25,6 +25,10 @@ final class ArchitectureTest {
     @ArchTest
     static final ArchRule MEDIA_STANDS_ALONE = noClasses().that().resideInAPackage("..core.media..")
             .should().dependOnClassesThat().resideInAnyPackage("..core.search..", "..core.bundles..");
+
+    @ArchTest
+    static final ArchRule LUCENE_STAYS_IN_SEARCH = noClasses().that().resideOutsideOfPackage("..core.search..")
+            .should().dependOnClassesThat().resideInAPackage("org.apache.lucene..");
 
     @ArchTest
     static final ArchRule NO_USER_DATA = noClasses().should().dependOnClassesThat()
