@@ -50,8 +50,11 @@ Key decisions:
   (`SignAnalyzers`: folding, prefixes, light FR/DE/IT stemmers) is versioned by `SignIndex.SCHEMA`: bump it
   when fields or analysis change, an index of another schema is emptied on opening and the bundles reload.
   Lucene stays in `core.search` (ArchUnit).
-- **Storage**: user accounts and lists live in PostgreSQL (`signaire-accounts`: JPA, schema by Flyway in `db/migration`, Hibernate
-  only validates it). It's a separate module so that the CLI needs no database. Lists reference signs
+- **Storage**: user accounts and lists live in PostgreSQL, or H2 for the standalone application (`signaire-accounts`:
+  JPA, schema by Flyway, Hibernate only validates it). Migrations are in `db/migration/common`, except those that
+  differ per database, in `db/migration/{postgresql,h2}` (`accounts.properties` sets the locations); a migration
+  already applied never changes, even when moved. Each service test runs on both: `*IT` on PostgreSQL, `*H2Test` on
+  H2 (`@H2Database`), sharing an `Abstract*Test`. It's a separate module so that the CLI needs no database. Lists reference signs
   by SignSuisse `uid`. Entities and repositories are package-private; services expose records and take
   the id of the acting account, so a list of someone else is "not found".
 - **Auth**: local accounts (Spring Security form login, bcrypt; `signaire.accounts.registration-enabled`)
@@ -80,6 +83,16 @@ Key decisions:
 - **Signs are transient**: bundles and index can be deleted and rebuilt at any time. Everything else refers
   to signs by uid (SignSuisse uid, or the `local-…` uid of signs added by administrators), never by an id of
   the index; `TransientSignsIT` checks it. Keep it that way.
+- **Standalone application** (`StandaloneApplication` in web, the `-standalone.jar` of signaire-web): the web
+  application with the `standalone` profile (`application-standalone.properties`: H2 file database in
+  `signaire.state.directory`, `127.0.0.1:8180`, log file, `standalone.properties` of the config directory imported).
+  When the port answers, it only opens the browser. `Standalone` (a bean of `SecurityConfiguration`, so that
+  `@WebMvcTest` slices have it) knows the mode: `SetupFilter` sends to `/setup` until the first run is set up (alone,
+  or several accounts with an administrator; signs to download through `SignSuisseSync`), `SingleUserFilter` makes
+  every local request the single user (an account with a Signaire OIDC identity, administrator), and
+  `/admin/quit` stops it (no console after a double click). Never on servers: `signaire.standalone.enabled` is false
+  there. `ci/package-standalone.sh` runs jpackage (application image with its Java runtime), CI does it on the three
+  systems. `StandaloneIT` (signaire-it) runs the jar: no container.
 - **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
   signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
   called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.

@@ -38,6 +38,22 @@ java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.accounts.
 Then open <http://localhost:8080>, create an account named `myname` (it is an administrator), and search. The
 manual is in the application ("Aide", `/help`); its pages are in `signaire-web/src/main/resources/help/`.
 
+## Standalone application
+
+For one computer, without server, Docker nor database to install: the accounts are in an H2 database and the search
+index in Lucene, in the user's directories.
+
+```bash
+./mvnw -PnoVerify -pl signaire-web -am package -DskipTests
+java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar   # or a double click on the jar
+ci/package-standalone.sh signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar target/package  # with its own Java
+```
+
+It listens to <http://localhost:8180> only (`--server.port=…` changes it), opens the browser, and asks on its first run
+whether one person uses it (no account: they are the administrator) or several, and which signs to download from
+SignSuisse. CI builds the package with its Java runtime for Linux, Windows and macOS (`signaire-standalone-*`
+artifacts). The manual has a page about it (`/help/standalone`).
+
 ## Command line
 
 ```bash
