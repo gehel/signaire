@@ -70,7 +70,7 @@ jobs:
         if: env.SONAR_TOKEN != ''
         run: >
           ./mvnw -B -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar
-          -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=gehel -Dsonar.projectKey=gehel_signaire
+          -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=gehel-github -Dsonar.projectKey=gehel_signaire
           -Dsonar.qualitygate.wait=true
       - name: Not configured
         if: env.SONAR_TOKEN == ''
