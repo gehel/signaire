@@ -94,3 +94,23 @@ footer.site {
     font-size: 0.85rem;
     margin-top: 2rem;
 }
+
+dd.categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+main.sign .media {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+main.sign video {
+    max-width: min(100%, 32rem);
+}
+
+main.sign dt {
+    font-weight: bold;
+}

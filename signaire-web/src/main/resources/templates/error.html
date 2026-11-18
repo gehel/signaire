@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<!--/* Spring Boot's error page, for the errors that the controllers don't handle themselves */-->
+<head th:replace="~{layout :: head(#{error.generic.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <h1 th:text="#{error.generic.title}">Error</h1>
+    <p th:text="#{error.generic.text(${status})}">The page cannot be shown (error 500).</p>
+    <p><a th:href="@{/}" th:text="#{sign.newSearch}">New search</a></p>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

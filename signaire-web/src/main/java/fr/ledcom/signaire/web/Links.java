@@ -1,11 +1,15 @@
 package fr.ledcom.signaire.web;
 
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
+import fr.ledcom.signaire.model.Media;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -33,9 +37,22 @@ public class Links {
                 .toUriString();
     }
 
+    /**
+     * Address of a media: served from its bundle when it was downloaded, else from SignSuisse.
+     */
+    public String media(Media media) {
+        if (media.file() == null) {
+            return media.sourceUrl();
+        }
+        return request().getContextPath() + "/" + UriUtils.encodePath(media.file(), StandardCharsets.UTF_8);
+    }
+
     private static UriComponentsBuilder current() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                .getRequest();
+        HttpServletRequest request = request();
         return UriComponentsBuilder.fromPath(request.getRequestURI()).query(request.getQueryString());
+    }
+
+    private static HttpServletRequest request() {
+        return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
     }
 }
