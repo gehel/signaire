@@ -56,6 +56,9 @@ public class SearchController {
             // to add the results to a list
             model.addAttribute("userLists", lists.lists(user.accountId()));
             model.addAttribute("allCount", Math.min(results.total(), MAX_ADDED));
+            // a sign is missing: the user can ask for it
+            model.addAttribute("requestWord", results.total() == 0 && text != null && !text.isBlank() ? text.strip()
+                    : null);
         }
         model.addAttribute("q", text);
         model.addAttribute("languages", selectedLanguages);

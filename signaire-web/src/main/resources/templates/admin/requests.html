@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(#{admin.requests.title})}"></head>
+<body>
+<header th:replace="~{layout :: header}"></header>
+<main>
+    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <h1 th:text="#{admin.requests.title}">Sign requests</h1>
+    <p th:if="${status}" class="error" role="status" th:text="${status}">Import failed.</p>
+    <p th:if="${requests.isEmpty()}" th:text="#{admin.requests.none}">No open request.</p>
+    <table th:unless="${requests.isEmpty()}" class="admin">
+        <tbody>
+        <tr th:each="request : ${requests}">
+            <td>
+                <strong th:text="${request.word()}">Zoug</strong>
+                <abbr th:text="#{'signLanguage.short.' + ${request.language().name()}}">LSF</abbr>
+                <div class="note" th:text="#{admin.requests.by(${request.requester()},
+                        ${request.createdAt().toString().substring(0, 10)})}">by alice</div>
+                <div th:if="${request.comment() != null}" th:text="${request.comment()}">Comment</div>
+            </td>
+            <td>
+                <a th:href="@{/admin/requests/{id}/signsuisse(id=${request.id()})}"
+                   th:text="#{admin.requests.searchSignSuisse}">Search SignSuisse</a>
+            </td>
+            <td>
+                <a th:href="@{/admin/signs/new(request=${request.id()})}" th:text="#{admin.requests.create}">Create</a>
+            </td>
+            <td>
+                <form th:action="@{/admin/requests/{id}/reject(id=${request.id()})}" method="post">
+                    <button type="submit" class="link" th:text="#{admin.requests.reject}">Reject</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+</body>
+</html>

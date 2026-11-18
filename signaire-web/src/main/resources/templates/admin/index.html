@@ -7,6 +7,10 @@
     <h1 th:text="#{admin.title}">Administration</h1>
     <ul class="admin-menu">
         <li>
+            <a th:href="@{/admin/requests}" th:text="#{admin.requests.title}">Sign requests</a>
+            <span class="count" th:text="#{admin.requests.count(${openRequests})}">1 open request</span>
+        </li>
+        <li>
             <a th:href="@{/admin/signs}" th:text="#{admin.signs.title}">Changed signs</a>
             <span class="count" th:text="#{admin.signs.count(${changedSigns})}">2 changed signs</span>
         </li>

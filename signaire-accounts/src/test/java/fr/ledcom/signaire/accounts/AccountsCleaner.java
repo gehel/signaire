@@ -14,6 +14,6 @@ public class AccountsCleaner {
     }
 
     public void deleteAll() {
-        jdbc.sql("TRUNCATE account, word_list, word_list_entry, sign_override RESTART IDENTITY CASCADE").update();
+        jdbc.sql("TRUNCATE account, word_list, word_list_entry, sign_override, sign_request RESTART IDENTITY CASCADE").update();
     }
 }

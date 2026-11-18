@@ -9,5 +9,8 @@ import fr.ledcom.signaire.model.Language;
 @FunctionalInterface
 public interface SignSearch {
 
+    /**
+     * @param category the category to search, or {@code null} to search them all
+     */
     List<SearchHit> search(String term, Language language, Category category);
 }
