@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import fr.ledcom.signaire.core.bundles.BundleLoader;
-import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.extractor.SignSource;
@@ -38,8 +37,8 @@ class SignSuisseSyncTest {
     @Test
     void showsTheSearchesWhileFindingTheSignsAndCanBeStoppedThen() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(3);
-        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(MediaLibrary.class),
-                mock(SignEditor.class), directory.resolve("bundles"), directory.resolve("media"));
+        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
+                directory.resolve("bundles"), directory.resolve("media"));
 
         sync.start(List.of(Category.CITY), List.of(Language.FRENCH), MediaChoice.NONE);
         assertThat(signSuisse.blocked.await(10, TimeUnit.SECONDS)).isTrue();
@@ -62,8 +61,8 @@ class SignSuisseSyncTest {
     @Test
     void countsTheSignsAndTheirMedia() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(0);
-        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(MediaLibrary.class),
-                mock(SignEditor.class), directory.resolve("bundles"), directory.resolve("media"));
+        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
+                directory.resolve("bundles"), directory.resolve("media"));
 
         sync.start(List.of(Category.CITY), List.of(Language.FRENCH), MediaChoice.ALL);
         assertThat(sync.awaitCompletion(Duration.ofSeconds(10))).isTrue();

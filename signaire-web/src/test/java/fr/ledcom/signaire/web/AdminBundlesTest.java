@@ -31,8 +31,8 @@ import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Category;
 
-@WebLayerTest({AdminBundlesController.class, AdminSyncController.class})
-@Import({SignEditor.class, StartupLoading.class, BundleUploads.class, SignSuisseSync.class, FakeSignSuisse.class})
+@WebLayerTest({AdminBundlesController.class, AdminUploadsController.class, AdminSyncController.class})
+@Import({SignEditor.class, BundleLoading.class, BundleUploads.class, SignSuisseSync.class, FakeSignSuisse.class})
 class AdminBundlesTest {
 
     @TempDir

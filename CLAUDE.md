@@ -97,8 +97,9 @@ Key decisions:
   3 s instead of 13 (the JVM ignores a cache whose jars changed). CI does it on the three systems. `StandaloneIT`
   (signaire-it) runs the jar: no container.
 - **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
-  signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
-  called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.
+  signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`):
+  in the web application, anything that loads bundles goes through `BundleLoading`, which reapplies them (and
+  refreshes the media) after each loading (`docs/design/bundle-loading.md`).
   New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
   and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
   cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web tests replace it with

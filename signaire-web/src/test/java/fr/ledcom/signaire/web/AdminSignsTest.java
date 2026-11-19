@@ -38,7 +38,7 @@ import fr.ledcom.signaire.model.Sign;
 
 /** Signs changed by administrators: stored as overrides (mocks here), applied to the index. */
 @WebLayerTest({AdminController.class, AdminSignsController.class, SearchController.class, SignController.class})
-@Import({SignEditor.class, StartupLoading.class})
+@Import({SignEditor.class, BundleLoading.class})
 class AdminSignsTest {
 
     @Autowired
@@ -54,7 +54,7 @@ class AdminSignsTest {
     private SignOverrideService overrides;
 
     @Autowired
-    private StartupLoading loading;
+    private BundleLoading loading;
 
     @Value("${signaire.bundles.directory}")
     private Path bundles;
