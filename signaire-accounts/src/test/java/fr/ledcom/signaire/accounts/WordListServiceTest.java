@@ -12,7 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 // Hibernate checks that the entities match the schema made by Flyway
 @SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
-abstract class AbstractWordListServiceTest {
+@H2Database
+class WordListServiceTest {
 
     @Autowired
     private AccountService accounts;

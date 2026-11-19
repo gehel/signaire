@@ -27,7 +27,7 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-bundle` | Read/write category bundles (zip) | no |
 | `signaire-extractor` | Crawl SignSuisse and produce bundles | no |
 | `signaire-core` | Bundle loading, Lucene indexing/search, media of the bundles | yes |
-| `signaire-accounts` | PostgreSQL (JPA, Flyway): accounts, word lists, sign changes, sign requests | yes |
+| `signaire-accounts` | PostgreSQL or H2 (JPA, Flyway): accounts, word lists, sign changes, sign requests | yes |
 | `signaire-export` | PDF (PDFBox, ZXing QR codes), Anki decks (SQLite), EPUB books | no |
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
@@ -53,8 +53,9 @@ Key decisions:
 - **Storage**: user accounts and lists live in PostgreSQL, or H2 for the standalone application (`signaire-accounts`:
   JPA, schema by Flyway, Hibernate only validates it). Migrations are in `db/migration/common`, except those that
   differ per database, in `db/migration/{postgresql,h2}` (`accounts.properties` sets the locations); a migration
-  already applied never changes, even when moved. Each service test runs on both: `*IT` on PostgreSQL, `*H2Test` on
-  H2 (`@H2Database`), sharing an `Abstract*Test`. It's a separate module so that the CLI needs no database. Lists reference signs
+  already applied never changes, even when moved. The service tests run on H2 (`@H2Database`, in the mode of the
+  standalone application); PostgreSQL and its migrations are tested by `signaire-it`, whose web application runs
+  on it. It's a separate module so that the CLI needs no database. Lists reference signs
   by SignSuisse `uid`. Entities and repositories are package-private; services expose records and take
   the id of the acting account, so a list of someone else is "not found".
 - **Auth**: local accounts (Spring Security form login, bcrypt; `signaire.accounts.registration-enabled`)
@@ -82,7 +83,7 @@ Key decisions:
   through `EnvironmentDefaults`. Tests always set these directories under `target/`.
 - **Signs are transient**: bundles and index can be deleted and rebuilt at any time. Everything else refers
   to signs by uid (SignSuisse uid, or the `local-…` uid of signs added by administrators), never by an id of
-  the index; `TransientSignsIT` checks it. Keep it that way.
+  the index; `FullStackIT.everythingSurvivesTheDeletionAndExtractionOfAllTheSigns` checks it. Keep it that way.
 - **Standalone application** (`StandaloneApplication` in web, the `-standalone.jar` of signaire-web): the web
   application with the `standalone` profile (`application-standalone.properties`: H2 file database in
   `signaire.state.directory`, `127.0.0.1:8180`, log file, `standalone.properties` of the config directory imported).
@@ -100,7 +101,7 @@ Key decisions:
   called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.
   New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
   and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
-  cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web ITs replace it with
+  cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web tests replace it with
   `FakeSignSuisse`). Users request missing signs (`sign_request`); admins import them from SignSuisse
   (media linked, not downloaded), link an existing sign, create it, or reject the request.
 - **Exports** (`signaire-export`, plain Java): the caller gives an `ExportRequest` (title, signs, locale)
@@ -180,18 +181,19 @@ Gotchas with the WMF ruleset and Java 27:
 
 Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a closed local port, except for
 localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
-ITs, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
+tests, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
 
-Integration tests (`*IT.java`, run by failsafe in `verify`) use Testcontainers (PostgreSQL) and need Docker.
-The search needs no container: core tests open a `SignIndex` on a `@TempDir`, Spring tests use
-`target/test-index`. `TestSigns` lives in core's test-jar, shared with the CLI and web tests. Run a single IT with
-`./mvnw -pl signaire-web -am verify -Dit.test=SearchPagesIT -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false`.
+Only `signaire-it` needs Docker (PostgreSQL in a container, Testcontainers); the other modules have unit tests
+only. A test above the database mocks the services below it rather than using a database: the accounts tests use
+H2, the web tests mock the account services (`@WebLayerTest`). The search needs no container: core tests open a
+`SignIndex` on a `@TempDir`, Spring tests use `target/test-index`. `TestSigns` lives in core's test-jar, shared with
+the CLI and web tests.
 
 `signaire-it` tests the whole stack as users run it: the CLI and web jars as processes (XDG directories under
 `target/it`, so both share the index), PostgreSQL in a container, and a fake SignSuisse served locally
 (`signaire.signsuisse.url`): extraction → bundles → web app → HTTP user journeys. Logs of the processes are in
 `signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
--Dsurefire.failIfNoSpecifiedTests=false` (the other modules' ITs run too unless `-Dit.test=FullStackIT`).
+-Dsurefire.failIfNoSpecifiedTests=false`, and one of its tests with `-Dit.test=FullStackIT`.
 
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
@@ -260,9 +262,11 @@ Web UI gotchas:
 - Messages rendered with arguments go through `MessageFormat`: write apostrophes `''` there only. Thymeleaf
   escapes `'` as `&#39;` in the output.
 - Web test properties are in `src/test/resources/config/application.properties` (a second
-  `application.properties` would trip duplicate-finder, so test-jars must not have one either). Web ITs
-  are annotated `@WebIntegrationTest` only, to share one Spring context and the PostgreSQL
-  container.
+  `application.properties` would trip duplicate-finder, so test-jars must not have one either).
+- Web tests need no database: `@WebLayerTest(SomeController.class)` is a `@WebMvcTest` slice with the security
+  configuration and the core services (Lucene under `target/test-index`), where the services of the accounts are
+  mocks to stub and verify; `TestUsers` has logged-in users and an administrator. What needs the database too
+  (signs are transient, user journeys) is tested in `signaire-it`.
 
 Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
 model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't

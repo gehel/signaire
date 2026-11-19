@@ -12,7 +12,8 @@ import fr.ledcom.signaire.model.Language;
 
 // Hibernate checks that the entities match the schema made by Flyway
 @SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
-abstract class AbstractSignRequestServiceTest {
+@H2Database
+class SignRequestServiceTest {
 
     @Autowired
     private AccountService accounts;

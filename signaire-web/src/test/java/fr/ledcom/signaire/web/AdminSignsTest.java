@@ -1,25 +1,32 @@
 package fr.ledcom.signaire.web;
 
+import static fr.ledcom.signaire.web.TestUsers.ADMIN;
+import static fr.ledcom.signaire.web.TestUsers.ADMIN_ID;
+import static fr.ledcom.signaire.web.TestUsers.ALICE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import fr.ledcom.signaire.accounts.AccountService;
-import fr.ledcom.signaire.accounts.AccountsCleaner;
+import fr.ledcom.signaire.accounts.SignOverride;
 import fr.ledcom.signaire.accounts.SignOverrideService;
 import fr.ledcom.signaire.bundle.BundleWriter;
 import fr.ledcom.signaire.core.TestSigns;
@@ -29,17 +36,13 @@ import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
 
-@WebIntegrationTest
-class AdminSignsIT {
+/** Signs changed by administrators: stored as overrides (mocks here), applied to the index. */
+@WebLayerTest({AdminController.class, AdminSignsController.class, SearchController.class, SignController.class})
+@Import({SignEditor.class, StartupLoading.class})
+class AdminSignsTest {
 
     @Autowired
     private MockMvcTester mvc;
-
-    @Autowired
-    private AccountService accounts;
-
-    @Autowired
-    private AccountsCleaner cleaner;
 
     @Autowired
     private SignIndex index;
@@ -56,15 +59,8 @@ class AdminSignsIT {
     @Value("${signaire.bundles.directory}")
     private Path bundles;
 
-    @Autowired
-    private AdminUsers admins;
-
-    private LocalUser admin;
-    private LocalUser alice;
-
     @BeforeEach
     void setUp() throws IOException {
-        cleaner.deleteAll();
         index.recreate();
         Files.createDirectories(bundles);
         try (var files = Files.list(bundles)) {
@@ -78,35 +74,30 @@ class AdminSignsIT {
         loading.load();
         index.index(TestSigns.ALL);
         index.refresh();
-        accounts.register("admin", "correct horse", "Admin");
-        accounts.register("alice", "correct horse", "Alice");
-        admin = new LocalUser(accounts.findLocalCredentials("admin").orElseThrow(), admins);
-        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow(), admins);
     }
 
     @Test
     void administrationIsForAdministratorsOnly() {
-        assertThat(admin.getAuthorities()).extracting(Object::toString).contains("ROLE_ADMIN");
-        assertThat(mvc.get().uri("/admin").with(user(alice)).exchange()).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(mvc.get().uri("/admin").with(ALICE).exchange()).hasStatus(HttpStatus.FORBIDDEN);
         assertThat(mvc.get().uri("/admin").exchange()).hasStatus(HttpStatus.FOUND);
-        assertThat(mvc.get().uri("/admin").with(user(admin)).exchange()).hasStatus(HttpStatus.OK);
-        assertThat(mvc.get().uri("/").with(user(admin)).exchange()).bodyText().contains("href=\"/admin\"");
-        assertThat(mvc.get().uri("/").with(user(alice)).exchange()).bodyText().doesNotContain("href=\"/admin\"");
+        assertThat(mvc.get().uri("/admin").with(ADMIN).exchange()).hasStatus(HttpStatus.OK);
+        assertThat(mvc.get().uri("/").with(ADMIN).exchange()).bodyText().contains("href=\"/admin\"");
+        assertThat(mvc.get().uri("/").with(ALICE).exchange()).bodyText().doesNotContain("href=\"/admin\"");
     }
 
     @Test
     void createsSigns() {
-        MvcTestResult result = mvc.post().uri("/admin/signs").with(user(admin)).with(csrf())
+        when(overrides.newUid()).thenReturn("local-1");
+
+        MvcTestResult result = mvc.post().uri("/admin/signs").with(ADMIN).with(csrf())
                 .param("name", "ZÜRICHSEE").param("language", "de").param("categories", "NATURE", "CITY")
                 .param("definition", "See bei Zürich").param("dialects", "ZH, SZ")
                 .param("videos", "https://example.org/zurichsee.mp4\n")
                 .param("examples", "Wir baden im Zürichsee.\n\nDer See ist kalt.")
                 .exchange();
 
-        assertThat(result).hasStatus(HttpStatus.FOUND);
-        String uid = result.getResponse().getRedirectedUrl().substring("/signs/".length());
-        assertThat(uid).startsWith("local-");
-        Sign created = search.findByUid(uid).orElseThrow();
+        assertThat(result).hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/signs/local-1");
+        Sign created = search.findByUid("local-1").orElseThrow();
         assertThat(created.name()).isEqualTo("ZÜRICHSEE");
         assertThat(created.language()).isEqualTo(Language.GERMAN);
         assertThat(created.categories()).containsExactly(Category.NATURE, Category.CITY);
@@ -116,15 +107,15 @@ class AdminSignsIT {
             assertThat(video.file()).isNull();
         });
         assertThat(created.examples()).hasSize(2);
-        assertThat(overrides.find(uid)).isPresent();
+        verify(overrides).save(created, ADMIN_ID);
     }
 
     @Test
     void editsSignsKeepingTheirDownloadedMedia() {
-        assertThat(mvc.get().uri("/admin/signs/1/edit").with(user(admin)).exchange()).bodyText()
+        assertThat(mvc.get().uri("/admin/signs/1/edit").with(ADMIN).exchange()).bodyText()
                 .contains("value=\"LAUSANNE\"", "Capitale du canton de Vaud", "https://example.org/lausanne.mp4");
 
-        MvcTestResult result = mvc.post().uri("/admin/signs/1").with(user(admin)).with(csrf())
+        MvcTestResult result = mvc.post().uri("/admin/signs/1").with(ADMIN).with(csrf())
                 .param("name", "LAUSANNE").param("language", "fr").param("categories", "CITY")
                 .param("definition", "Ville olympique").param("videos", "https://example.org/lausanne.mp4")
                 .exchange();
@@ -134,23 +125,35 @@ class AdminSignsIT {
         assertThat(edited.definition()).isEqualTo("Ville olympique");
         assertThat(edited.videos()).singleElement()
                 .satisfies(video -> assertThat(video.file()).isEqualTo("media/lausanne.mp4"));
+        verify(overrides).save(edited, ADMIN_ID);
     }
 
     @Test
     void deletesSigns() {
-        assertThat(mvc.post().uri("/admin/signs/3/delete").with(user(admin)).with(csrf()).exchange())
+        assertThat(mvc.post().uri("/admin/signs/3/delete").with(ADMIN).with(csrf()).exchange())
                 .hasRedirectedUrl("/admin/signs");
 
         assertThat(search.findByUid("3")).isEmpty();
-        assertThat(mvc.get().uri("/admin/signs").with(user(admin)).exchange()).bodyText()
+        verify(overrides).delete("3", ADMIN_ID);
+    }
+
+    @Test
+    void listsTheChanges() {
+        when(overrides.all()).thenReturn(List.of(new SignOverride("3", null, true, Instant.now(), "admin")));
+
+        assertThat(mvc.get().uri("/admin/signs").with(ADMIN).exchange()).bodyText()
                 .contains("Supprimé", "3", "admin");
     }
 
     @Test
-    void changesSurviveTheReloadOfTheBundles() {
-        mvc.post().uri("/admin/signs/1").with(user(admin)).with(csrf())
+    void changesAreAppliedAgainAfterLoadingTheBundles() {
+        mvc.post().uri("/admin/signs/1").with(ADMIN).with(csrf())
                 .param("name", "LAUSANNE").param("language", "fr").param("definition", "Ville olympique").exchange();
-        mvc.post().uri("/admin/signs/2/delete").with(user(admin)).with(csrf()).exchange();
+        ArgumentCaptor<Sign> saved = ArgumentCaptor.forClass(Sign.class);
+        verify(overrides).save(saved.capture(), eq(ADMIN_ID));
+        when(overrides.all()).thenReturn(List.of(
+                new SignOverride("1", saved.getValue(), false, Instant.now(), "admin"),
+                new SignOverride("2", null, true, Instant.now(), "admin")));
 
         index.recreate();
         loading.load();
@@ -161,19 +164,19 @@ class AdminSignsIT {
 
     @Test
     void revertsChangesToTheSignOfTheBundles() {
-        mvc.post().uri("/admin/signs/1").with(user(admin)).with(csrf())
+        mvc.post().uri("/admin/signs/1").with(ADMIN).with(csrf())
                 .param("name", "LAUSANNE").param("language", "fr").param("definition", "Ville olympique").exchange();
 
-        assertThat(mvc.post().uri("/admin/signs/1/revert").with(user(admin)).with(csrf()).exchange())
+        assertThat(mvc.post().uri("/admin/signs/1/revert").with(ADMIN).with(csrf()).exchange())
                 .hasRedirectedUrl("/admin/signs");
 
         assertThat(search.findByUid("1").orElseThrow().definition()).isEqualTo("Capitale du canton de Vaud");
-        assertThat(overrides.find("1")).isEmpty();
+        verify(overrides).revert("1");
     }
 
     @Test
     void explainsWhatIsWrongWithASign() {
-        MvcTestResult result = mvc.post().uri("/admin/signs").with(user(admin)).with(csrf())
+        MvcTestResult result = mvc.post().uri("/admin/signs").with(ADMIN).with(csrf())
                 .param("name", " ").param("language", "fr").exchange();
 
         assertThat(result).hasStatus(HttpStatus.OK);
@@ -182,9 +185,9 @@ class AdminSignsIT {
 
     @Test
     void signPagesLinkToTheirEditionForAdministrators() {
-        assertThat(mvc.get().uri("/signs/1").with(user(admin)).exchange()).bodyText()
+        assertThat(mvc.get().uri("/signs/1").with(ADMIN).exchange()).bodyText()
                 .contains("href=\"/admin/signs/1/edit\"", "action=\"/admin/signs/1/delete\"");
-        assertThat(mvc.get().uri("/signs/1").with(user(alice)).exchange()).bodyText()
+        assertThat(mvc.get().uri("/signs/1").with(ALICE).exchange()).bodyText()
                 .doesNotContain("/admin/signs/1/edit");
     }
 }

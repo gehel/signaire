@@ -98,7 +98,7 @@ SignSuisse category with the signs and their media; the search index can always 
 ## Development
 
 ```bash
-./mvnw verify            # build with all the tests (Docker needed) and quality checks; unchanged modules are cached
+./mvnw verify            # build with all the tests (Docker needed by signaire-it) and quality checks; unchanged modules are cached
 ./mvnw -PnoVerify verify # without the static analysis
 ./mvnw verify -Dmaven.build.cache.enabled=false  # everything, without the build cache
 ```
