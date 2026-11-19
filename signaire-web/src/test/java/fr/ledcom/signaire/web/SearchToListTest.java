@@ -1,8 +1,15 @@
 package fr.ledcom.signaire.web;
 
+import static fr.ledcom.signaire.web.TestUsers.ALICE;
+import static fr.ledcom.signaire.web.TestUsers.ALICE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.util.List;
 
@@ -13,52 +20,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import fr.ledcom.signaire.accounts.AccountService;
-import fr.ledcom.signaire.accounts.AccountsCleaner;
 import fr.ledcom.signaire.accounts.WordList;
+import fr.ledcom.signaire.accounts.WordListException;
 import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
-@WebIntegrationTest
-class SearchToListIT {
+@WebLayerTest({SearchController.class, SearchToListController.class})
+class SearchToListTest {
+
+    private static final WordList FAMILY = new WordList(10, "Famille", List.of());
 
     @Autowired
     private MockMvcTester mvc;
 
     @Autowired
-    private AccountService accounts;
-
-    @Autowired
     private WordListService lists;
-
-    @Autowired
-    private AccountsCleaner cleaner;
 
     @Autowired
     private SignIndex index;
 
-    private LocalUser alice;
-    private WordList family;
-
     @BeforeEach
     void setUp() {
-        cleaner.deleteAll();
         index.recreate();
         index.index(TestSigns.ALL);
         index.refresh();
-        accounts.register("alice", "correct horse", "Alice");
-        alice = new LocalUser(accounts.findLocalCredentials("alice").orElseThrow(), new AdminUsers(List.of()));
-        family = lists.create(alice.accountId(), "Famille");
+        when(lists.lists(ALICE_ID)).thenReturn(List.of(FAMILY));
+        when(lists.get(ALICE_ID, FAMILY.id())).thenReturn(FAMILY);
     }
 
     @Test
     void resultsCanBeSelectedByLoggedInUsers() {
-        MvcTestResult result = mvc.get().uri("/?category=CITY").with(user(alice)).exchange();
+        MvcTestResult result = mvc.get().uri("/?category=CITY").with(ALICE).exchange();
 
         assertThat(result).bodyText()
                 .contains("form=\"add-to-list\"", "name=\"uid\"", "value=\"1\"")
-                .contains("<option value=\"" + family.id() + "\">Famille</option>")
+                .contains("<option value=\"10\">Famille</option>")
                 .contains("Ajouter la sélection", "Ajouter tous les résultats (2)");
     }
 
@@ -69,52 +66,61 @@ class SearchToListIT {
 
     @Test
     void addsTheSelectedSigns() {
-        MvcTestResult result = mvc.post().uri("/lists/signs").with(user(alice)).with(csrf())
-                .param("scope", "selection").param("uid", "3", "1").param("list", String.valueOf(family.id()))
+        when(lists.addAll(ALICE_ID, FAMILY.id(), List.of("3", "1"))).thenReturn(2);
+
+        MvcTestResult result = mvc.post().uri("/lists/signs").with(ALICE).with(csrf())
+                .param("scope", "selection").param("uid", "3", "1").param("list", "10")
                 .param("q", "").param("category", "CITY", "ANIMALS")
                 .exchange();
 
         assertThat(result).hasStatus(HttpStatus.FOUND)
                 .hasRedirectedUrl("/?category=CITY&category=ANIMALS");
         assertThat(result).flash().containsEntry("status", "2 signes ajoutés à « Famille ».");
-        assertThat(lists.get(alice.accountId(), family.id()).signUids()).containsExactly("3", "1");
+        verify(lists).addAll(ALICE_ID, FAMILY.id(), List.of("3", "1"));
     }
 
     @Test
     void addsAllTheResultsOfTheSearch() {
-        mvc.post().uri("/lists/signs").with(user(alice)).with(csrf())
-                .param("scope", "all").param("uid", "3").param("list", String.valueOf(family.id()))
+        mvc.post().uri("/lists/signs").with(ALICE).with(csrf())
+                .param("scope", "all").param("uid", "3").param("list", "10")
                 .param("category", "CITY")
                 .exchange();
 
-        assertThat(lists.get(alice.accountId(), family.id()).signUids()).containsExactly("2", "1");
+        verify(lists).addAll(ALICE_ID, FAMILY.id(), List.of("2", "1"));
     }
 
     @Test
     void addsToANewList() {
-        MvcTestResult result = mvc.post().uri("/lists/signs").with(user(alice)).with(csrf())
+        when(lists.create(ALICE_ID, "Villes")).thenReturn(new WordList(11, "Villes", List.of()));
+        when(lists.addAll(ALICE_ID, 11, List.of("1"))).thenReturn(1);
+
+        MvcTestResult result = mvc.post().uri("/lists/signs").with(ALICE).with(csrf())
                 .header("HX-Request", "true")
                 .param("scope", "all").param("list", "").param("newList", "Villes").param("q", "lausanne")
                 .exchange();
 
         assertThat(result).hasStatus(HttpStatus.OK);
         assertThat(result).bodyText().doesNotContain("<html").contains("1 signe ajouté à « Villes ».");
-        assertThat(lists.lists(alice.accountId())).extracting(WordList::name).contains("Villes");
     }
 
     @Test
     void explainsWhatIsMissing() {
-        assertThat(mvc.post().uri("/lists/signs").with(user(alice)).with(csrf()).header("HX-Request", "true")
-                .param("scope", "selection").param("list", String.valueOf(family.id())).exchange())
+        when(lists.create(ALICE_ID, " ")).thenThrow(new WordListException(WordListException.Reason.INVALID_NAME,
+                "blank"));
+
+        assertThat(mvc.post().uri("/lists/signs").with(ALICE).with(csrf()).header("HX-Request", "true")
+                .param("scope", "selection").param("list", "10").exchange())
                 .bodyText().contains("Cochez d&#39;abord des signes.");
-        assertThat(mvc.post().uri("/lists/signs").with(user(alice)).with(csrf()).header("HX-Request", "true")
+        assertThat(mvc.post().uri("/lists/signs").with(ALICE).with(csrf()).header("HX-Request", "true")
                 .param("scope", "all").param("list", "").param("newList", " ").exchange())
                 .bodyText().contains("Le nom doit compter 1 à 100 caractères.");
+        verify(lists, never()).addAll(anyLong(), anyLong(), anyList());
     }
 
     @Test
     void requiresLogin() {
         assertThat(mvc.post().uri("/lists/signs").with(csrf()).param("scope", "all").exchange())
                 .hasStatus(HttpStatus.FOUND);
+        verify(lists, never()).create(anyLong(), anyString());
     }
 }

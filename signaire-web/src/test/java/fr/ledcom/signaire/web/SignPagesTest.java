@@ -28,8 +28,8 @@ import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
 
-@WebIntegrationTest
-class SignPagesIT {
+@WebLayerTest({SignController.class, MediaController.class})
+class SignPagesTest {
 
     /** A sign whose media were not downloaded, with everything a sign can have. */
     private static final Sign BAER = Sign.builder("10", Language.GERMAN, "BÄR")

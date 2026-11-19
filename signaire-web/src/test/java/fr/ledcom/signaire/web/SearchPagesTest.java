@@ -13,8 +13,8 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import fr.ledcom.signaire.core.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
-@WebIntegrationTest
-class SearchPagesIT {
+@WebLayerTest(SearchController.class)
+class SearchPagesTest {
 
     @Autowired
     private MockMvcTester mvc;
