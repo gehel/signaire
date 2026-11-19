@@ -91,8 +91,10 @@ Key decisions:
   or several accounts with an administrator; signs to download through `SignSuisseSync`), `SingleUserFilter` makes
   every local request the single user (an account with a Signaire OIDC identity, administrator), and
   `/admin/quit` stops it (no console after a double click). Never on servers: `signaire.standalone.enabled` is false
-  there. `ci/package-standalone.sh` runs jpackage (application image with its Java runtime), CI does it on the three
-  systems. `StandaloneIT` (signaire-it) runs the jar: no container.
+  there. `ci/package-standalone.sh` runs jpackage (application image with its Java runtime) on the extracted jar, then
+  a training run that writes the JVM's AOT cache (`signaire.aot`, in the launcher's options): the app starts in about
+  3 s instead of 13 (the JVM ignores a cache whose jars changed). CI does it on the three systems. `StandaloneIT`
+  (signaire-it) runs the jar: no container.
 - **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
   signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
   called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.
