@@ -1,8 +1,6 @@
 package fr.ledcom.signaire.export;
 
-import java.util.Locale;
-
-/** Escaping for the HTML (Anki, EPUB) and JSON (Anki) written by the exporters. */
+/** Escaping for the HTML (Anki, EPUB) written by the exporters. */
 final class Markup {
 
     private Markup() {
@@ -25,27 +23,5 @@ final class Markup {
             }
         }
         return escaped.toString();
-    }
-
-    /** A JSON string literal, with its quotes. */
-    static String json(String text) {
-        StringBuilder escaped = new StringBuilder(text.length() + 2).append('"');
-        for (char c : text.toCharArray()) {
-            switch (c) {
-                case '"' -> escaped.append("\\\"");
-                case '\\' -> escaped.append("\\\\");
-                case '\n' -> escaped.append("\\n");
-                case '\r' -> escaped.append("\\r");
-                case '\t' -> escaped.append("\\t");
-                default -> {
-                    if (c < 0x20) {
-                        escaped.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
-                    } else {
-                        escaped.append(c);
-                    }
-                }
-            }
-        }
-        return escaped.append('"').toString();
     }
 }

@@ -23,10 +23,9 @@ categories, SignSuisse link, uid), labelled in the language of the export (`expo
 Downloaded videos and images are included (`[sound:…]`, `<img>`); others are linked to SignSuisse. New cards are
 shown in the order of the export.
 
-The JSON of the collection (`col.conf`, `col.models`, `col.decks`, `col.dconf`) is written with Jackson from records
-that mirror Anki's structures. `AnkiExporter` decides *what* goes in the deck (a `NoteType`: name, fields, card
-templates, the field each card needs, CSS, built from the labels); `AnkiSchema` decides *how* Anki stores it (the
-records, the JSON, the tables).
+The JSON of the collection (`col.conf`, `col.models`, `col.decks`, `col.dconf`) and the media map are written with
+Jackson's tree model. `AnkiExporter` decides *what* goes in the deck (a `NoteType`: name, fields, card templates, the
+field each card needs, CSS, built from the labels); `AnkiSchema` decides *how* Anki stores it (the JSON, the tables).
 
 ## Decisions
 
@@ -42,7 +41,8 @@ records, the JSON, the tables).
   set once.
 - **Jackson for the JSON** instead of string concatenation: the earlier hand-written JSON needed its own escaping
   (`Markup.json`) and a method with nine parameters; Jackson (already used by the bundle, extractor and accounts
-  modules) escapes everything and the records name each part of the structure. The constant deck configuration
+  modules) escapes everything. Its tree model rather than records: Anki's objects have many constant members, which
+  records would turn into constructors with a dozen arguments. The constant deck configuration
   (`dconf`) stays a text block: it has no variable part.
 - **No Anki library**: the known ones (genanki, …) are Python; the format needed for an import is small.
 

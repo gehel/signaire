@@ -12,7 +12,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -66,16 +65,14 @@ public final class AnkiExporter {
             try (ZipOutputStream zip = new ZipOutputStream(out)) {
                 zip.putNextEntry(new ZipEntry("collection.anki2"));
                 Files.copy(collection, zip);
-                List<String> mediaEntries = new ArrayList<>();
                 int index = 0;
-                for (Map.Entry<String, byte[]> file : files.entrySet()) {
+                for (byte[] content : files.values()) {
                     zip.putNextEntry(new ZipEntry(String.valueOf(index)));
-                    zip.write(file.getValue());
-                    mediaEntries.add(Markup.json(String.valueOf(index)) + ":" + Markup.json(file.getKey()));
+                    zip.write(content);
                     index++;
                 }
                 zip.putNextEntry(new ZipEntry("media"));
-                zip.write(("{" + String.join(",", mediaEntries) + "}").getBytes(StandardCharsets.UTF_8));
+                zip.write(AnkiSchema.media(List.copyOf(files.keySet())).getBytes(StandardCharsets.UTF_8));
                 zip.finish();
             }
         } catch (IOException | SQLException e) {
@@ -207,10 +204,10 @@ public final class AnkiExporter {
         String wordToSignFront = word;
         String wordToSignBack = "{{FrontSide}}<hr id=\"answer\">" + video + image + "<div class=\"link\">" + link
                 + "</div>";
-        return AnkiSchema.model(modelId, deckId, labels.get("anki.model"), names, now, List.of(
+        return AnkiSchema.models(modelId, deckId, new AnkiSchema.NoteType(labels.get("anki.model"), names, List.of(
                 new AnkiSchema.Template(labels.get("anki.signToWord"), signToWordFront, signToWordBack),
                 new AnkiSchema.Template(labels.get("anki.wordToSign"), wordToSignFront, wordToSignBack)),
-                FIELDS.indexOf("video"), FIELDS.indexOf("name"), CSS);
+                FIELDS.indexOf("video"), FIELDS.indexOf("name"), CSS), now);
     }
 
     private static String link(String url, String text) {
