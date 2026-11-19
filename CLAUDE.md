@@ -263,6 +263,9 @@ Web UI gotchas:
   `@WebMvcTest` slices (no Docker) don't load them; mock what the slice needs (`AccountService` for the
   security configuration).
 - Forms posted with htmx (`hx-post` on a `<form th:action=…>`) carry the CSRF token as a hidden field.
+- The guided tour (`TourController`): `?tour=N` renders step N as a `<dialog>` in the header of any page, pointing at
+  the element marked `data-tour`; `static/js/tour.js` places it and dims the rest of the page. Without script, the dialog
+  is a card under the header. Keep the `data-tour` markers when changing the pages.
 - Messages rendered with arguments go through `MessageFormat`: write apostrophes `''` there only. Thymeleaf
   escapes `'` as `&#39;` in the output.
 - Web test properties are in `src/test/resources/config/application.properties` (a second

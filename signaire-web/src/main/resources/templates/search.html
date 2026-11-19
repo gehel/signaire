@@ -5,7 +5,7 @@
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
     <h1 class="visually-hidden" th:text="#{search.label}">Search a sign</h1>
-    <section th:if="${welcome}" class="welcome" aria-labelledby="welcome-title">
+    <section th:if="${welcome and tour == null}" class="welcome" aria-labelledby="welcome-title">
         <h2 id="welcome-title" th:text="#{tour.welcome.title}">Welcome to Signaire</h2>
         <p th:text="#{tour.welcome.text}">Signaire helps you learn Swiss sign languages.</p>
         <p class="tour-links">
@@ -13,7 +13,7 @@
             <a th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
         </p>
     </section>
-    <form class="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
+    <form class="search" data-tour="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
           hx-push-url="true" hx-trigger="submit, input delay:300ms, change">
         <p class="words">
             <label for="q" th:text="#{search.label}">Search a sign</label>
@@ -43,7 +43,7 @@
     <p id="add-status" th:fragment="add-status" role="status" th:text="${status}"
        th:class="${statusError} ? 'error' : 'success'"></p>
 
-    <section id="results" th:fragment="results" aria-live="polite">
+    <section id="results" th:fragment="results" aria-live="polite" data-tour="results">
         <p th:if="${results.total() == 0}" th:text="#{search.none}">No sign found.</p>
         <p th:if="${requestWord != null}">
             <a th:href="@{/requests(word=${requestWord})}" th:text="#{search.request(${requestWord})}">Request it</a>
