@@ -17,6 +17,10 @@ import fr.ledcom.signaire.core.bundles.LoadReport;
 import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignIndex;
+import fr.ledcom.signaire.model.DialectVariant;
+import fr.ledcom.signaire.model.Example;
+import fr.ledcom.signaire.model.Media;
+import fr.ledcom.signaire.model.Sign;
 
 /**
  * The loading of bundles in the web application: whatever loads bundles goes through here, so that the media are
@@ -81,7 +85,33 @@ public class BundleLoading {
         return load();
     }
 
-    /** After bundles were loaded by {@link BundleLoader} directly (the SignSuisse synchronization). */
+    /**
+     * Indexes signs being extracted, before their bundle is written: with their media on SignSuisse (the media
+     * library serves only the media of bundles) and the changes of administrators. Loading the bundle replaces them.
+     */
+    public void indexExtracted(List<Sign> signs) {
+        editor.indexWithChanges(signs.stream().map(BundleLoading::linked).toList());
+    }
+
+    private static Sign linked(Sign sign) {
+        return sign.toBuilder()
+                .videos(sign.videos().stream().map(BundleLoading::linked).toList())
+                .examples(sign.examples().stream()
+                        .map(example -> example.video() == null ? example
+                                : new Example(example.text(), linked(example.video())))
+                        .toList())
+                .dialectVariants(sign.dialectVariants().stream()
+                        .map(variant -> new DialectVariant(variant.dialects(), linked(variant.video())))
+                        .toList())
+                .images(sign.images().stream().map(BundleLoading::linked).toList())
+                .build();
+    }
+
+    private static Media linked(Media media) {
+        return media.file() == null ? media : new Media(media.sourceUrl(), null);
+    }
+
+    /** After bundles were loaded by {@link BundleLoader} directly. */
     public void loaded() {
         media.refresh();
         // the bundles replace the signs changed by administrators

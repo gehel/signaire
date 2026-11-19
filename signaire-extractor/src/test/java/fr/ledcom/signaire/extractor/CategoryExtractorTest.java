@@ -169,6 +169,25 @@ class CategoryExtractorTest {
     }
 
     @Test
+    void handsEachSignOverOnceItsMediaAreDownloaded() {
+        List<Sign> extracted = Collections.synchronizedList(new ArrayList<>());
+        CategoryExtractor followed = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
+                new BundleWriter(Clock.systemUTC()), new ExtractionListener() {
+                    @Override
+                    public void signExtracted(Sign sign) {
+                        extracted.add(sign);
+                    }
+                });
+
+        followed.extract(Category.CITY, EnumSet.of(Language.FRENCH, Language.GERMAN), output, MediaChoice.VIDEOS);
+
+        assertThat(extracted).extracting(Sign::name).containsExactlyInAnyOrder("LAUSANNE", "ZÜRICH");
+        assertThat(extracted).filteredOn(sign -> sign.name().equals("LAUSANNE")).singleElement()
+                .satisfies(sign -> assertThat(sign.videos())
+                        .containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", "media/LAUSANNE.mp4")));
+    }
+
+    @Test
     void reusesTheSignsOfTheExistingBundle() {
         extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.NONE);
         source.fetches.clear();

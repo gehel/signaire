@@ -318,7 +318,7 @@ public class CategoryExtractor {
                     continue;
                 }
                 if (media == MediaChoice.NONE) {
-                    signs.add(SignMedia.with(sign.get(), SignMedia::linked, SignMedia::linked));
+                    extracted(SignMedia.with(sign.get(), SignMedia::linked, SignMedia::linked));
                 } else {
                     tracker.mediaQueued(toFetch(sign.get()).size());
                     toDownload.add(sign);
@@ -351,9 +351,14 @@ public class CategoryExtractor {
                 checkInterrupted();
                 Sign sign = next.get();
                 UnaryOperator<Media> fetched = chosen -> download(sign, chosen);
-                signs.add(SignMedia.with(sign, media.videos() ? fetched : SignMedia::linked,
+                extracted(SignMedia.with(sign, media.videos() ? fetched : SignMedia::linked,
                         media.images() ? fetched : SignMedia::linked));
             }
+        }
+
+        private void extracted(Sign sign) {
+            signs.add(sign);
+            listener.signExtracted(sign);
         }
 
         private void checkInterrupted() {
