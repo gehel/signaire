@@ -43,7 +43,7 @@ public class RequestController {
             redirect.addFlashAttribute("status", messages.getMessage("requests.sent", new Object[] {requested},
                     locale));
             return "redirect:/requests";
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             addModel(user, model, word, "requests.error.word");
             return "requests";
         }

@@ -53,7 +53,7 @@ final class Pdf {
     static float width(PDFont font, float size, String text) {
         try {
             return font.getStringWidth(text) / 1000 * size;
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException _) {
             return text.length() * size / 2;
         }
     }

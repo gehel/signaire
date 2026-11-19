@@ -43,34 +43,34 @@ class TranslationsTest {
 
     @Test
     void messagesFollowTheDefaultLocale() {
-        try (DefaultLocale locale = DefaultLocale.set(Locale.GERMAN)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.GERMAN)) {
             assertThat(Messages.of("fr.ledcom.signaire.cli.load").get("load.unchanged", "x")).isEqualTo("x: unverändert");
         }
-        try (DefaultLocale locale = DefaultLocale.set(Locale.ITALIAN)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.ITALIAN)) {
             assertThat(Messages.of("fr.ledcom.signaire.cli.load").get("load.unchanged", "x")).isEqualTo("x: invariato");
         }
-        try (DefaultLocale locale = DefaultLocale.set(Locale.ENGLISH)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.ENGLISH)) {
             assertThat(Messages.of("fr.ledcom.signaire.cli.load").get("load.unchanged", "x")).isEqualTo("x: unchanged");
         }
     }
 
     @Test
     void unsupportedLanguagesFallBackToFrench() {
-        try (DefaultLocale locale = DefaultLocale.set(Locale.of("es", "ES"))) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.of("es", "ES"))) {
             assertThat(Messages.of("fr.ledcom.signaire.cli.load").get("load.unchanged", "x")).isEqualTo("x : inchangé");
         }
     }
 
     @Test
     void categoryNamesFollowTheDefaultLocale() {
-        try (DefaultLocale locale = DefaultLocale.set(Locale.GERMAN)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.GERMAN)) {
             assertThat(CategoryNames.name(Category.CITY)).isEqualTo("stadt");
             assertThat(new CategoryNames.Candidates()).contains("stadt", "beruf-schule").doesNotContain("ville");
         }
-        try (DefaultLocale locale = DefaultLocale.set(Locale.ITALIAN)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.ITALIAN)) {
             assertThat(CategoryNames.name(Category.CITY)).isEqualTo("citta");
         }
-        try (DefaultLocale locale = DefaultLocale.set(Locale.ENGLISH)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.ENGLISH)) {
             assertThat(CategoryNames.name(Category.CITY)).isEqualTo("city");
         }
     }
@@ -85,7 +85,7 @@ class TranslationsTest {
 
     @Test
     void unknownCategoriesAreReportedInTheUserLanguage() {
-        try (DefaultLocale locale = DefaultLocale.set(Locale.GERMAN)) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.GERMAN)) {
             CategoryNames.Converter converter = new CategoryNames.Converter();
             assertThatThrownBy(() -> converter.convert("xyz"))
                     .isInstanceOf(TypeConversionException.class)

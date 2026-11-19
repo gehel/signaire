@@ -41,7 +41,7 @@ public class QuitController {
         Thread.ofVirtual().name("quit").start(() -> {
             try {
                 Thread.sleep(DELAY);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
             stop.run();

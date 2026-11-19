@@ -85,7 +85,7 @@ class SingleUserFilter extends OncePerRequestFilter {
         try {
             // an IP address: no lookup
             return InetAddress.getByName(request.getRemoteAddr()).isLoopbackAddress();
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException _) {
             return false;
         }
     }

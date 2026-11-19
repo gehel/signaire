@@ -182,7 +182,7 @@ public class SignSuisseSync {
                 extraction.extract(category, languages, chosenMedia);
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
-        } catch (CancellationException e) {
+        } catch (CancellationException _) {
             progress.updateAndGet(p -> p.with(State.CANCELLED, null));
         } catch (ExtractionException | BundleException | SearchException | UncheckedIOException e) {
             LOG.log(Level.ERROR, "SignSuisse synchronization failed", e);

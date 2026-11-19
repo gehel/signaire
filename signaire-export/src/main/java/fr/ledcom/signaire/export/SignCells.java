@@ -196,7 +196,7 @@ final class SignCells {
         return media.read(image).flatMap(bytes -> {
             try {
                 return Optional.of(PDImageXObject.createFromByteArray(document, bytes, name));
-            } catch (IOException | IllegalArgumentException e) {
+            } catch (IOException | IllegalArgumentException _) {
                 return Optional.empty();
             }
         });

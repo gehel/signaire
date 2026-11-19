@@ -66,7 +66,7 @@ public class BundleLoader {
                 if (sign.isPresent()) {
                     return sign;
                 }
-            } catch (BundleException e) {
+            } catch (BundleException _) {
                 // an invalid bundle has no sign to offer
             }
         }

@@ -81,7 +81,7 @@ public final class AnkiExporter {
             if (collection != null) {
                 try {
                     Files.deleteIfExists(collection);
-                } catch (IOException e) {
+                } catch (IOException _) {
                     // a temporary file left behind
                 }
             }

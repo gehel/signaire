@@ -128,7 +128,7 @@ public class MediaLibrary implements AutoCloseable {
     private static boolean isCurrent(Path file, OpenBundle bundle) {
         try {
             return bundle.isCurrent(file);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }

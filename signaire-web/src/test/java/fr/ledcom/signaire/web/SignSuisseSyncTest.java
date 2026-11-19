@@ -92,7 +92,7 @@ class SignSuisseSyncTest {
                 blocked.countDown();
                 try {
                     release.await();
-                } catch (InterruptedException e) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                 }
             }
