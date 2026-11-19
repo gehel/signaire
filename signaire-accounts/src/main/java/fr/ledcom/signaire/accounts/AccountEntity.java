@@ -21,9 +21,9 @@ class AccountEntity {
     private String username;
     private String displayName;
     private String passwordHash;
-    private String oidcIssuer;
-    private String oidcSubject;
-    private Instant createdAt;
+    private String oidcIssuer; // NOSONAR read by findByOidcIssuerAndOidcSubject
+    private String oidcSubject; // NOSONAR read by findByOidcIssuerAndOidcSubject
+    private Instant createdAt; // NOSONAR a column, for administrators reading the database
 
     protected AccountEntity() {
         // for JPA

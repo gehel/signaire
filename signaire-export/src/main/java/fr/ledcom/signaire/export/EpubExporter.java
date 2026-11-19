@@ -6,11 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -81,8 +83,27 @@ public final class EpubExporter {
     private record Captioned(String text, Media video) {
     }
 
-    /** A file of the book, listed in its manifest. */
-    private record Item(String id, String href, String mediaType, byte[] content, boolean inSpine) {
+    /** A file of the book, listed in its manifest. Compared by the bytes of its content. */
+    record Item(String id, String href, String mediaType, byte[] content, boolean inSpine) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof Item item && id.equals(item.id) && href.equals(item.href)
+                    && mediaType.equals(item.mediaType) && Arrays.equals(content, item.content)
+                    && inSpine == item.inSpine;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, href, mediaType, Arrays.hashCode(content), inSpine);
+        }
+
+        /** With the size of the content: a media can be megabytes. */
+        @Override
+        public String toString() {
+            return "Item[id=" + id + ", href=" + href + ", mediaType=" + mediaType + ", content=" + content.length
+                    + " bytes, inSpine=" + inSpine + "]";
+        }
     }
 
     /** The files of a book, with the media they include. */

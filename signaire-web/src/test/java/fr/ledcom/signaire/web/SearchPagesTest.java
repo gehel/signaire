@@ -33,8 +33,8 @@ class SearchPagesTest {
     void findsSignsAndLinksToThem() {
         MvcTestResult result = mvc.get().uri("/?q=lausanne").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText()
                 .contains("<html lang=\"fr\">")
                 .contains("1 signe trouvé")
                 .contains("href=\"/signs/1\"", "LAUSANNE")
@@ -95,9 +95,9 @@ class SearchPagesTest {
     void htmxRequestsGetTheResultsOnly() {
         MvcTestResult result = mvc.get().uri("/?q=chat").header("HX-Request", "true").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).hasHeader(HttpHeaders.VARY, "HX-Request");
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .hasHeader(HttpHeaders.VARY, "HX-Request")
+                .bodyText()
                 .doesNotContain("<html")
                 .contains("id=\"results\"", "CHAT")
                 .contains("hx-swap-oob");

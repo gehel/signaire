@@ -46,7 +46,7 @@ final class SignCells {
         float size = Math.min(cell.width(), cell.height());
         float padding = Math.max(3, size * 0.04f);
         Box inner = cell.inset(padding);
-        float nameSize = clamp(size * 0.075f, 7, 20);
+        float nameSize = Math.clamp(size * 0.075f, 7, 20);
         float smallSize = Math.max(5, nameSize * 0.55f);
         float textSize = Math.max(5, nameSize * 0.5f);
 
@@ -113,7 +113,7 @@ final class SignCells {
         float size = Math.min(cell.width(), cell.height());
         float padding = Math.max(3, size * 0.06f);
         Box inner = cell.inset(padding);
-        float nameSize = clamp(size * 0.1f, 8, 28);
+        float nameSize = Math.clamp(size * 0.1f, 8, 28);
         float smallSize = Math.max(5, nameSize * 0.45f);
         float textSize = Math.max(5, nameSize * 0.42f);
         float baseline = inner.y() + inner.height() * 0.62f;
@@ -196,7 +196,7 @@ final class SignCells {
         return media.read(image).flatMap(bytes -> {
             try {
                 return Optional.of(PDImageXObject.createFromByteArray(document, bytes, name));
-            } catch (IOException | IllegalArgumentException e) {
+            } catch (IOException | IllegalArgumentException _) {
                 return Optional.empty();
             }
         });
@@ -209,9 +209,5 @@ final class SignCells {
 
     private static float centered(Box box, PDFont font, float size, String text) {
         return box.x() + (box.width() - Pdf.width(font, size, text)) / 2;
-    }
-
-    private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
     }
 }

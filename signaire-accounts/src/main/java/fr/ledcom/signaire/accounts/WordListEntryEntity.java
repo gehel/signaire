@@ -26,7 +26,7 @@ class WordListEntryEntity {
     @JoinColumn(name = "word_list_id")
     private WordListEntity wordList;
     private String signUid;
-    private Instant addedAt;
+    private Instant addedAt; // NOSONAR read by the @OrderBy of WordListEntity.entries
 
     protected WordListEntryEntity() {
         // for JPA

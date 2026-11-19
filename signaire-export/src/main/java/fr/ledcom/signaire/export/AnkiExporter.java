@@ -12,7 +12,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -60,22 +59,21 @@ public final class AnkiExporter {
         Labels labels = Labels.of(request.locale());
         Path collection = null;
         try {
-            collection = Files.createTempFile("signaire-", ".anki2");
+            // readable by its owner only, with a random name, deleted below
+            collection = Files.createTempFile("signaire-", ".anki2"); // NOSONAR
             Map<String, byte[]> files = new LinkedHashMap<>();
             writeCollection(collection, request, labels, files);
             try (ZipOutputStream zip = new ZipOutputStream(out)) {
                 zip.putNextEntry(new ZipEntry("collection.anki2"));
                 Files.copy(collection, zip);
-                List<String> mediaEntries = new ArrayList<>();
                 int index = 0;
-                for (Map.Entry<String, byte[]> file : files.entrySet()) {
+                for (byte[] content : files.values()) {
                     zip.putNextEntry(new ZipEntry(String.valueOf(index)));
-                    zip.write(file.getValue());
-                    mediaEntries.add(Markup.json(String.valueOf(index)) + ":" + Markup.json(file.getKey()));
+                    zip.write(content);
                     index++;
                 }
                 zip.putNextEntry(new ZipEntry("media"));
-                zip.write(("{" + String.join(",", mediaEntries) + "}").getBytes(StandardCharsets.UTF_8));
+                zip.write(AnkiSchema.media(List.copyOf(files.keySet())).getBytes(StandardCharsets.UTF_8));
                 zip.finish();
             }
         } catch (IOException | SQLException e) {
@@ -84,15 +82,15 @@ public final class AnkiExporter {
             if (collection != null) {
                 try {
                     Files.deleteIfExists(collection);
-                } catch (IOException e) {
+                } catch (IOException _) {
                     // a temporary file left behind
                 }
             }
         }
     }
 
-    @SuppressFBWarnings(value = {"SIL_SQL_IN_LOOP", "SQL_INJECTION_JDBC"},
-            justification = "The statements in the loop are the constant schema of Anki collections")
+    @SuppressFBWarnings(value = "SQL_INJECTION_JDBC",
+            justification = "The statements of the batch are the constant schema of Anki collections")
     private void writeCollection(Path file, ExportRequest request, Labels labels, Map<String, byte[]> files)
             throws SQLException {
         long now = System.currentTimeMillis();
@@ -102,8 +100,9 @@ public final class AnkiExporter {
             connection.setAutoCommit(false);
             try (Statement statement = connection.createStatement()) {
                 for (String table : AnkiSchema.TABLES) {
-                    statement.execute(table);
+                    statement.addBatch(table);
                 }
+                statement.executeBatch();
             }
             try (PreparedStatement col = connection.prepareStatement(
                     "insert into col values (1, ?, ?, ?, 11, 0, 0, 0, ?, ?, ?, ?, '{}')")) {
@@ -120,6 +119,11 @@ public final class AnkiExporter {
                     "insert into notes values (?, ?, ?, ?, -1, ?, ?, ?, ?, 0, '')");
                     PreparedStatement cards = connection.prepareStatement(
                             "insert into cards values (?, ?, ?, ?, ?, -1, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, '')")) {
+                // the same for every note and card
+                notes.setLong(3, modelId);
+                notes.setLong(4, now / 1000);
+                cards.setLong(3, deckId);
+                cards.setLong(5, now / 1000);
                 List<Sign> signs = request.signs();
                 for (int i = 0; i < signs.size(); i++) {
                     Sign sign = signs.get(i);
@@ -127,27 +131,25 @@ public final class AnkiExporter {
                     long noteId = now + i;
                     notes.setLong(1, noteId);
                     notes.setString(2, "signaire-" + sign.uid());
-                    notes.setLong(3, modelId);
-                    notes.setLong(4, now / 1000);
                     notes.setString(5, tags(sign, labels));
                     notes.setString(6, String.join(SEPARATOR, fields));
                     notes.setString(7, sign.name());
                     notes.setLong(8, checksum(sign.name()));
-                    notes.executeUpdate();
+                    notes.addBatch();
                     for (int ord : List.of(SIGN_TO_WORD, WORD_TO_SIGN)) {
                         if (ord == SIGN_TO_WORD && fields.get(FIELDS.indexOf("video")).isEmpty()) {
                             continue;
                         }
                         cards.setLong(1, now + 2L * i + ord);
                         cards.setLong(2, noteId);
-                        cards.setLong(3, deckId);
                         cards.setInt(4, ord);
-                        cards.setLong(5, now / 1000);
                         // new cards are shown in the order of the export
                         cards.setInt(6, i + 1);
-                        cards.executeUpdate();
+                        cards.addBatch();
                     }
                 }
+                notes.executeBatch();
+                cards.executeBatch();
             }
             connection.commit();
         }
@@ -155,10 +157,10 @@ public final class AnkiExporter {
 
     /** The fields of the note of a sign, in the order of {@link #FIELDS}. */
     private List<String> fields(Sign sign, Labels labels, Map<String, byte[]> files) {
-        String video = MediaFiles.firstVideo(sign).map(media -> include(media, files)
+        String video = MediaFiles.firstVideo(sign).map(videoMedia -> include(videoMedia, files)
                 .map(name -> "[sound:" + name + "]")
-                .orElseGet(() -> link(media.sourceUrl(), labels.get("watchVideo")))).orElse("");
-        String image = MediaFiles.firstImage(sign).flatMap(media -> include(media, files))
+                .orElseGet(() -> link(videoMedia.sourceUrl(), labels.get("watchVideo")))).orElse("");
+        String image = MediaFiles.firstImage(sign).flatMap(imageMedia -> include(imageMedia, files))
                 .map(name -> "<img src=\"" + Markup.html(name) + "\">").orElse("");
         return List.of(
                 Markup.html(sign.name()),
@@ -203,10 +205,10 @@ public final class AnkiExporter {
         String wordToSignFront = word;
         String wordToSignBack = "{{FrontSide}}<hr id=\"answer\">" + video + image + "<div class=\"link\">" + link
                 + "</div>";
-        return AnkiSchema.model(modelId, deckId, labels.get("anki.model"), names, now, List.of(
+        return AnkiSchema.models(modelId, deckId, new AnkiSchema.NoteType(labels.get("anki.model"), names, List.of(
                 new AnkiSchema.Template(labels.get("anki.signToWord"), signToWordFront, signToWordBack),
                 new AnkiSchema.Template(labels.get("anki.wordToSign"), wordToSignFront, wordToSignBack)),
-                FIELDS.indexOf("video"), FIELDS.indexOf("name"), CSS);
+                FIELDS.indexOf("video"), FIELDS.indexOf("name"), CSS), now);
     }
 
     private static String link(String url, String text) {
@@ -224,7 +226,9 @@ public final class AnkiExporter {
     @SuppressFBWarnings(value = "WEAK_MESSAGE_DIGEST_SHA1", justification = "Anki's format, not security")
     private static long checksum(String text) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-1").digest(text.getBytes(StandardCharsets.UTF_8));
+            // required by Anki's format, not a security use
+            byte[] digest = MessageDigest.getInstance("SHA-1") // NOSONAR
+                    .digest(text.getBytes(StandardCharsets.UTF_8));
             long checksum = 0;
             for (int i = 0; i < 4; i++) {
                 checksum = checksum << 8 | (digest[i] & 0xff);

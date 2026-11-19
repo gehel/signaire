@@ -28,10 +28,16 @@ public final class UserDirectories {
      */
     public UserDirectories(Map<String, String> environment, String osName, Path home) {
         this.environment = Map.copyOf(environment);
-        String os = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
-        this.system = os.startsWith("windows") ? OperatingSystem.WINDOWS
-                : os.startsWith("mac") ? OperatingSystem.MAC : OperatingSystem.LINUX;
+        this.system = operatingSystem(osName);
         this.home = home;
+    }
+
+    private static OperatingSystem operatingSystem(String osName) {
+        String os = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
+        if (os.startsWith("windows")) {
+            return OperatingSystem.WINDOWS;
+        }
+        return os.startsWith("mac") ? OperatingSystem.MAC : OperatingSystem.LINUX;
     }
 
     /** The directories of the user running the JVM. */

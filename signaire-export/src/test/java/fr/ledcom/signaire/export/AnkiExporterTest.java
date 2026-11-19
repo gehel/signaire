@@ -24,10 +24,15 @@ import java.util.zip.ZipInputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 class AnkiExporterTest {
 
     @TempDir
     Path directory;
+
+    private static final JsonMapper JSON = JsonMapper.builder().build();
 
     private final AnkiExporter exporter = new AnkiExporter(ExportTestData.MEDIA);
 
@@ -38,8 +43,7 @@ class AnkiExporterTest {
         assertThat(entries).containsKeys("collection.anki2", "media", "0", "1");
         assertThat(new String(entries.get("media"), StandardCharsets.UTF_8))
                 .isEqualTo("{\"0\":\"lausanne.mp4\",\"1\":\"lausanne.png\"}");
-        assertThat(entries.get("0")).isEqualTo(ExportTestData.VIDEO);
-        assertThat(entries.get("1")).isEqualTo(ExportTestData.IMAGE);
+        assertThat(entries).containsEntry("0", ExportTestData.VIDEO).containsEntry("1", ExportTestData.IMAGE);
     }
 
     @Test
@@ -73,23 +77,42 @@ class AnkiExporterTest {
     @Test
     void theDeckIsNamedAfterTheExport() throws Exception {
         try (Connection collection = collection(Locale.FRENCH)) {
-            assertThat(strings(collection, "select decks from col").getFirst()).contains("\"name\": \"Famille\"");
-            assertThat(strings(collection, "select models from col").getFirst())
-                    .contains("\"name\": \"Signaire (signes)\"", "Signe → mot", "Mot → signe", "{{Vidéo}}");
+            assertThat(json(collection, "decks").valueStream().map(deck -> deck.get("name").asString()))
+                    .containsExactlyInAnyOrder("Default", "Famille");
+            JsonNode model = json(collection, "models").values().iterator().next();
+            assertThat(model.get("name").asString()).isEqualTo("Signaire (signes)");
+            assertThat(model.get("tmpls").valueStream().map(template -> template.get("name").asString()))
+                    .containsExactly("Signe → mot", "Mot → signe");
+            assertThat(model.get("tmpls").get(0).get("qfmt").asString()).isEqualTo("{{Vidéo}}");
         }
     }
 
     @Test
     void fieldsAndCardsAreNamedInTheLanguageOfTheRequest() throws Exception {
         try (Connection collection = collection(Locale.GERMAN)) {
-            assertThat(strings(collection, "select models from col").getFirst())
-                    .contains("Gebärde → Wort", "\"name\": \"Wort\"");
+            JsonNode model = json(collection, "models").values().iterator().next();
+            assertThat(model.get("tmpls").get(0).get("name").asString()).isEqualTo("Gebärde → Wort");
+            assertThat(model.get("flds").valueStream().map(field -> field.get("name").asString())).contains("Wort");
+        }
+    }
+
+    @Test
+    void titlesWithQuotesAndBackslashesStayValidJson() throws Exception {
+        Path file = directory.resolve("quoted.anki2");
+        Files.write(file, export(Locale.FRENCH, "Le \"lac\" \\ ici").get("collection.anki2"));
+        try (Connection collection = DriverManager.getConnection("jdbc:sqlite:" + file)) {
+            assertThat(json(collection, "decks").valueStream().map(deck -> deck.get("name").asString()))
+                    .contains("Le \"lac\" \\ ici");
         }
     }
 
     private Map<String, byte[]> export(Locale locale) throws IOException {
+        return export(locale, "Famille");
+    }
+
+    private Map<String, byte[]> export(Locale locale, String title) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        exporter.write(new ExportRequest("Famille", ExportTestData.signs(3), locale), out);
+        exporter.write(new ExportRequest(title, ExportTestData.signs(3), locale), out);
         Map<String, byte[]> entries = new HashMap<>();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
@@ -103,6 +126,10 @@ class AnkiExporterTest {
         Path file = directory.resolve("collection-" + locale + ".anki2");
         Files.write(file, export(locale).get("collection.anki2"));
         return DriverManager.getConnection("jdbc:sqlite:" + file);
+    }
+
+    private static JsonNode json(Connection collection, String column) throws SQLException {
+        return JSON.readTree(strings(collection, "select " + column + " from col").getFirst());
     }
 
     private static List<String> strings(Connection connection, String query) throws SQLException {

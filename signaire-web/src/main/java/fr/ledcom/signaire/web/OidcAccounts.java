@@ -47,7 +47,8 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
             return user.getPreferredUsername();
         }
         String email = user.getEmail();
-        if (email != null && email.indexOf('@') > 0) {
+        // > 0: an address starting with @ has no name before it
+        if (email != null && email.indexOf('@') > 0) { // NOSONAR
             return email.substring(0, email.indexOf('@'));
         }
         return user.getSubject();

@@ -104,8 +104,10 @@ class BundleRoundTripTest {
     @Test
     void writerRejectsMissingMediaFiles() throws IOException {
         Path emptyRoot = Files.createDirectories(tmp.resolve("empty"));
+        Path bundle = tmp.resolve("ville.zip");
+        List<Sign> signs = List.of(lausanne());
 
-        assertThatThrownBy(() -> writer.write(tmp.resolve("ville.zip"), Category.CITY, List.of(lausanne()), emptyRoot))
+        assertThatThrownBy(() -> writer.write(bundle, Category.CITY, signs, emptyRoot))
                 .isInstanceOf(BundleException.class)
                 .hasMessageContaining("media/lausanne.mp4");
     }
@@ -118,7 +120,10 @@ class BundleRoundTripTest {
                 .videos(List.of(new Media("https://example.org/x.mp4", "media/../../secret.txt")))
                 .build();
 
-        assertThatThrownBy(() -> writer.write(tmp.resolve("ville.zip"), Category.CITY, List.of(sign), mediaRoot))
+        Path bundle = tmp.resolve("ville.zip");
+        List<Sign> signs = List.of(sign);
+
+        assertThatThrownBy(() -> writer.write(bundle, Category.CITY, signs, mediaRoot))
                 .isInstanceOf(BundleException.class)
                 .hasMessageContaining("secret.txt");
     }

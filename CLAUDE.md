@@ -97,8 +97,9 @@ Key decisions:
   3 s instead of 13 (the JVM ignores a cache whose jars changed). CI does it on the three systems. `StandaloneIT`
   (signaire-it) runs the jar: no container.
 - **Administration** (`/admin/**`, role `ADMIN` = usernames in `signaire.accounts.admins`): changes to
-  signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`,
-  called by `StartupLoading.load()`, uploads and the sync); anything that loads bundles must call it.
+  signs are stored in `sign_override` and applied again after every bundle load (`SignEditor.reapply()`):
+  in the web application, anything that loads bundles goes through `BundleLoading`, which reapplies them (and
+  refreshes the media) after each loading (`docs/design/bundle-loading.md`).
   New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
   and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
   cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web tests replace it with
@@ -172,7 +173,10 @@ Gotchas with Spring Boot and picocli:
 Gotchas with the WMF ruleset and Java 27:
 - The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
   the parent's versions can't handle Java 27 class files. Check these first when bumping the JDK or the
-  parent.
+  parent. It also overrides checkstyle (12.3.1, the last version with the `JavadocStyle` check of the WMF ruleset):
+  the parent's 10.16 rejects unnamed variables.
+- Unused catch parameters and try-with-resources variables are `_`, except in the Java 17 modules (model,
+  bundle), where `_` doesn't compile.
 - Import order: `java.*`, `javax.*`, `org.*`, `com.*`, then everything else (`edu.*`, `picocli.*`, …) as
   one group; groups are separated by a blank line, static imports on top.
 - Classes with only static methods need a non-public constructor (`HideUtilityClassConstructor`); Spring
@@ -207,8 +211,8 @@ summarizes them (main keeps them as the `sitespeed-baseline` artifact, 90 days) 
 requests of a page grow by more than 10% (and more than 100 ms, 1 KB or 1 request). The comparison is in the summary of
 the job. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
 code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
-integration tests), so code reached only by ITs needs unit tests too. Some SonarCloud suggestions clash with the
-WMF checkstyle rules (unnamed variables `_` are forbidden): checkstyle wins.
+integration tests), so code reached only by ITs needs unit tests too. When a SonarCloud suggestion clashes with
+the WMF checkstyle rules, checkstyle wins; a false positive gets a `// NOSONAR` with its reason.
 
 Running the CLI locally:
 
@@ -285,6 +289,9 @@ the CLI and web never reach Lucene or JPA directly. Change the rules there when 
 
 ## Conventions
 
+- **Design first**: a feature, or a change to the design of one, starts with its design document in `docs/design/`
+  (why, design, decisions and rejected alternatives; template in `docs/design/README.md`), as the first commit of its
+  branch. Keep it in step with the implementation.
 - **Test first**: write the failing test before the implementation, JUnit 5 + AssertJ (no Hamcrest, no
   JUnit assertions).
 - **Branch per feature** (`feature/<name>`), merged to `main` through a GitHub PR. Commits tell a story

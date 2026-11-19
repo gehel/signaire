@@ -74,8 +74,8 @@ class SearchToListTest {
                 .exchange();
 
         assertThat(result).hasStatus(HttpStatus.FOUND)
-                .hasRedirectedUrl("/?category=CITY&category=ANIMALS");
-        assertThat(result).flash().containsEntry("status", "2 signes ajoutés à « Famille ».");
+                .hasRedirectedUrl("/?category=CITY&category=ANIMALS")
+                .flash().containsEntry("status", "2 signes ajoutés à « Famille ».");
         verify(lists).addAll(ALICE_ID, FAMILY.id(), List.of("3", "1"));
     }
 
@@ -99,8 +99,8 @@ class SearchToListTest {
                 .param("scope", "all").param("list", "").param("newList", "Villes").param("q", "lausanne")
                 .exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().doesNotContain("<html").contains("1 signe ajouté à « Villes ».");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().doesNotContain("<html").contains("1 signe ajouté à « Villes ».");
     }
 
     @Test

@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.core.bundles.BundleLoader;
-import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.extractor.ExtractionException;
 import fr.ledcom.signaire.extractor.MediaChoice;
@@ -38,21 +37,19 @@ public class SignSuisseSync {
 
     private final SignSource source;
     private final BundleLoader loader;
-    private final MediaLibrary media;
-    private final SignEditor editor;
+    private final BundleLoading loading;
     private final Path bundles;
     private final Path mediaCache;
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.IDLE);
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private Thread worker;
 
-    public SignSuisseSync(SignSource source, BundleLoader loader, MediaLibrary media, SignEditor editor,
+    public SignSuisseSync(SignSource source, BundleLoader loader, BundleLoading loading,
             @Value("${signaire.bundles.directory:bundles}") Path bundles,
             @Value("${signaire.media.cache:bundles/.media}") Path mediaCache) {
         this.source = source;
         this.loader = loader;
-        this.media = media;
-        this.editor = editor;
+        this.loading = loading;
         this.bundles = bundles;
         this.mediaCache = mediaCache;
     }
@@ -185,14 +182,13 @@ public class SignSuisseSync {
                 extraction.extract(category, languages, chosenMedia);
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
-        } catch (CancellationException e) {
+        } catch (CancellationException _) {
             progress.updateAndGet(p -> p.with(State.CANCELLED, null));
         } catch (ExtractionException | BundleException | SearchException | UncheckedIOException e) {
             LOG.log(Level.ERROR, "SignSuisse synchronization failed", e);
             progress.updateAndGet(p -> p.with(State.FAILED, e.getMessage()));
         } finally {
-            media.refresh();
-            editor.reapply();
+            loading.loaded();
         }
     }
 }

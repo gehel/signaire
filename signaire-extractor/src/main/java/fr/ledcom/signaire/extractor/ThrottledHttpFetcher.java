@@ -136,7 +136,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
         }
         try {
             Files.deleteIfExists(file);
-        } catch (IOException e) {
+        } catch (IOException _) {
             // best effort cleanup of the temporary file, the original error matters more
         }
     }

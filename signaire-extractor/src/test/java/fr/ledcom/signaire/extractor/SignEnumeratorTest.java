@@ -36,8 +36,8 @@ class SignEnumeratorTest {
 
         new SignEnumerator(lexicon, CAP, 10).enumerate(Language.FRENCH, Category.CITY);
 
-        assertThat(lexicon.queries).allSatisfy(q -> assertThat(q).isNotBlank());
-        assertThat(lexicon.queries).doesNotHaveDuplicates();
+        assertThat(lexicon.queries).allSatisfy(q -> assertThat(q).isNotBlank())
+                .doesNotHaveDuplicates();
     }
 
     @Test

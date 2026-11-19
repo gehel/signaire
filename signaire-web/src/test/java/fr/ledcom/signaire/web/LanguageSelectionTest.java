@@ -51,8 +51,8 @@ class LanguageSelectionTest {
     void homePageIsInFrenchByDefault() {
         MvcTestResult result = mvc.get().uri("/").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText()
                 .contains("<html lang=\"fr\">")
                 .contains("<title>Signaire</title>")
                 .contains("Lexique de la langue des signes suisse");
@@ -67,16 +67,16 @@ class LanguageSelectionTest {
     void homePageFollowsTheBrowserLanguage(String acceptLanguage, String language, String tagline) {
         MvcTestResult result = mvc.get().uri("/").header(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage).exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("<html lang=\"" + language + "\">").contains(tagline);
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("<html lang=\"" + language + "\">").contains(tagline);
     }
 
     @Test
     void unsupportedLanguagesFallBackToFrench() {
         MvcTestResult result = mvc.get().uri("/").header(HttpHeaders.ACCEPT_LANGUAGE, "es").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("<html lang=\"fr\">");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("<html lang=\"fr\">");
     }
 
     @Test
@@ -96,8 +96,8 @@ class LanguageSelectionTest {
     void unsupportedLanguagesCannotBeChosen() {
         MvcTestResult result = mvc.get().uri("/?lang=es").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("<html lang=\"fr\">");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("<html lang=\"fr\">");
     }
 
     @Test

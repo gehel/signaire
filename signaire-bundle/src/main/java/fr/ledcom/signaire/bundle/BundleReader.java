@@ -46,8 +46,8 @@ public class BundleReader {
             return new Bundle(file, zip, manifest, signs);
         } catch (IOException | JacksonException | BundleException e) {
             closeQuietly(zip, e);
-            if (e instanceof BundleException) {
-                throw (BundleException) e;
+            if (e instanceof BundleException invalid) {
+                throw invalid;
             }
             throw new BundleException("Invalid bundle " + file, e);
         }

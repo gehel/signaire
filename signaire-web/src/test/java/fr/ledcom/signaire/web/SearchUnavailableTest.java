@@ -42,8 +42,8 @@ class SearchUnavailableTest {
 
         MvcTestResult result = mvc.get().uri("/?q=chat").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.SERVICE_UNAVAILABLE);
-        assertThat(result).bodyText().contains("<html lang=\"de\">", "Suche nicht verfügbar");
+        assertThat(result).hasStatus(HttpStatus.SERVICE_UNAVAILABLE)
+                .bodyText().contains("<html lang=\"de\">", "Suche nicht verfügbar");
     }
 
     @Test

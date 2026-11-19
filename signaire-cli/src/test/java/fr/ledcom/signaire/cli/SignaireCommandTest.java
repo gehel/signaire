@@ -50,7 +50,7 @@ class SignaireCommandTest {
     void helpIsDisplayedInTheUserLanguage(String language, String usage, String description, String commands) {
         StringWriter out = new StringWriter();
         int exitCode;
-        try (DefaultLocale locale = DefaultLocale.set(Locale.of(language))) {
+        try (DefaultLocale _ = DefaultLocale.set(Locale.of(language))) {
             CommandLine commandLine = SignaireCommand.commandLine(command, factory);
             commandLine.setOut(new PrintWriter(out));
             exitCode = commandLine.execute("--help");

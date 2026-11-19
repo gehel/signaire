@@ -61,7 +61,7 @@ public final class StandaloneApplication {
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), CONNECT_TIMEOUT_MILLIS);
             return true;
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }

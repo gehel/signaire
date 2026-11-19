@@ -16,26 +16,31 @@ import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.bundles.LoadReport;
 import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SearchException;
+import fr.ledcom.signaire.core.search.SignIndex;
 
 /**
- * Loads the bundles of the configured directory when the application starts, in the background: the UI is
- * usable, with the signs already indexed, while new or changed bundles are loaded.
+ * The loading of bundles in the web application: whatever loads bundles goes through here, so that the media are
+ * refreshed and the changes of administrators applied again after each loading (the bundles replace the signs they
+ * contain). The bundles of the configured directory are loaded when the application starts, in the background: the
+ * UI is usable, with the signs already indexed, while new or changed bundles are loaded.
  */
 @Component
-public class StartupLoading {
+public class BundleLoading {
 
-    private static final Logger LOG = System.getLogger(StartupLoading.class.getName());
+    private static final Logger LOG = System.getLogger(BundleLoading.class.getName());
 
     private final BundleLoader loader;
+    private final SignIndex index;
     private final MediaLibrary media;
     private final SignEditor editor;
     private final Path directory;
     private final boolean enabled;
 
-    public StartupLoading(BundleLoader loader, MediaLibrary media, SignEditor editor,
+    public BundleLoading(BundleLoader loader, SignIndex index, MediaLibrary media, SignEditor editor,
             @Value("${signaire.bundles.directory:bundles}") Path directory,
             @Value("${signaire.bundles.load-on-startup:true}") boolean enabled) {
         this.loader = loader;
+        this.index = index;
         this.media = media;
         this.editor = editor;
         this.directory = directory;
@@ -59,6 +64,30 @@ public class StartupLoading {
         }
     }
 
+    /**
+     * Loads one bundle (an upload), then refreshes the media and applies the changes of administrators again.
+     *
+     * @throws BundleException when the bundle is invalid
+     */
+    public LoadReport load(Path bundle) {
+        LoadReport report = loader.load(bundle);
+        loaded();
+        return report;
+    }
+
+    /** Empties the index and loads all the bundles again: after a change of the index mapping. */
+    public List<LoadReport> reindex() {
+        index.recreate();
+        return load();
+    }
+
+    /** After bundles were loaded by {@link BundleLoader} directly (the SignSuisse synchronization). */
+    public void loaded() {
+        media.refresh();
+        // the bundles replace the signs changed by administrators
+        editor.reapply();
+    }
+
     private List<LoadReport> tryLoad() {
         if (!Files.isDirectory(directory)) {
             LOG.log(Level.WARNING, "No bundle directory {0} yet: download signs with the synchronization of the "
@@ -73,9 +102,7 @@ public class StartupLoading {
                     "Bundle {0}: {1} ({2} signs){3}", report.file().getFileName(), report.status(),
                     report.signCount(), report.error() == null ? "" : ", " + report.error());
         }
-        media.refresh();
-        // the bundles replace the signs changed by administrators
-        editor.reapply();
+        loaded();
         return reports;
     }
 }

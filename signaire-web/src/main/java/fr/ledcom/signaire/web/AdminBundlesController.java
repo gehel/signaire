@@ -1,7 +1,6 @@
 package fr.ledcom.signaire.web;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,42 +17,28 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.bundles.BundleRecord;
 import fr.ledcom.signaire.core.bundles.LoadReport;
-import fr.ledcom.signaire.core.media.MediaLibrary;
-import fr.ledcom.signaire.core.search.SignIndex;
 
-/** Administrators see the bundles, upload new ones, reload and reindex them. */
+/** Administrators see the bundles, reload and reindex them (uploads: {@link AdminUploadsController}). */
 @Controller
 public class AdminBundlesController {
 
-    private static final String STATUS = "status";
-    private static final String REDIRECT = "redirect:/admin/bundles";
+    static final String STATUS = "status";
+    static final String REDIRECT = "redirect:/admin/bundles";
 
     private final BundleLoader loader;
-    private final StartupLoading loading;
-    private final BundleUploads uploads;
-    private final SignIndex index;
-    private final MediaLibrary media;
-    private final SignEditor editor;
+    private final BundleLoading loading;
     private final MessageSource messages;
     private final Path directory;
 
-    public AdminBundlesController(BundleLoader loader, StartupLoading loading, BundleUploads uploads,
-            SignIndex index, MediaLibrary media, SignEditor editor, MessageSource messages,
+    public AdminBundlesController(BundleLoader loader, BundleLoading loading, MessageSource messages,
             @Value("${signaire.bundles.directory:bundles}") Path directory) {
         this.loader = loader;
         this.loading = loading;
-        this.uploads = uploads;
-        this.index = index;
-        this.media = media;
-        this.editor = editor;
         this.messages = messages;
         this.directory = directory;
     }
@@ -84,25 +69,7 @@ public class AdminBundlesController {
     /** Empties the index and loads all the bundles again: after a change of the index mapping. */
     @PostMapping("/admin/bundles/reindex")
     public String reindex(Locale locale, RedirectAttributes redirect) {
-        index.recreate();
-        redirect.addFlashAttribute(STATUS, summary(loading.load(), locale));
-        return REDIRECT;
-    }
-
-    @PostMapping("/admin/bundles")
-    public String upload(@RequestParam("bundle") MultipartFile file, Locale locale, RedirectAttributes redirect)
-            throws IOException {
-        try (InputStream in = file.getInputStream()) {
-            Path bundle = uploads.store(in);
-            LoadReport report = loader.load(bundle);
-            media.refresh();
-            editor.reapply();
-            redirect.addFlashAttribute(STATUS, messages.getMessage("admin.bundles.uploaded",
-                    new Object[] {String.valueOf(bundle.getFileName()), report.signCount()}, locale));
-        } catch (BundleException e) {
-            redirect.addFlashAttribute(STATUS, messages.getMessage("admin.bundles.invalid",
-                    new Object[] {e.getMessage()}, locale));
-        }
+        redirect.addFlashAttribute(STATUS, summary(loading.reindex(), locale));
         return REDIRECT;
     }
 

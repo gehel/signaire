@@ -25,8 +25,7 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AccountService accounts, AdminUsers admins,
-            Standalone standalone, ObjectProvider<ClientRegistrationRepository> clientRegistrations)
-            throws Exception {
+            Standalone standalone, ObjectProvider<ClientRegistrationRepository> clientRegistrations) {
         http.authorizeHttpRequests(requests -> requests
                         .requestMatchers("/admin/**").hasRole(AdminUsers.ADMIN_ROLE)
                         .requestMatchers("/lists/**", "/signs/*/lists/**", "/requests/**").authenticated()

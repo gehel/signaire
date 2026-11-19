@@ -28,7 +28,7 @@ final class QrCodes {
     static Optional<BitMatrix> encode(String url) {
         try {
             return Optional.of(new QRCodeWriter().encode(url, BarcodeFormat.QR_CODE, 0, 0, HINTS));
-        } catch (WriterException | IllegalArgumentException e) {
+        } catch (WriterException | IllegalArgumentException _) {
             return Optional.empty();
         }
     }

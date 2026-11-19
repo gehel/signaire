@@ -1,10 +1,15 @@
 package fr.ledcom.signaire.export;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /** The tables and JSON configuration of an Anki collection, schema version 11. */
 final class AnkiSchema {
+
+    private static final JsonMapper JSON = JsonMapper.builder().build();
 
     static final List<String> TABLES = List.of(
             "create table col (id integer primary key, crt integer not null, mod integer not null, "
@@ -40,60 +45,137 @@ final class AnkiSchema {
              "rev": {"bury": true, "ease4": 1.3, "fuzz": 0.05, "ivlFct": 1, "maxIvl": 36500, "minSpace": 1,
                      "perDay": 100}}}""";
 
+    /** Anki's default preamble of the LaTeX in notes. */
+    private static final String LATEX_PREAMBLE = """
+            \\documentclass[12pt]{article}
+            \\special{papersize=3in,5in}
+            \\usepackage[utf8]{inputenc}
+            \\usepackage{amssymb,amsmath}
+            \\pagestyle{empty}
+            \\setlength{\\parindent}{0in}
+            \\begin{document}
+            """;
+
     /** A card template: its name, and its question and answer formats. */
     record Template(String name, String question, String answer) {
+    }
+
+    /**
+     * What a note type holds: its fields, and its card templates (the first is "sign to word", the second
+     * "word to sign").
+     *
+     * @param signToWordField index of the field a "sign to word" card needs
+     * @param wordToSignField index of the field a "word to sign" card needs
+     */
+    record NoteType(String name, List<String> fields, List<Template> templates, int signToWordField,
+            int wordToSignField, String css) {
+        NoteType {
+            fields = List.copyOf(fields);
+            templates = List.copyOf(templates);
+        }
     }
 
     private AnkiSchema() {
     }
 
+    /** Collection settings: the deck and note type of the export are the current ones. */
     static String conf(long modelId, long deckId) {
-        return "{\"activeDecks\": [" + deckId + "], \"addToCur\": true, \"collapseTime\": 1200, \"curDeck\": "
-                + deckId + ", \"curModel\": \"" + modelId + "\", \"dueCounts\": true, \"estTimes\": true, "
-                + "\"newBury\": true, \"newSpread\": 0, \"nextPos\": 1, \"sortBackwards\": false, "
-                + "\"sortType\": \"noteFld\", \"timeLim\": 0}";
+        ObjectNode conf = JSON.createObjectNode();
+        conf.putArray("activeDecks").add(deckId);
+        conf.put("addToCur", true)
+                .put("collapseTime", 1200)
+                .put("curDeck", deckId)
+                .put("curModel", String.valueOf(modelId))
+                .put("dueCounts", true)
+                .put("estTimes", true)
+                .put("newBury", true)
+                .put("newSpread", 0)
+                .put("nextPos", 1)
+                .put("sortBackwards", false)
+                .put("sortType", "noteFld")
+                .put("timeLim", 0);
+        return JSON.writeValueAsString(conf);
     }
 
+    /** The decks by id: Anki's default deck, and the deck of the export. */
     static String decks(long deckId, String name, long now) {
-        return "{\"1\": " + deck(1, "Default", now) + ", \"" + deckId + "\": " + deck(deckId, name, now) + "}";
+        ObjectNode decks = JSON.createObjectNode();
+        decks.set("1", deck(1, "Default", now));
+        decks.set(String.valueOf(deckId), deck(deckId, name, now));
+        return JSON.writeValueAsString(decks);
     }
 
-    private static String deck(long id, String name, long now) {
-        return "{\"id\": " + id + ", \"name\": " + Markup.json(name) + ", \"mod\": " + now / 1000
-                + ", \"usn\": -1, \"desc\": \"\", \"dyn\": 0, \"conf\": 1, \"collapsed\": false, "
-                + "\"extendNew\": 10, \"extendRev\": 50, \"newToday\": [0, 0], \"revToday\": [0, 0], "
-                + "\"lrnToday\": [0, 0], \"timeToday\": [0, 0]}";
+    private static ObjectNode deck(long id, String name, long now) {
+        ObjectNode deck = JSON.createObjectNode()
+                .put("id", id)
+                .put("name", name)
+                .put("mod", now / 1000)
+                .put("usn", -1)
+                .put("desc", "")
+                .put("dyn", 0)
+                .put("conf", 1)
+                .put("collapsed", false)
+                .put("extendNew", 10)
+                .put("extendRev", 50);
+        for (String counts : List.of("newToday", "revToday", "lrnToday", "timeToday")) {
+            deck.putArray(counts).add(0).add(0);
+        }
+        return deck;
     }
 
-    /**
-     * A note type.
-     *
-     * @param signToWordField index of the field a "sign to word" card needs
-     * @param wordToSignField index of the field a "word to sign" card needs
-     */
-    static String model(long modelId, long deckId, String name, List<String> fields, long now,
-            List<Template> templates, int signToWordField, int wordToSignField, String css) {
-        List<String> fieldJson = new ArrayList<>();
-        for (int i = 0; i < fields.size(); i++) {
-            fieldJson.add("{\"name\": " + Markup.json(fields.get(i)) + ", \"ord\": " + i + ", \"sticky\": false, "
-                    + "\"rtl\": false, \"font\": \"Arial\", \"size\": 20, \"media\": []}");
+    /** The note types by id: the one of the export. */
+    static String models(long modelId, long deckId, NoteType type, long now) {
+        ObjectNode model = JSON.createObjectNode()
+                .put("id", modelId)
+                .put("name", type.name())
+                .put("type", 0)
+                .put("mod", now / 1000)
+                .put("usn", -1)
+                .put("sortf", 0)
+                .put("did", deckId);
+        ArrayNode templates = model.putArray("tmpls");
+        for (int i = 0; i < type.templates().size(); i++) {
+            Template template = type.templates().get(i);
+            templates.addObject()
+                    .put("name", template.name())
+                    .put("ord", i)
+                    .put("qfmt", template.question())
+                    .put("afmt", template.answer())
+                    .putNull("did")
+                    .put("bqfmt", "")
+                    .put("bafmt", "");
         }
-        List<String> templateJson = new ArrayList<>();
-        for (int i = 0; i < templates.size(); i++) {
-            Template template = templates.get(i);
-            templateJson.add("{\"name\": " + Markup.json(template.name()) + ", \"ord\": " + i + ", \"qfmt\": "
-                    + Markup.json(template.question()) + ", \"afmt\": " + Markup.json(template.answer())
-                    + ", \"did\": null, \"bqfmt\": \"\", \"bafmt\": \"\"}");
+        ArrayNode fields = model.putArray("flds");
+        for (int i = 0; i < type.fields().size(); i++) {
+            fields.addObject()
+                    .put("name", type.fields().get(i))
+                    .put("ord", i)
+                    .put("sticky", false)
+                    .put("rtl", false)
+                    .put("font", "Arial")
+                    .put("size", 20)
+                    .putArray("media");
         }
-        return "{\"" + modelId + "\": {\"id\": " + modelId + ", \"name\": " + Markup.json(name)
-                + ", \"type\": 0, \"mod\": " + now / 1000 + ", \"usn\": -1, \"sortf\": 0, \"did\": " + deckId
-                + ", \"tmpls\": [" + String.join(", ", templateJson) + "], \"flds\": ["
-                + String.join(", ", fieldJson) + "], \"css\": " + Markup.json(css)
-                + ", \"latexPre\": " + Markup.json("\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n"
-                        + "\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n"
-                        + "\\setlength{\\parindent}{0in}\n\\begin{document}\n")
-                + ", \"latexPost\": " + Markup.json("\\end{document}")
-                + ", \"req\": [[0, \"any\", [" + signToWordField + "]], [1, \"any\", [" + wordToSignField + "]]]"
-                + ", \"tags\": [], \"vers\": []}}";
+        model.put("css", type.css())
+                .put("latexPre", LATEX_PREAMBLE)
+                .put("latexPost", "\\end{document}");
+        // the cards of each template are generated when this field is not empty
+        ArrayNode required = model.putArray("req");
+        required.addArray().add(0).add("any").addArray().add(type.signToWordField());
+        required.addArray().add(1).add("any").addArray().add(type.wordToSignField());
+        model.putArray("tags");
+        model.putArray("vers");
+        ObjectNode models = JSON.createObjectNode();
+        models.set(String.valueOf(modelId), model);
+        return JSON.writeValueAsString(models);
+    }
+
+    /** The media of a package: their entry names in the zip, to their file names. */
+    static String media(List<String> fileNames) {
+        ObjectNode media = JSON.createObjectNode();
+        for (int i = 0; i < fileNames.size(); i++) {
+            media.put(String.valueOf(i), fileNames.get(i));
+        }
+        return JSON.writeValueAsString(media);
     }
 }
