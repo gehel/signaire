@@ -4,7 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import fr.ledcom.signaire.model.DialectVariant;
@@ -36,7 +36,7 @@ final class SignMedia {
     }
 
     /** The sign with each video (of the sign, its examples and dialect variants) and image replaced. */
-    static Sign with(Sign sign, Function<Media, Media> video, Function<Media, Media> image) {
+    static Sign with(Sign sign, UnaryOperator<Media> video, UnaryOperator<Media> image) {
         return sign.toBuilder()
                 .videos(sign.videos().stream().map(video).toList())
                 .examples(sign.examples().stream()

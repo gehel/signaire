@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -249,9 +250,10 @@ class CategoryExtractorTest {
         CategoryExtractor cancelling = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
                 new BundleWriter(Clock.systemUTC()));
         source.onFetch = cancelling::cancel;
+        Set<Language> french = EnumSet.of(Language.FRENCH);
 
-        assertThatThrownBy(() -> cancelling.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
-                MediaChoice.NONE)).isInstanceOf(CancellationException.class);
+        assertThatThrownBy(() -> cancelling.extract(Category.CITY, french, output, MediaChoice.NONE))
+                .isInstanceOf(CancellationException.class);
         assertThat(output.resolve("city.zip")).doesNotExist();
     }
 

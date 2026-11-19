@@ -15,9 +15,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
@@ -152,11 +154,13 @@ class ThrottledHttpFetcherTest {
         AtomicInteger maxInFlight = new AtomicInteger();
         HttpServer slow = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         slow.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        // a response that takes 300 ms
+        CountDownLatch never = new CountDownLatch(1);
         slow.createContext("/slow", exchange -> {
             maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
             try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
+                never.await(300, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
             inFlight.decrementAndGet();

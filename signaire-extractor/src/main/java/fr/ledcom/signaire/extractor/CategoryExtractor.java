@@ -27,9 +27,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleReader;
@@ -57,6 +60,7 @@ public class CategoryExtractor {
     private static final Duration DEFAULT_PROGRESS_INTERVAL = Duration.ofSeconds(5);
     private static final long POLL_MILLIS = 100;
     private static final long STOP_SECONDS = 10;
+    private static final String EXTRACTION_OF = "Extraction of ";
 
     private final SignSource source;
     private final SignEnumerator enumerator;
@@ -64,8 +68,8 @@ public class CategoryExtractor {
     private final ExtractionListener listener;
     private final Duration progressInterval;
     private final Clock clock;
-    private volatile ExtractionTracker tracker;
-    private volatile Run running;
+    private final AtomicReference<ExtractionTracker> lastTracker = new AtomicReference<>();
+    private final AtomicReference<Run> running = new AtomicReference<>();
     private volatile boolean cancelled;
 
     public CategoryExtractor(SignSource source, SignEnumerator enumerator, BundleWriter writer) {
@@ -114,12 +118,12 @@ public class CategoryExtractor {
         Path target = outputDir.resolve(bundleFileName(category));
         Map<String, Sign> previous = options.refresh() ? Map.of() : previousSigns(target);
         Run run = new Run(category, EnumSet.copyOf(languages), cache, options.media(), previous);
-        tracker = run.tracker;
-        running = run;
+        lastTracker.set(run.tracker);
+        running.set(run);
         try {
             run.execute();
         } finally {
-            running = null;
+            running.set(null);
         }
         run.tracker.stage(Stage.WRITING);
         Path bundle = writer.write(target, category, List.copyOf(run.signs), cache);
@@ -132,14 +136,13 @@ public class CategoryExtractor {
 
     /** Where the current (or last) extraction is, or empty before the first one. */
     public Optional<ExtractionStatus> status() {
-        ExtractionTracker current = tracker;
-        return current == null ? Optional.empty() : Optional.of(current.snapshot());
+        return Optional.ofNullable(lastTracker.get()).map(ExtractionTracker::snapshot);
     }
 
     /** Stops the current extraction, and those that would start: {@link #extract} throws a CancellationException. */
     public void cancel() {
         cancelled = true;
-        Run current = running;
+        Run current = running.get();
         if (current != null) {
             current.stop();
         }
@@ -175,7 +178,7 @@ public class CategoryExtractor {
         private final BlockingQueue<Optional<Sign>> toDownload = new LinkedBlockingQueue<>();
         private final List<Sign> signs = Collections.synchronizedList(new ArrayList<>());
         private final List<SearchHit> failures = Collections.synchronizedList(new ArrayList<>());
-        private volatile List<Future<Void>> stages = List.of();
+        private final AtomicReference<List<Future<Void>>> stages = new AtomicReference<>(List.of());
 
         Run(Category category, Set<Language> languages, Path cache, MediaChoice media, Map<String, Sign> previous) {
             this.category = category;
@@ -189,10 +192,10 @@ public class CategoryExtractor {
         void execute() {
             ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
             try {
-                stages = List.of(
+                stages.set(List.of(
                         executor.submit(() -> stage(this::search, found)),
                         executor.submit(() -> stage(this::read, toDownload)),
-                        executor.submit(() -> stage(this::download, null)));
+                        executor.submit(() -> stage(this::download, null))));
                 if (cancelled) {
                     stop();
                 }
@@ -228,33 +231,42 @@ public class CategoryExtractor {
 
         /** Interrupts the stages: they stop at their next request or sign. */
         void stop() {
-            stages.forEach(stage -> stage.cancel(true));
+            stages.get().forEach(stage -> stage.cancel(true));
         }
 
         private void await() {
             long nextProgress = System.nanoTime() + progressInterval.toNanos();
-            for (Future<Void> stage : stages) {
-                boolean done = false;
-                while (!done) {
-                    if (cancelled) {
-                        throw stop(new CancellationException("Extraction of " + category + " cancelled"));
-                    }
-                    try {
-                        stage.get(POLL_MILLIS, TimeUnit.MILLISECONDS);
-                        done = true;
-                    } catch (TimeoutException _) {
-                        if (System.nanoTime() >= nextProgress) {
-                            listener.progress(tracker.snapshot());
-                            nextProgress = System.nanoTime() + progressInterval.toNanos();
-                        }
-                    } catch (ExecutionException e) {
-                        throw stop(e.getCause() instanceof RuntimeException cause ? cause
-                                : new ExtractionException("Extraction of " + category + " failed", e.getCause()));
-                    } catch (InterruptedException _) {
-                        Thread.currentThread().interrupt();
-                        throw stop(new CancellationException("Extraction of " + category + " interrupted"));
+            for (Future<Void> stage : stages.get()) {
+                while (!awaited(stage)) {
+                    if (System.nanoTime() >= nextProgress) {
+                        listener.progress(tracker.snapshot());
+                        nextProgress = System.nanoTime() + progressInterval.toNanos();
                     }
                 }
+            }
+        }
+
+        /** Waits a little for a stage: true when it is done; stops everything on cancellation or failure. */
+        @SuppressFBWarnings(value = "LEST_LOST_EXCEPTION_STACK_TRACE",
+                justification = "The failure of a stage is thrown as is, the interruption kept as the cause")
+        private boolean awaited(Future<Void> stage) {
+            if (cancelled) {
+                throw stop(new CancellationException(EXTRACTION_OF + category + " cancelled"));
+            }
+            try {
+                stage.get(POLL_MILLIS, TimeUnit.MILLISECONDS);
+                return true;
+            } catch (TimeoutException _) {
+                return false;
+            } catch (ExecutionException e) {
+                throw stop(e.getCause() instanceof RuntimeException cause ? cause
+                        : new ExtractionException(EXTRACTION_OF + category + " failed", e.getCause()));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                CancellationException cancellation =
+                        new CancellationException(EXTRACTION_OF + category + " interrupted");
+                cancellation.initCause(e);
+                throw stop(cancellation);
             }
         }
 
@@ -338,7 +350,7 @@ public class CategoryExtractor {
             for (Optional<Sign> next = take(toDownload); next.isPresent(); next = take(toDownload)) {
                 checkInterrupted();
                 Sign sign = next.get();
-                Function<Media, Media> fetched = chosen -> download(sign, chosen);
+                UnaryOperator<Media> fetched = chosen -> download(sign, chosen);
                 signs.add(SignMedia.with(sign, media.videos() ? fetched : SignMedia::linked,
                         media.images() ? fetched : SignMedia::linked));
             }
@@ -346,7 +358,7 @@ public class CategoryExtractor {
 
         private void checkInterrupted() {
             if (Thread.currentThread().isInterrupted()) {
-                throw new CancellationException("Extraction of " + category + " interrupted");
+                throw new CancellationException(EXTRACTION_OF + category + " interrupted");
             }
         }
 
@@ -355,7 +367,7 @@ public class CategoryExtractor {
                 return queue.take();
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
-                throw new CancellationException("Extraction of " + category + " interrupted");
+                throw new CancellationException(EXTRACTION_OF + category + " interrupted");
             }
         }
 

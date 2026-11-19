@@ -43,7 +43,7 @@ public class SignSuisseSync {
     private final Path mediaCache;
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.IDLE);
     private final AtomicBoolean cancelled = new AtomicBoolean();
-    private volatile SyncExtraction extraction;
+    private final AtomicReference<SyncExtraction> extraction = new AtomicReference<>();
     private Thread worker;
 
     public SignSuisseSync(SignSource source, BundleLoader loader, BundleLoading loading,
@@ -114,7 +114,7 @@ public class SignSuisseSync {
 
     public Progress progress() {
         Progress current = progress.get();
-        SyncExtraction running = extraction;
+        SyncExtraction running = extraction.get();
         if (current.running() && running != null) {
             return running.status().map(current::withCurrent).orElse(current);
         }
@@ -137,8 +137,8 @@ public class SignSuisseSync {
                 : EnumSet.copyOf(languages);
         cancelled.set(false);
         progress.set(Progress.started(selectedCategories));
-        extraction = new SyncExtraction(source, loader, bundles, mediaCache, progress);
-        SyncExtraction started = extraction;
+        SyncExtraction started = new SyncExtraction(source, loader, bundles, mediaCache, progress);
+        extraction.set(started);
         worker = Thread.ofVirtual().name("signsuisse-sync")
                 .start(() -> run(started, selectedCategories, selectedLanguages, options));
         return true;
@@ -147,7 +147,7 @@ public class SignSuisseSync {
     /** Stops the synchronization; the categories done stay loaded. */
     public void cancel() {
         cancelled.set(true);
-        SyncExtraction running = extraction;
+        SyncExtraction running = extraction.get();
         if (running != null) {
             running.cancel();
         }

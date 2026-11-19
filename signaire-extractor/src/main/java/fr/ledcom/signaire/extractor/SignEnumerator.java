@@ -231,7 +231,7 @@ public class SignEnumerator {
     /** The order of SignSuisse, as far as known: spaces, punctuation, digits, letters, other letters. */
     static int compare(char a, char b) {
         int byRank = Integer.compare(rank(a), rank(b));
-        return byRank != 0 ? byRank : Character.compare(a, b);
+        return byRank == 0 ? Character.compare(a, b) : byRank;
     }
 
     private static int rank(char c) {
