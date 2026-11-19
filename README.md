@@ -46,7 +46,7 @@ index in Lucene, in the user's directories.
 ```bash
 ./mvnw -PnoVerify -pl signaire-web -am package -DskipTests
 java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar   # or a double click on the jar
-ci/package-standalone.sh signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar target/package  # with its own Java
+ci/package-standalone.sh signaire-web/target/signaire-web-1.0-SNAPSHOT-standalone.jar target/package  # with its own Java, starts faster
 ```
 
 It listens to <http://localhost:8180> only (`--server.port=…` changes it), opens the browser, and asks on its first run
