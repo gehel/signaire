@@ -45,6 +45,6 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
   - [x] Number of video / images queued for download (media of the signs read, not downloaded yet: they are downloaded sign by sign)
   - [x] Number of video / images fully downloaded
   - [x] There is feedback on the number of searches, can we also give feedback on the total expected number of searches? (done: the searches planned so far; the total cannot be known in advance, every search with too many results adds about 40)
-- [ ] Remove JavaDoc that is just a restatement of the code. Only add JavaDoc if it adds value and understanding that isn't immediately understandable from reading the code.
+- [x] Remove JavaDoc that is just a restatement of the code. Only add JavaDoc if it adds value and understanding that isn't immediately understandable from reading the code. (done: the comments restating their declaration; the rule is in CLAUDE.md)
 - [ ] Android app (on hold)
 - [ ] iOS app (to be decided)

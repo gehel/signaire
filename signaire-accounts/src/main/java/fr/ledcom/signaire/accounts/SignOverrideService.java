@@ -60,7 +60,6 @@ public class SignOverrideService {
         overrides.deleteById(uid);
     }
 
-    /** A uid for a new sign. */
     public String newUid() {
         byte[] bytes = new byte[UID_BYTES];
         random.nextBytes(bytes);

@@ -9,7 +9,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** Table {@code sign_override}. */
 @Entity
 @Table(name = "sign_override")
 class SignOverrideEntity {

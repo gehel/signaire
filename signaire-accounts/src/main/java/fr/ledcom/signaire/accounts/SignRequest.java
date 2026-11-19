@@ -15,7 +15,6 @@ import fr.ledcom.signaire.model.Language;
 public record SignRequest(long id, String requester, String word, Language language, String comment,
         Status status, String signUid, Instant createdAt, Instant resolvedAt) {
 
-    /** Where a request is. */
     public enum Status {
         OPEN, ADDED, REJECTED
     }

@@ -57,7 +57,6 @@ public class SignSuisseSync {
         this.mediaCache = mediaCache;
     }
 
-    /** States of a synchronization. */
     public enum State {
         IDLE, RUNNING, DONE, CANCELLED, FAILED
     }

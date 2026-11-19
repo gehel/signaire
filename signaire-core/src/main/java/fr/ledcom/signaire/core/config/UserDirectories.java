@@ -49,7 +49,6 @@ public final class UserDirectories {
         });
     }
 
-    /** Configuration of the user. */
     public Path config() {
         return xdg("XDG_CONFIG_HOME").orElseGet(() -> switch (system) {
             case MAC -> home.resolve("Library/Application Support").resolve(CAPITALIZED_NAME);

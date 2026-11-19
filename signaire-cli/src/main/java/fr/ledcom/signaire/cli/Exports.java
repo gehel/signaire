@@ -22,7 +22,6 @@ import fr.ledcom.signaire.model.Media;
 /** Writes exports in the chosen format, with the media of a bundle directory. */
 final class Exports {
 
-    /** The export formats. */
     enum Format {
         PDF, ANKI, EPUB
     }
