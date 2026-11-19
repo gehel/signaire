@@ -3,6 +3,11 @@ package fr.ledcom.signaire.accounts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 // Hibernate checks that the entities match the schema made by Flyway
 @SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
-abstract class AbstractAccountServiceTest {
+@H2Database
+class AccountServiceTest {
 
     @Autowired
     private AccountService accounts;
@@ -22,9 +28,20 @@ abstract class AbstractAccountServiceTest {
     @Autowired
     private AccountsCleaner cleaner;
 
+    @Autowired
+    private DataSource dataSource;
+
     @BeforeEach
     void clean() {
         cleaner.deleteAll();
+    }
+
+    /** On H2, as the standalone application; PostgreSQL is tested in signaire-it, with the web application. */
+    @Test
+    void runsOnH2() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            assertThat(connection.getMetaData().getDatabaseProductName()).isEqualTo("H2");
+        }
     }
 
     @Test

@@ -17,7 +17,8 @@ import fr.ledcom.signaire.model.Sign;
 
 // Hibernate checks that the entities match the schema made by Flyway
 @SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
-abstract class AbstractSignOverrideServiceTest {
+@H2Database
+class SignOverrideServiceTest {
 
     private static final Sign LAUSANNE = Sign.builder("119158", Language.FRENCH, "LAUSANNE")
             .definition("Capitale du canton de Vaud")

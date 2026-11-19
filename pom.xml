@@ -96,12 +96,6 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
-                <artifactId>signaire-accounts</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-            </dependency>
-            <dependency>
-                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-bundle</artifactId>
                 <version>${project.version}</version>
             </dependency>
