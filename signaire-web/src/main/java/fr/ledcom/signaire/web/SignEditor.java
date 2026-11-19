@@ -1,7 +1,12 @@
 package fr.ledcom.signaire.web;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -52,6 +57,23 @@ public class SignEditor {
                 sign -> index.index(List.of(sign)),
                 () -> index.delete(uid));
         index.refresh();
+    }
+
+    /**
+     * Indexes signs not loaded from a bundle (being extracted), with the changes of administrators: an edited sign is
+     * indexed as edited, a deleted one not at all.
+     */
+    public void indexWithChanges(Collection<Sign> signs) {
+        Map<String, SignOverride> changes = overrides.all().stream()
+                .collect(Collectors.toMap(SignOverride::uid, Function.identity(), (a, b) -> b));
+        List<Sign> changed = signs.stream()
+                .map(sign -> changes.containsKey(sign.uid()) ? changes.get(sign.uid()).sign() : sign)
+                .filter(Objects::nonNull)
+                .toList();
+        if (!changed.isEmpty()) {
+            index.index(changed);
+            index.refresh();
+        }
     }
 
     /** Applies all the changes to the index, after loading bundles. */

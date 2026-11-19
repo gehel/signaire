@@ -22,7 +22,8 @@ tutto (dopo un aggiornamento di Signaire che cambia l'indice).
 
 Scegli categorie e lingue dei segni (nessuna selezionata: tutte), e i media da scaricare: video e immagini, solo
 video, solo immagini o nessuno. I media non scaricati sono mostrati da SignSuisse, ma mancano negli export e senza
-connessione. La sincronizzazione gira in background; ogni categoria viene caricata appena pronta.
+connessione. La sincronizzazione gira in background; ogni segno è consultabile appena estratto (i suoi
+media mostrati da SignSuisse fino alla fine della sua categoria).
 
 Signaire risparmia SignSuisse: le richieste sono distanziate di almeno mezzo secondo, e i segni già estratti vengono
 ripresi dai pacchetti esistenti invece di essere riletti; seleziona **Rileggere i segni già estratti** per ottenere le

@@ -2,6 +2,7 @@ package fr.ledcom.signaire.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.extractor.ExtractionOptions;
 import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.MediaChoice;
@@ -40,7 +40,7 @@ class SignSuisseSyncTest {
     @Test
     void showsWhereTheExtractionIsAndCanBeStopped() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(3);
-        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
+        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoading.class),
                 directory.resolve("bundles"), directory.resolve("media"));
 
         sync.start(List.of(Category.CITY, Category.NATURE), List.of(Language.FRENCH),
@@ -68,7 +68,8 @@ class SignSuisseSyncTest {
     @Test
     void tellsWhatEachCategoryTook() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(0);
-        SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
+        BundleLoading loading = mock(BundleLoading.class);
+        SignSuisseSync sync = new SignSuisseSync(signSuisse, loading,
                 directory.resolve("bundles"), directory.resolve("media"));
 
         sync.start(List.of(Category.CITY), List.of(Language.FRENCH), ExtractionOptions.of(MediaChoice.ALL));
@@ -79,6 +80,7 @@ class SignSuisseSyncTest {
         assertThat(progress.current()).isNull();
         // 35 searches, 1 page, 2 videos
         assertThat(progress.done()).containsExactly(new CategoryResult(Category.CITY, 1, 0, true, 38));
+        verify(loading).load(directory.resolve("bundles/city.zip"));
     }
 
     /** Finds one sign with "a", with two videos; blocks on a search until released (none when 0). */

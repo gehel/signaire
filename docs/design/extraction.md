@@ -81,8 +81,9 @@ An `ExtractionTracker`, updated by the stages, gives an immutable `ExtractionSta
 - elapsed time, and an estimate of the time left: the requests pending times the average time per request so far
   (a lower bound while the search runs).
 
-`ExtractionListener` gets this status every few seconds and when the stage changes, and the failures (sign, media,
-search) with their causes. The CLI prints a progress line; the synchronization page polls the status (htmx, every
+`ExtractionListener` gets this status every few seconds and when the stage changes, the failures (sign, media,
+search) with their causes, and each sign as soon as it is complete (read, its chosen media downloaded or failed):
+the synchronization indexes it right away (see [Bundle loading](bundle-loading.md)). The CLI prints a progress line; the synchronization page polls the status (htmx, every
 2 s) and shows it, with the categories done and left; both log it at INFO every 30 s.
 
 ### Callers

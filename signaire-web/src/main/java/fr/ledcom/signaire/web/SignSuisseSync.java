@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import fr.ledcom.signaire.bundle.BundleException;
-import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.extractor.ExtractionException;
 import fr.ledcom.signaire.extractor.ExtractionOptions;
@@ -37,7 +36,6 @@ public class SignSuisseSync {
     private static final Logger LOG = System.getLogger(SignSuisseSync.class.getName());
 
     private final SignSource source;
-    private final BundleLoader loader;
     private final BundleLoading loading;
     private final Path bundles;
     private final Path mediaCache;
@@ -46,11 +44,10 @@ public class SignSuisseSync {
     private final AtomicReference<SyncExtraction> extraction = new AtomicReference<>();
     private Thread worker;
 
-    public SignSuisseSync(SignSource source, BundleLoader loader, BundleLoading loading,
+    public SignSuisseSync(SignSource source, BundleLoading loading,
             @Value("${signaire.bundles.directory:bundles}") Path bundles,
             @Value("${signaire.media.cache:bundles/.media}") Path mediaCache) {
         this.source = source;
-        this.loader = loader;
         this.loading = loading;
         this.bundles = bundles;
         this.mediaCache = mediaCache;
@@ -73,14 +70,15 @@ public class SignSuisseSync {
      * Where the synchronization is.
      *
      * @param current where the category being extracted is, or null
+     * @param indexed signs of the current category already searchable
      * @param done the categories done
      * @param left the categories not started yet
      * @param error why the synchronization failed, or null
      */
-    public record Progress(State state, ExtractionStatus current, List<CategoryResult> done, List<Category> left,
-            String error) {
+    public record Progress(State state, ExtractionStatus current, int indexed, List<CategoryResult> done,
+            List<Category> left, String error) {
 
-        static final Progress IDLE = new Progress(State.IDLE, null, List.of(), List.of(), null);
+        static final Progress IDLE = new Progress(State.IDLE, null, 0, List.of(), List.of(), null);
 
         public Progress {
             done = List.copyOf(done);
@@ -88,7 +86,7 @@ public class SignSuisseSync {
         }
 
         static Progress started(Collection<Category> categories) {
-            return new Progress(State.RUNNING, null, List.of(), List.copyOf(categories), null);
+            return new Progress(State.RUNNING, null, 0, List.of(), List.copyOf(categories), null);
         }
 
         public boolean running() {
@@ -96,19 +94,19 @@ public class SignSuisseSync {
         }
 
         Progress with(State newState, String newError) {
-            return new Progress(newState, null, done, left, newError);
+            return new Progress(newState, null, 0, done, left, newError);
         }
 
-        Progress withCurrent(ExtractionStatus status) {
+        Progress withCurrent(ExtractionStatus status, int newIndexed) {
             List<Category> newLeft = left.stream().filter(category -> category != status.category()).toList();
-            return new Progress(state, status, done, newLeft, error);
+            return new Progress(state, status, newIndexed, done, newLeft, error);
         }
 
         Progress categoryDone(CategoryResult result) {
             List<CategoryResult> newDone = new ArrayList<>(done);
             newDone.add(result);
             List<Category> newLeft = left.stream().filter(category -> category != result.category()).toList();
-            return new Progress(state, null, newDone, newLeft, error);
+            return new Progress(state, null, 0, newDone, newLeft, error);
         }
     }
 
@@ -116,7 +114,7 @@ public class SignSuisseSync {
         Progress current = progress.get();
         SyncExtraction running = extraction.get();
         if (current.running() && running != null) {
-            return running.status().map(current::withCurrent).orElse(current);
+            return running.status().map(status -> current.withCurrent(status, running.indexed())).orElse(current);
         }
         return current;
     }
@@ -137,7 +135,7 @@ public class SignSuisseSync {
                 : EnumSet.copyOf(languages);
         cancelled.set(false);
         progress.set(Progress.started(selectedCategories));
-        SyncExtraction started = new SyncExtraction(source, loader, bundles, mediaCache, progress);
+        SyncExtraction started = new SyncExtraction(source, loading, bundles, mediaCache, progress);
         extraction.set(started);
         worker = Thread.ofVirtual().name("signsuisse-sync")
                 .start(() -> run(started, selectedCategories, selectedLanguages, options));

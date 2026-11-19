@@ -103,7 +103,7 @@ Key decisions:
   New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
   and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
   cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web tests replace it with
-  `FakeSignSuisse`). Users request missing signs (`sign_request`); admins import them from SignSuisse
+  `FakeSignSuisse`); each sign is indexed as soon as it is extracted, its bundle loaded at the end of its category. Users request missing signs (`sign_request`); admins import them from SignSuisse
   (media linked, not downloaded), link an existing sign, create it, or reject the request.
 - **Exports** (`signaire-export`, plain Java): the caller gives an `ExportRequest` (title, signs, locale)
   and a `MediaSource` reading downloaded media (web and CLI adapt `MediaLibrary`). Labels are in

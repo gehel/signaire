@@ -46,8 +46,8 @@ class AdminSyncTest {
                 new ExtractionStatus.Signs(120, 80, 30, 2, "LAUSANNE"),
                 new ExtractionStatus.Media(60, 40, 1, 12_500_000, "lausanne.mp4"), 160, 50, Duration.ofMinutes(5),
                 Duration.ofMinutes(3));
-        when(sync.progress()).thenReturn(new Progress(State.RUNNING, status, List.of(), List.of(Category.NATURE),
-                null));
+        when(sync.progress()).thenReturn(new Progress(State.RUNNING, status, 95, List.of(),
+                List.of(Category.NATURE), null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
                 .contains("Ville : recherche des signes en LSF",
@@ -58,14 +58,14 @@ class AdminSyncTest {
                         "Requêtes à SignSuisse : 160 faites, 50 restantes connues.",
                         "recherche « sch »", "signe LAUSANNE", "média lausanne.mp4",
                         "Temps restant estimé : au moins 3 minutes",
-                        "Catégories restantes : Nature", "every 2s");
+                        "Signes déjà consultables : 95", "Catégories restantes : Nature", "every 2s");
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).header(HttpHeaders.ACCEPT_LANGUAGE, "de")
                 .exchange()).bodyText().contains("Suchen: 40 gemacht, 12 bekannt ausstehend");
     }
 
     @Test
     void showsTheCategoriesDone() {
-        when(sync.progress()).thenReturn(new Progress(State.DONE, null,
+        when(sync.progress()).thenReturn(new Progress(State.DONE, null, 0,
                 List.of(new CategoryResult(Category.CITY, 12, 0, true, 48)), List.of(), null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()

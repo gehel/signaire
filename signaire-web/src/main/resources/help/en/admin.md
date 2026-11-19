@@ -22,7 +22,8 @@ update of Signaire that changes the index).
 
 Choose categories and sign languages (none checked: all), and the media to download: videos and images, videos only,
 images only, or none. Media not downloaded are shown from SignSuisse, but are missing from exports and without a
-connection. The synchronization runs in the background; each category is loaded as soon as it is ready.
+connection. The synchronization runs in the background; each sign is searchable as soon as it is extracted
+(its media shown from SignSuisse until the end of its category).
 
 Signaire spares SignSuisse: requests are at least half a second apart, and signs already extracted are reused from the
 existing bundles rather than read again; check **Read the signs already extracted again** to get the corrections made

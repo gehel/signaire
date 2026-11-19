@@ -22,8 +22,8 @@ neu (nach einem Signaire-Update, das den Index ändert).
 
 Wählen Sie Kategorien und Gebärdensprachen (keine gewählt: alle) und die herunterzuladenden Medien: Videos und Bilder,
 nur Videos, nur Bilder oder keine. Nicht heruntergeladene Medien werden von SignSuisse angezeigt, fehlen aber in den
-Exporten und ohne Verbindung. Die Synchronisation läuft im Hintergrund; jede Kategorie wird geladen, sobald sie bereit
-ist.
+Exporten und ohne Verbindung. Die Synchronisation läuft im Hintergrund; jede Gebärde ist abrufbar, sobald sie extrahiert
+ist (ihre Medien bis zum Ende ihrer Kategorie von SignSuisse angezeigt).
 
 Signaire schont SignSuisse: Zwischen den Anfragen liegt mindestens eine halbe Sekunde, und bereits extrahierte
 Gebärden werden aus den bestehenden Bündeln übernommen statt neu gelesen; wählen Sie **Bereits extrahierte Gebärden

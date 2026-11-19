@@ -30,6 +30,8 @@
                     th:text="#{admin.sync.media(${status.media().downloaded()}, ${status.media().queued()},
                              ${status.media().bytes() / 1000000}, ${status.media().failed()})}">Media to download:
                     12 of 40 (30 MB), 0 failed.</li>
+                <li th:if="${progress.indexed() > 0}" th:text="#{admin.sync.indexed(${progress.indexed()})}">Signs
+                    already searchable: 95.</li>
                 <li th:text="#{admin.sync.requests(${status.requestsDone()}, ${status.requestsLeft()})}">Requests to
                     SignSuisse: 200 done, 40 known to be left.</li>
             </ul>
