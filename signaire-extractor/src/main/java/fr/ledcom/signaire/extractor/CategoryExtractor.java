@@ -76,7 +76,8 @@ public class CategoryExtractor {
         List<SearchHit> failures = new ArrayList<>();
         boolean complete = true;
         for (Language language : EnumSet.copyOf(languages)) {
-            SignEnumerator.Result result = enumerator.enumerate(language, category);
+            SignEnumerator.Result result = enumerator.enumerate(language, category,
+                    (queries, found) -> listener.searched(category, language, queries, found));
             listener.enumerated(category, language, result);
             complete &= result.complete();
             for (SearchHit hit : result.hits()) {

@@ -22,7 +22,9 @@ update of Signaire that changes the index).
 
 Choose categories and sign languages (none checked: all), and whether to download the videos and images. The
 synchronization runs in the background; each category is loaded as soon as it is ready. Without media, count a few
-minutes per category; with the media, much longer.
+minutes per category; with the media, much longer. SignSuisse gives only 100 results per search: finding all the
+signs of a category takes hundreds of searches, spaced out to spare the site. The page shows how many; no sign is
+extracted before the end of this step.
 
 ## Sign requests
 

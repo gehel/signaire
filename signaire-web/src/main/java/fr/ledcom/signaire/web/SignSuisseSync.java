@@ -84,16 +84,18 @@ public class SignSuisseSync {
      *
      * @param category the category being extracted, or null
      * @param language the language being extracted, or null
-     * @param found signs found in the current category and language
+     * @param listing whether the signs of the category and language are still being searched
+     * @param searches the searches sent for the current category and language
+     * @param found signs found in the current category and language (so far, while listing)
      * @param extracted signs extracted so far
      * @param failed signs that could not be extracted so far
      * @param done the categories done
      * @param error why the synchronization failed, or null
      */
-    public record Progress(State state, Category category, Language language, int found, int extracted,
-            int failed, List<CategoryResult> done, String error) {
+    public record Progress(State state, Category category, Language language, boolean listing, int searches,
+            int found, int extracted, int failed, List<CategoryResult> done, String error) {
 
-        static final Progress IDLE = new Progress(State.IDLE, null, null, 0, 0, 0, List.of(), null);
+        static final Progress IDLE = new Progress(State.IDLE, null, null, false, 0, 0, 0, 0, List.of(), null);
 
         public Progress {
             done = List.copyOf(done);
@@ -104,7 +106,7 @@ public class SignSuisseSync {
         }
 
         Progress with(State newState, String newError) {
-            return new Progress(newState, null, null, found, extracted, failed, done, newError);
+            return new Progress(newState, null, null, false, 0, found, extracted, failed, done, newError);
         }
     }
 
@@ -127,13 +129,13 @@ public class SignSuisseSync {
         Set<Language> selectedLanguages = languages.isEmpty() ? EnumSet.allOf(Language.class)
                 : EnumSet.copyOf(languages);
         cancelled.set(false);
-        progress.set(new Progress(State.RUNNING, null, null, 0, 0, 0, List.of(), null));
+        progress.set(new Progress(State.RUNNING, null, null, false, 0, 0, 0, 0, List.of(), null));
         worker = Thread.ofVirtual().name("signsuisse-sync")
                 .start(() -> run(selectedCategories, selectedLanguages, withMedia));
         return true;
     }
 
-    /** Stops the synchronization after the current sign; the categories done stay loaded. */
+    /** Stops the synchronization after the current search or sign; the categories done stay loaded. */
     public void cancel() {
         cancelled.set(true);
     }
@@ -159,7 +161,8 @@ public class SignSuisseSync {
                     List<CategoryResult> done = new ArrayList<>(p.done());
                     done.add(new CategoryResult(category, report.signCount(), report.failures().size(),
                             report.enumerationComplete()));
-                    return new Progress(State.RUNNING, null, null, 0, p.extracted(), p.failed(), done, null);
+                    return new Progress(State.RUNNING, null, null, false, 0, 0, p.extracted(), p.failed(), done,
+                            null);
                 });
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
@@ -177,24 +180,31 @@ public class SignSuisseSync {
     /** Follows the extraction, and stops it when cancelled. */
     private final class Listener implements ExtractionListener {
         @Override
+        public void searched(Category category, Language language, int queries, int found) {
+            checkCancelled();
+            progress.updateAndGet(p -> new Progress(State.RUNNING, category, language, true, queries, found,
+                    p.extracted(), p.failed(), p.done(), null));
+        }
+
+        @Override
         public void enumerated(Category category, Language language, SignEnumerator.Result result) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, category, language, result.hits().size(), p.extracted(),
-                    p.failed(), p.done(), null));
+            progress.updateAndGet(p -> new Progress(State.RUNNING, category, language, false, p.searches(),
+                    result.hits().size(), p.extracted(), p.failed(), p.done(), null));
         }
 
         @Override
         public void signExtracted(Sign sign) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), p.found(), p.extracted() + 1,
-                    p.failed(), p.done(), null));
+            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), false, p.searches(),
+                    p.found(), p.extracted() + 1, p.failed(), p.done(), null));
         }
 
         @Override
         public void signFailed(SearchHit hit, RuntimeException cause) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), p.found(), p.extracted(),
-                    p.failed() + 1, p.done(), null));
+            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), false, p.searches(),
+                    p.found(), p.extracted(), p.failed() + 1, p.done(), null));
         }
 
         private void checkCancelled() {
