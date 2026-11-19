@@ -97,14 +97,18 @@ class ThrottledHttpFetcherTest {
     void givesUpAfterTheMaximumNumberOfAttempts() {
         failuresBeforeSuccess.set(3);
 
-        assertThatThrownBy(() -> fetcher.fetchText(uri("/flaky")))
+        URI flaky = uri("/flaky");
+
+        assertThatThrownBy(() -> fetcher.fetchText(flaky))
                 .isInstanceOf(ExtractionException.class)
                 .hasMessageContaining("503");
     }
 
     @Test
     void doesNotRetryClientErrors() {
-        assertThatThrownBy(() -> fetcher.fetchText(uri("/missing")))
+        URI missing = uri("/missing");
+
+        assertThatThrownBy(() -> fetcher.fetchText(missing))
                 .isInstanceOf(ExtractionException.class)
                 .hasMessageContaining("404");
     }
@@ -112,8 +116,9 @@ class ThrottledHttpFetcherTest {
     @Test
     void failedDownloadsLeaveNoFile() {
         Path target = tmp.resolve("file.mp4");
+        URI missing = uri("/missing");
 
-        assertThatThrownBy(() -> fetcher.download(uri("/missing"), target)).isInstanceOf(ExtractionException.class);
+        assertThatThrownBy(() -> fetcher.download(missing, target)).isInstanceOf(ExtractionException.class);
 
         assertThat(target).doesNotExist();
         assertThat(tmp).isEmptyDirectory();

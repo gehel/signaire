@@ -70,8 +70,9 @@ class SignTest {
 
         categories.add(Category.NATION);
 
-        assertThat(sign.categories()).containsExactly(Category.CITY);
-        assertThatThrownBy(() -> sign.categories().add(Category.NATION))
+        List<Category> signCategories = sign.categories();
+        assertThat(signCategories).containsExactly(Category.CITY);
+        assertThatThrownBy(() -> signCategories.add(Category.NATION))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

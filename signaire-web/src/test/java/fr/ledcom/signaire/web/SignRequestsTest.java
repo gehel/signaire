@@ -78,8 +78,8 @@ class SignRequestsTest {
         MvcTestResult sent = mvc.post().uri("/requests").with(ALICE).with(csrf())
                 .param("word", "Zoug").param("language", "fr").param("comment", "Le canton").exchange();
 
-        assertThat(sent).hasRedirectedUrl("/requests");
-        assertThat(sent).flash().containsEntry("status", "Demande envoyée : « Zoug ».");
+        assertThat(sent).hasRedirectedUrl("/requests")
+                .flash().containsEntry("status", "Demande envoyée : « Zoug ».");
         assertThat(mvc.get().uri("/requests").with(ALICE).exchange()).bodyText()
                 .contains("Zoug", "Le canton", "En attente");
     }

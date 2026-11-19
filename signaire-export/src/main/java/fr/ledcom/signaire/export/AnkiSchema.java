@@ -40,6 +40,17 @@ final class AnkiSchema {
              "rev": {"bury": true, "ease4": 1.3, "fuzz": 0.05, "ivlFct": 1, "maxIvl": 36500, "minSpace": 1,
                      "perDay": 100}}}""";
 
+    /** Anki's default preamble of the LaTeX in notes. */
+    private static final String LATEX_PREAMBLE = """
+            \\documentclass[12pt]{article}
+            \\special{papersize=3in,5in}
+            \\usepackage[utf8]{inputenc}
+            \\usepackage{amssymb,amsmath}
+            \\pagestyle{empty}
+            \\setlength{\\parindent}{0in}
+            \\begin{document}
+            """;
+
     /** A card template: its name, and its question and answer formats. */
     record Template(String name, String question, String answer) {
     }
@@ -89,9 +100,7 @@ final class AnkiSchema {
                 + ", \"type\": 0, \"mod\": " + now / 1000 + ", \"usn\": -1, \"sortf\": 0, \"did\": " + deckId
                 + ", \"tmpls\": [" + String.join(", ", templateJson) + "], \"flds\": ["
                 + String.join(", ", fieldJson) + "], \"css\": " + Markup.json(css)
-                + ", \"latexPre\": " + Markup.json("\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n"
-                        + "\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n"
-                        + "\\setlength{\\parindent}{0in}\n\\begin{document}\n")
+                + ", \"latexPre\": " + Markup.json(LATEX_PREAMBLE)
                 + ", \"latexPost\": " + Markup.json("\\end{document}")
                 + ", \"req\": [[0, \"any\", [" + signToWordField + "]], [1, \"any\", [" + wordToSignField + "]]]"
                 + ", \"tags\": [], \"vers\": []}}";

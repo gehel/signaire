@@ -105,7 +105,7 @@ public final class PdfExporter {
             List<Sign> signs = request.signs();
             int pageCount = Math.max(1, (signs.size() + signsPerPage - 1) / signsPerPage);
             float margin = margin(size);
-            float footerSize = Math.max(5, Math.min(7, size.getWidth() / 70));
+            float footerSize = Math.clamp(size.getWidth() / 70, 5f, 7f);
             Grid grid = Grid.of(signsPerPage, size.getWidth() > size.getHeight());
             for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
                 PDPage page = new PDPage(size);
@@ -158,7 +158,7 @@ public final class PdfExporter {
 
         private float writeHeader(PDPageContentStream content, PDRectangle size, float margin, float top)
                 throws IOException {
-            float titleSize = Math.max(10, Math.min(16, size.getWidth() / 36));
+            float titleSize = Math.clamp(size.getWidth() / 36, 10f, 16f);
             float subtitleSize = titleSize * 0.65f;
             float width = size.getWidth() - 2 * margin;
             Pdf pdf = cells.pdf();
@@ -186,7 +186,7 @@ public final class PdfExporter {
         }
 
         private float margin(PDRectangle size) {
-            return Pdf.millimeters(Math.min(size.getWidth(), size.getHeight()) < Pdf.millimeters(120) ? 6 : 10);
+            return Pdf.millimeters(Math.min(size.getWidth(), size.getHeight()) < Pdf.millimeters(120) ? 6f : 10f);
         }
     }
 }

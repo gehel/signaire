@@ -98,12 +98,19 @@ public class ExportCommand implements Callable<Integer> {
         String text = words == null ? null : String.join(" ", words);
         List<Sign> signs = signs(new SignQuery(text, languages == null ? null : Set.copyOf(languages),
                 categories == null ? null : Set.copyOf(categories), 0, 1));
-        String documentTitle = title != null ? title : text != null ? text : messages.get("export.defaultTitle");
-        ExportRequest request = new ExportRequest(documentTitle, signs, Locale.getDefault());
+        ExportRequest request = new ExportRequest(documentTitle(text), signs, Locale.getDefault());
         Exports.write(format, request, pdfLayout, withVideos, bundles, output);
         PrintWriter console = spec.commandLine().getOut();
         console.println(messages.get("export.done", signs.size(), output));
         return 0;
+    }
+
+    /** The title given, else the words searched, else a default title. */
+    private String documentTitle(String text) {
+        if (title != null) {
+            return title;
+        }
+        return text != null ? text : messages.get("export.defaultTitle");
     }
 
     private PdfLayout pdfLayout() {

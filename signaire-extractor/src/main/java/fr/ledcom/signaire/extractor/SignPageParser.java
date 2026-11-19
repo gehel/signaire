@@ -81,8 +81,8 @@ public class SignPageParser {
     private static String status(Element left) {
         for (Element strong : left.select("strong")) {
             Node next = strong.nextSibling();
-            if (hasLabel(strong, STATUS_LABELS) && next instanceof TextNode) {
-                return nonBlank(((TextNode) next).text());
+            if (hasLabel(strong, STATUS_LABELS) && next instanceof TextNode text) {
+                return nonBlank(text.text());
             }
         }
         return null;

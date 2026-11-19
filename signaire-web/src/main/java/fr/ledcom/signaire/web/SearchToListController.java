@@ -49,10 +49,13 @@ public class SearchToListController {
             @RequestParam(name = "category", required = false) Set<Category> categories,
             @AuthenticationPrincipal AccountPrincipal user, Locale locale,
             HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirect, Model model) {
-        List<String> signs = "all".equals(scope)
-                ? search.findUids(SearchController.query(text, languages, categories, 0, 1),
-                        SearchController.MAX_ADDED)
-                : uids == null ? List.of() : uids;
+        List<String> signs;
+        if ("all".equals(scope)) {
+            signs = search.findUids(SearchController.query(text, languages, categories, 0, 1),
+                    SearchController.MAX_ADDED);
+        } else {
+            signs = uids == null ? List.of() : uids;
+        }
         String status;
         boolean error = true;
         if (signs.isEmpty()) {

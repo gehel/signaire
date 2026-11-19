@@ -57,8 +57,8 @@ class ListPagesTest {
 
         MvcTestResult result = mvc.get().uri("/lists").with(ALICE).exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("href=\"/lists/10\">Famille</a>", "2 signes");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("href=\"/lists/10\">Famille</a>", "2 signes");
     }
 
     @Test
@@ -96,8 +96,8 @@ class ListPagesTest {
         MvcTestResult result = mvc.get().uri("/lists/10").with(ALICE)
                 .header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText()
                 .contains("<h1>Famille</h1>", "2 Gebärden")
                 .contains("href=\"/signs/1\">LAUSANNE</a>", "href=\"/signs/3\">CHAT</a>")
                 .contains("action=\"/lists/10/signs/1/remove\"");
@@ -145,8 +145,8 @@ class ListPagesTest {
 
         MvcTestResult result = mvc.get().uri("/lists/10").with(BOB).exchange();
 
-        assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(result).bodyText().contains("Liste introuvable");
+        assertThat(result).hasStatus(HttpStatus.NOT_FOUND)
+                .bodyText().contains("Liste introuvable");
         assertThat(mvc.post().uri("/lists/10/delete").with(BOB).with(csrf()).exchange())
                 .hasStatus(HttpStatus.NOT_FOUND);
     }
@@ -182,8 +182,8 @@ class ListPagesTest {
         MvcTestResult removed = mvc.post().uri(uri + "/remove").with(ALICE).with(csrf())
                 .header("HX-Request", "true").exchange();
 
-        assertThat(removed).hasStatus(HttpStatus.OK);
-        assertThat(removed).bodyText().doesNotContain("<html").contains("action=\"" + uri + "\"");
+        assertThat(removed).hasStatus(HttpStatus.OK)
+                .bodyText().doesNotContain("<html").contains("action=\"" + uri + "\"");
         verify(lists).remove(ALICE_ID, 10, "1");
     }
 

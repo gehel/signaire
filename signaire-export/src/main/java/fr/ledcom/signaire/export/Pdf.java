@@ -37,7 +37,7 @@ final class Pdf {
         text.codePoints().forEach(codePoint -> {
             if (Character.isWhitespace(codePoint)) {
                 clean.append(' ');
-            } else if (encodable.computeIfAbsent(codePoint, Pdf::canEncode)) {
+            } else if (Boolean.TRUE.equals(encodable.computeIfAbsent(codePoint, Pdf::canEncode))) {
                 clean.appendCodePoint(codePoint);
             } else {
                 clean.append('?');

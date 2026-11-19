@@ -81,8 +81,8 @@ class AdminBundlesTest {
 
         MvcTestResult reloaded = mvc.post().uri("/admin/bundles/reload").with(ADMIN).with(csrf()).exchange();
 
-        assertThat(reloaded).hasRedirectedUrl("/admin/bundles");
-        assertThat(reloaded).flash().containsEntry("status", "Bundles chargés : 1, inchangés : 0, en échec : 0.");
+        assertThat(reloaded).hasRedirectedUrl("/admin/bundles")
+                .flash().containsEntry("status", "Bundles chargés : 1, inchangés : 0, en échec : 0.");
         assertThat(search.findByUid(TestSigns.LAUSANNE.uid())).isPresent();
         assertThat(mvc.get().uri("/admin/bundles").with(ADMIN).exchange()).bodyText()
                 .contains("city.zip", "Ville", ">2<");
@@ -111,8 +111,8 @@ class AdminBundlesTest {
                         Files.readAllBytes(bundle)))
                 .with(ADMIN).with(csrf()));
 
-        assertThat(result).hasRedirectedUrl("/admin/bundles");
-        assertThat(result).flash().containsEntry("status", "animals.zip : 2 signes chargés.");
+        assertThat(result).hasRedirectedUrl("/admin/bundles")
+                .flash().containsEntry("status", "animals.zip : 2 signes chargés.");
         assertThat(bundles.resolve("animals.zip")).exists();
         assertThat(search.findByUid(TestSigns.KATZE.uid())).isPresent();
     }
@@ -124,9 +124,9 @@ class AdminBundlesTest {
                         "not a zip".getBytes(StandardCharsets.UTF_8)))
                 .with(ADMIN).with(csrf()));
 
-        assertThat(result).hasRedirectedUrl("/admin/bundles");
-        assertThat(result).flash().hasEntrySatisfying("status",
-                status -> assertThat(status).asString().startsWith("Bundle invalide"));
+        assertThat(result).hasRedirectedUrl("/admin/bundles")
+                .flash().hasEntrySatisfying("status",
+                        status -> assertThat(status).asString().startsWith("Bundle invalide"));
         try (Stream<Path> files = Files.list(bundles)) {
             assertThat(files.filter(f -> !Files.isDirectory(f))).isEmpty();
         }

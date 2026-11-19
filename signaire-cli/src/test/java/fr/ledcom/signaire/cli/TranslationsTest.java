@@ -86,7 +86,8 @@ class TranslationsTest {
     @Test
     void unknownCategoriesAreReportedInTheUserLanguage() {
         try (DefaultLocale locale = DefaultLocale.set(Locale.GERMAN)) {
-            assertThatThrownBy(() -> new CategoryNames.Converter().convert("xyz"))
+            CategoryNames.Converter converter = new CategoryNames.Converter();
+            assertThatThrownBy(() -> converter.convert("xyz"))
                     .isInstanceOf(TypeConversionException.class)
                     .hasMessage("Unbekannte Kategorie: xyz");
         }

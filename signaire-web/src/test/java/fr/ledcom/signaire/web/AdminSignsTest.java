@@ -179,8 +179,8 @@ class AdminSignsTest {
         MvcTestResult result = mvc.post().uri("/admin/signs").with(ADMIN).with(csrf())
                 .param("name", " ").param("language", "fr").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("Le nom du signe est obligatoire.");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("Le nom du signe est obligatoire.");
     }
 
     @Test

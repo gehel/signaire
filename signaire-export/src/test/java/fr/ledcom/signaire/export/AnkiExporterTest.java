@@ -38,8 +38,7 @@ class AnkiExporterTest {
         assertThat(entries).containsKeys("collection.anki2", "media", "0", "1");
         assertThat(new String(entries.get("media"), StandardCharsets.UTF_8))
                 .isEqualTo("{\"0\":\"lausanne.mp4\",\"1\":\"lausanne.png\"}");
-        assertThat(entries.get("0")).isEqualTo(ExportTestData.VIDEO);
-        assertThat(entries.get("1")).isEqualTo(ExportTestData.IMAGE);
+        assertThat(entries).containsEntry("0", ExportTestData.VIDEO).containsEntry("1", ExportTestData.IMAGE);
     }
 
     @Test

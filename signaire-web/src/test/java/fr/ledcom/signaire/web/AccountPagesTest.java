@@ -35,8 +35,8 @@ class AccountPagesTest {
     void loginPageIsInTheUserLanguage() {
         MvcTestResult result = mvc.get().uri("/login").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText().contains("<h1>Anmelden</h1>", "name=\"username\"", "name=\"password\"",
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText().contains("<h1>Anmelden</h1>", "name=\"username\"", "name=\"password\"",
                 "name=\"_csrf\"", "href=\"/register\"")
                 .doesNotContain("/oauth2/authorization");
     }

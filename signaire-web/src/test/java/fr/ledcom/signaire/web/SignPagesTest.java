@@ -72,8 +72,8 @@ class SignPagesTest {
     void showsTheSign() {
         MvcTestResult result = mvc.get().uri("/signs/1").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).bodyText()
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .bodyText()
                 .contains("<title>LAUSANNE – Signaire</title>")
                 .contains("<h1>LAUSANNE")
                 .contains("Ville au bord du lac", "Capitale du canton de Vaud", "Je travaille à Lausanne.")
@@ -114,27 +114,27 @@ class SignPagesTest {
     void unknownSignsAreNotFound() {
         MvcTestResult result = mvc.get().uri("/signs/999").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(result).bodyText().contains("Gebärde nicht gefunden");
+        assertThat(result).hasStatus(HttpStatus.NOT_FOUND)
+                .bodyText().contains("Gebärde nicht gefunden");
     }
 
     @Test
     void servesTheMediaOfTheBundles() {
         MvcTestResult result = mvc.get().uri("/media/lausanne.mp4").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.OK);
-        assertThat(result).hasContentType("video/mp4");
-        assertThat(result).hasHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
-        assertThat(result).hasHeader(HttpHeaders.CACHE_CONTROL, "max-age=604800");
-        assertThat(result).bodyText().isEqualTo("video");
+        assertThat(result).hasStatus(HttpStatus.OK)
+                .hasContentType("video/mp4")
+                .hasHeader(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .hasHeader(HttpHeaders.CACHE_CONTROL, "max-age=604800")
+                .bodyText().isEqualTo("video");
     }
 
     @Test
     void servesRangesOfMedia() {
         MvcTestResult result = mvc.get().uri("/media/lausanne.mp4").header(HttpHeaders.RANGE, "bytes=1-2").exchange();
 
-        assertThat(result).hasStatus(HttpStatus.PARTIAL_CONTENT);
-        assertThat(result).bodyText().isEqualTo("id");
+        assertThat(result).hasStatus(HttpStatus.PARTIAL_CONTENT)
+                .bodyText().isEqualTo("id");
     }
 
     @Test

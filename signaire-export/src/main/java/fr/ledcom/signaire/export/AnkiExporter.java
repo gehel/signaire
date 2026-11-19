@@ -91,8 +91,8 @@ public final class AnkiExporter {
         }
     }
 
-    @SuppressFBWarnings(value = {"SIL_SQL_IN_LOOP", "SQL_INJECTION_JDBC"},
-            justification = "The statements in the loop are the constant schema of Anki collections")
+    @SuppressFBWarnings(value = "SQL_INJECTION_JDBC",
+            justification = "The statements of the batch are the constant schema of Anki collections")
     private void writeCollection(Path file, ExportRequest request, Labels labels, Map<String, byte[]> files)
             throws SQLException {
         long now = System.currentTimeMillis();
@@ -102,8 +102,9 @@ public final class AnkiExporter {
             connection.setAutoCommit(false);
             try (Statement statement = connection.createStatement()) {
                 for (String table : AnkiSchema.TABLES) {
-                    statement.execute(table);
+                    statement.addBatch(table);
                 }
+                statement.executeBatch();
             }
             try (PreparedStatement col = connection.prepareStatement(
                     "insert into col values (1, ?, ?, ?, 11, 0, 0, 0, ?, ?, ?, ?, '{}')")) {
@@ -120,6 +121,11 @@ public final class AnkiExporter {
                     "insert into notes values (?, ?, ?, ?, -1, ?, ?, ?, ?, 0, '')");
                     PreparedStatement cards = connection.prepareStatement(
                             "insert into cards values (?, ?, ?, ?, ?, -1, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, '')")) {
+                // the same for every note and card
+                notes.setLong(3, modelId);
+                notes.setLong(4, now / 1000);
+                cards.setLong(3, deckId);
+                cards.setLong(5, now / 1000);
                 List<Sign> signs = request.signs();
                 for (int i = 0; i < signs.size(); i++) {
                     Sign sign = signs.get(i);
@@ -127,27 +133,25 @@ public final class AnkiExporter {
                     long noteId = now + i;
                     notes.setLong(1, noteId);
                     notes.setString(2, "signaire-" + sign.uid());
-                    notes.setLong(3, modelId);
-                    notes.setLong(4, now / 1000);
                     notes.setString(5, tags(sign, labels));
                     notes.setString(6, String.join(SEPARATOR, fields));
                     notes.setString(7, sign.name());
                     notes.setLong(8, checksum(sign.name()));
-                    notes.executeUpdate();
+                    notes.addBatch();
                     for (int ord : List.of(SIGN_TO_WORD, WORD_TO_SIGN)) {
                         if (ord == SIGN_TO_WORD && fields.get(FIELDS.indexOf("video")).isEmpty()) {
                             continue;
                         }
                         cards.setLong(1, now + 2L * i + ord);
                         cards.setLong(2, noteId);
-                        cards.setLong(3, deckId);
                         cards.setInt(4, ord);
-                        cards.setLong(5, now / 1000);
                         // new cards are shown in the order of the export
                         cards.setInt(6, i + 1);
-                        cards.executeUpdate();
+                        cards.addBatch();
                     }
                 }
+                notes.executeBatch();
+                cards.executeBatch();
             }
             connection.commit();
         }
@@ -155,10 +159,10 @@ public final class AnkiExporter {
 
     /** The fields of the note of a sign, in the order of {@link #FIELDS}. */
     private List<String> fields(Sign sign, Labels labels, Map<String, byte[]> files) {
-        String video = MediaFiles.firstVideo(sign).map(media -> include(media, files)
+        String video = MediaFiles.firstVideo(sign).map(videoMedia -> include(videoMedia, files)
                 .map(name -> "[sound:" + name + "]")
-                .orElseGet(() -> link(media.sourceUrl(), labels.get("watchVideo")))).orElse("");
-        String image = MediaFiles.firstImage(sign).flatMap(media -> include(media, files))
+                .orElseGet(() -> link(videoMedia.sourceUrl(), labels.get("watchVideo")))).orElse("");
+        String image = MediaFiles.firstImage(sign).flatMap(imageMedia -> include(imageMedia, files))
                 .map(name -> "<img src=\"" + Markup.html(name) + "\">").orElse("");
         return List.of(
                 Markup.html(sign.name()),
