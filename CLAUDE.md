@@ -202,7 +202,10 @@ the CLI and web tests.
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
 scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
-`.sitespeed/budget.json`. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
+`.sitespeed/budget.json` and, on pull requests, the measures of the last successful build of main: `ci/sitespeed.py`
+summarizes them (main keeps them as the `sitespeed-baseline` artifact, 90 days) and fails when a timing, a size or the
+requests of a page grow by more than 10% (and more than 100 ms, 1 KB or 1 request). The comparison is in the summary of
+the job. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
 code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
 integration tests), so code reached only by ITs needs unit tests too. Some SonarCloud suggestions clash with the
 WMF checkstyle rules (unnamed variables `_` are forbidden): checkstyle wins.

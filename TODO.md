@@ -17,7 +17,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] Add links back to <https://www.sgb-fss.ch/signsuisse/fr> in the footer, and for each sign link back to the original page
 - [x] Make the web app as accessible as possible (Lighthouse accessibility score 100 on the measured pages, enforced in CI)
 - [x] add integration with sitespeed.io during build to evaluate performance and fail the build in case of regression (fails when exceeding the budget of `.sitespeed/budget.json`)
-- [ ] compare sitespeed.io measures with a baseline, rather than with fixed budgets
+- [x] compare sitespeed.io measures with a baseline, rather than with fixed budgets (done: pull requests are compared with the last build of main, `ci/sitespeed.py`; the budget stays as a ceiling)
 - [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
 - [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
 - [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
