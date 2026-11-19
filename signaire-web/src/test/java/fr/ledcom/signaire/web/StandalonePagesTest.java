@@ -8,8 +8,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,12 +19,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import fr.ledcom.signaire.accounts.Account;
 import fr.ledcom.signaire.accounts.AccountException;
 import fr.ledcom.signaire.accounts.AccountService;
+import fr.ledcom.signaire.accounts.LocalCredentials;
 import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignSearchService;
@@ -51,6 +56,9 @@ class StandalonePagesTest {
 
     @Autowired
     private AdminUsers admins;
+
+    @Autowired
+    private UserDetailsService users;
 
     @Autowired
     private MockMvcTester mvc;
@@ -104,6 +112,26 @@ class StandalonePagesTest {
 
         verify(standalone).completeSetup(false, "alice");
         assertThat(admins.isAdmin("alice")).isTrue();
+    }
+
+    @Test
+    void onlyTheAdministratorOfTheSetupCanQuit() {
+        when(accounts.register("parent", "correct horse", null)).thenReturn(new Account(1, "parent", null));
+        mvc.post().uri("/setup").with(csrf()).param("alone", "false").param("username", "parent")
+                .param("password", "correct horse").param("confirmation", "correct horse").exchange();
+        when(standalone.needsSetup()).thenReturn(false);
+        when(accounts.findLocalCredentials("parent"))
+                .thenReturn(Optional.of(new LocalCredentials(1, "parent", null, "{noop}correct horse")));
+        when(accounts.findLocalCredentials("child"))
+                .thenReturn(Optional.of(new LocalCredentials(2, "child", null, "{noop}correct horse")));
+        RequestPostProcessor parent = user(users.loadUserByUsername("parent"));
+        RequestPostProcessor child = user(users.loadUserByUsername("child"));
+
+        assertThat(mvc.get().uri("/").with(parent).exchange()).bodyText().contains("Quitter Signaire");
+        assertThat(mvc.get().uri("/").with(child).exchange()).bodyText().doesNotContain("Quitter Signaire");
+        assertThat(mvc.get().uri("/admin").with(child).exchange()).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(mvc.post().uri("/admin/quit").with(child).with(csrf()).exchange())
+                .hasStatus(HttpStatus.FORBIDDEN);
     }
 
     @Test

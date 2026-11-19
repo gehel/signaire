@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 /**
  * The standalone application, as a user runs it on their computer: no container, no server. Set up on its first
  * run, it downloads signs from a (fake) SignSuisse, keeps everything for the next runs, and stops from its pages.
+ * The setup with several accounts is a test of the web module ({@code StandalonePagesTest}): it needs no jar.
  */
 class StandaloneIT {
 
@@ -87,29 +88,6 @@ class StandaloneIT {
         assertThat(Files.readString(work.resolve("config/signaire/standalone.properties")))
                 .contains("signaire.accounts.single-user=true");
         assertThat(work.resolve("state/signaire/database")).isDirectoryContaining("glob:**.mv.db");
-    }
-
-    @Test
-    void sharedByAFamily() throws Exception {
-        standalone = start("standalone-shared");
-        Session parent = new Session(base);
-        awaitStarted(parent);
-
-        HttpResponse<String> setup = parent.post("/setup", Map.of("alone", "false", "username", "parent",
-                "password", "correct horse", "confirmation", "correct horse"), "/setup");
-        assertThat(setup.headers().firstValue("Location")).hasValue(base + "/login?registered");
-
-        // the others have their accounts; only the administrator can quit
-        Session child = Session.registered(base, "child");
-        assertThat(child.get("/").body()).doesNotContain("Quitter Signaire");
-        assertThat(child.get("/admin").statusCode()).isEqualTo(403);
-        HttpResponse<String> login = parent.post("/login", Map.of("username", "parent",
-                "password", "correct horse"), "/login");
-        assertThat(login.headers().firstValue("Location")).hasValueSatisfying(
-                target -> assertThat(target).doesNotContain("error"));
-        assertThat(parent.get("/admin").statusCode()).isEqualTo(200);
-        assertThat(parent.post("/admin/quit", Map.of()).statusCode()).isEqualTo(200);
-        assertThat(standalone.await(Duration.ofMinutes(1))).isZero();
     }
 
     private JavaProcess start(String name) throws IOException {
