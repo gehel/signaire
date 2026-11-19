@@ -31,8 +31,8 @@ class WordListEntity {
     @JoinColumn(name = "owner_id")
     private AccountEntity owner;
     private String name;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Instant createdAt; // NOSONAR a column, for administrators reading the database
+    private Instant updatedAt; // NOSONAR a column, for administrators reading the database
     @OneToMany(mappedBy = "wordList", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("addedAt, id")
     private List<WordListEntryEntity> entries = new ArrayList<>();

@@ -59,7 +59,8 @@ public final class AnkiExporter {
         Labels labels = Labels.of(request.locale());
         Path collection = null;
         try {
-            collection = Files.createTempFile("signaire-", ".anki2");
+            // readable by its owner only, with a random name, deleted below
+            collection = Files.createTempFile("signaire-", ".anki2"); // NOSONAR
             Map<String, byte[]> files = new LinkedHashMap<>();
             writeCollection(collection, request, labels, files);
             try (ZipOutputStream zip = new ZipOutputStream(out)) {
@@ -225,7 +226,9 @@ public final class AnkiExporter {
     @SuppressFBWarnings(value = "WEAK_MESSAGE_DIGEST_SHA1", justification = "Anki's format, not security")
     private static long checksum(String text) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-1").digest(text.getBytes(StandardCharsets.UTF_8));
+            // required by Anki's format, not a security use
+            byte[] digest = MessageDigest.getInstance("SHA-1") // NOSONAR
+                    .digest(text.getBytes(StandardCharsets.UTF_8));
             long checksum = 0;
             for (int i = 0; i < 4; i++) {
                 checksum = checksum << 8 | (digest[i] & 0xff);
