@@ -28,5 +28,25 @@ What is not decided yet, known limits, possible follow-ups.
 
 ## Documents
 
-- [Anki export](anki-export.md)
+Signs, from SignSuisse to the user:
+- [Extraction from SignSuisse](extraction.md)
+- [Bundles](bundles.md)
 - [Bundle loading](bundle-loading.md)
+- [Search](search.md)
+- [SignSuisse synchronization](signsuisse-sync.md)
+
+People and their signs:
+- [Accounts and authentication](accounts.md)
+- [Word lists](word-lists.md)
+- [Administration: signs and requests](administration.md)
+- [Exports](exports.md), [Anki export](anki-export.md)
+
+Applications:
+- [Web interface](web-ui.md)
+- [Command line](cli.md)
+- [Standalone application](standalone.md)
+- [Languages of the interface](i18n.md)
+- [User directories](user-directories.md)
+
+Project:
+- [Build, tests and quality](build-and-tests.md)
