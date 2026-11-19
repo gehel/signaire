@@ -3,7 +3,6 @@ package fr.ledcom.signaire.cli;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -28,7 +27,7 @@ import picocli.CommandLine.Spec;
 // a new instance per command line: picocli doesn't reset all options (e.g. positional lists) between runs
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Command(name = "chercher", resourceBundle = "fr.ledcom.signaire.cli.search")
-public class SearchCommand implements Callable<Integer> {
+public class SearchCommand implements Runnable {
 
     private final SignSearchService search;
     private final Messages messages = Messages.of("fr.ledcom.signaire.cli.search");
@@ -62,7 +61,7 @@ public class SearchCommand implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() {
+    public void run() {
         PrintWriter out = spec.commandLine().getOut();
         String text = words == null ? null : String.join(" ", words);
         SignQuery query = new SignQuery(text, languages == null ? null : Set.copyOf(languages),
@@ -70,7 +69,7 @@ public class SearchCommand implements Callable<Integer> {
         SearchResults results = search.search(query);
         if (results.total() == 0) {
             out.println(messages.get("search.none"));
-            return 0;
+            return;
         }
         out.println(messages.get("search.found", results.total()));
         for (Sign sign : results.signs()) {
@@ -82,7 +81,6 @@ public class SearchCommand implements Callable<Integer> {
             out.println();
             out.println(messages.get("search.page", Math.max(page, 1), pages));
         }
-        return 0;
     }
 
     private void print(PrintWriter out, Sign sign) {
