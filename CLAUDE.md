@@ -153,8 +153,10 @@ parallel gains little: the build is CPU bound):
   `~/.m2/build-cache`) skips the modules whose sources, POM and dependencies did not change, tests and static
   analysis included, and restores their jars, `classes` and `test-classes` into `target/`: after a change in web,
   only web and signaire-it build. It reruns tests when the selection changes (`-Dtest=…`, `-Dit.test=…`), and a
-  build without tests never replaces one with tests. Files read by the build from outside `src/` and the POM are not
-  inputs: if one matters, add it to the cache configuration.
+  build without tests never replaces one with tests. Builds that stop before `package` (`test`, `compile`) are not
+  cached (`.mvn/maven.config`): a module restored without its jar would make the next modules compile against the
+  stale snapshot of `~/.m2`. Files read by the build from outside `src/` and the POM are not inputs: if one matters,
+  add it to the cache configuration.
 - Test JVMs (`argLine`, and the jars run by `JavaProcess`) use the quick compiler and the serial collector: they
   start faster than the optimizing compiler pays back.
 

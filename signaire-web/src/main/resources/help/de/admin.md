@@ -22,7 +22,9 @@ neu (nach einem Signaire-Update, das den Index ändert).
 
 Wählen Sie Kategorien und Gebärdensprachen (keine gewählt: alle) und ob Videos und Bilder heruntergeladen werden
 sollen. Die Synchronisation läuft im Hintergrund; jede Kategorie wird geladen, sobald sie bereit ist. Ohne Medien
-dauert es einige Minuten pro Kategorie, mit Medien viel länger.
+dauert es einige Minuten pro Kategorie, mit Medien viel länger. SignSuisse liefert nur 100 Ergebnisse pro Suche: alle
+Gebärden einer Kategorie zu finden braucht Hunderte von Suchen, mit Pausen, um die Website zu schonen. Die Seite zeigt
+ihre Anzahl; vor dem Ende dieses Schritts wird keine Gebärde extrahiert.
 
 ## Gebärdenanfragen
 

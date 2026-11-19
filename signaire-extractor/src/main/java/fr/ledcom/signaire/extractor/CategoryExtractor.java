@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import fr.ledcom.signaire.bundle.BundleException;
@@ -76,7 +77,8 @@ public class CategoryExtractor {
         List<SearchHit> failures = new ArrayList<>();
         boolean complete = true;
         for (Language language : EnumSet.copyOf(languages)) {
-            SignEnumerator.Result result = enumerator.enumerate(language, category);
+            SignEnumerator.Result result = enumerator.enumerate(language, category,
+                    (queries, found) -> listener.searched(category, language, queries, found));
             listener.enumerated(category, language, result);
             complete &= result.complete();
             for (SearchHit hit : result.hits()) {
@@ -103,6 +105,8 @@ public class CategoryExtractor {
     }
 
     private Sign withDownloadedMedia(Sign sign, Path cache) {
+        listener.mediaQueued(sign, (int) allMedia(sign).stream().map(CategoryExtractor::file).distinct()
+                .filter(file -> !Files.isRegularFile(cache.resolve(file))).count());
         return sign.toBuilder()
                 .videos(sign.videos().stream().map(media -> download(media, cache)).toList())
                 .examples(sign.examples().stream()
@@ -116,14 +120,28 @@ public class CategoryExtractor {
                 .build();
     }
 
+    private static List<Media> allMedia(Sign sign) {
+        List<Media> all = new ArrayList<>(sign.videos());
+        sign.examples().stream().map(Example::video).filter(Objects::nonNull).forEach(all::add);
+        all.addAll(sign.images());
+        sign.dialectVariants().forEach(variant -> all.add(variant.video()));
+        return all;
+    }
+
     private Media download(Media media, Path cache) {
-        URI uri = URI.create(media.sourceUrl());
-        String file = MEDIA_DIRECTORY + fileName(uri);
+        String file = file(media);
         Path target = cache.resolve(file);
         if (!Files.isRegularFile(target)) {
+            URI uri = URI.create(media.sourceUrl());
             source.download(uri, target);
+            listener.mediaDownloaded(uri);
         }
         return new Media(media.sourceUrl(), file);
+    }
+
+    /** The file of a media, in the cache and in the bundle. */
+    private static String file(Media media) {
+        return MEDIA_DIRECTORY + fileName(URI.create(media.sourceUrl()));
     }
 
     private static String fileName(URI uri) {

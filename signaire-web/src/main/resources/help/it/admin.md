@@ -22,7 +22,9 @@ tutto (dopo un aggiornamento di Signaire che cambia l'indice).
 
 Scegli categorie e lingue dei segni (nessuna selezionata: tutte), e se scaricare video e immagini. La
 sincronizzazione gira in background; ogni categoria viene caricata appena pronta. Senza media, qualche minuto per
-categoria; con i media, molto di più.
+categoria; con i media, molto di più. SignSuisse dà solo 100 risultati per ricerca: trovare tutti i segni di una
+categoria richiede centinaia di ricerche, distanziate per non sovraccaricare il sito. La pagina ne mostra il numero;
+nessun segno viene estratto prima della fine di questa fase.
 
 ## Richieste di segni
 

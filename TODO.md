@@ -21,17 +21,29 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] integration with lighthouse ci (thresholds in `.lighthouserc.json`)
 - [x] integration with sonarcloud during the build, failing the build in case of regressions (quality gate of the `gehel-github` organization)
 - [ ] Create a package that can be run as a standalone webapp, for standard users who don't want to deploy on a real server. It should have:
-  - app should be able to run just by double clicking the jar file (if a JRE is present) (done: `-standalone.jar`)
-  - also provide a version with an embedded JRE (done: jpackage application images, built by CI; installers to come)
-  - search runs embedded in the same jar (done: Lucene), no need to run a docker image or connect to an external instance
-  - embedded DB (done: H2)
-  - state (DB, search index) should be persisted in a reasonable location, OS specific (done: XDG state directory)
-  - uses the same logic / implementation, this is mostly a repackaging, not a new implementation
-  - option to run single user, without having to create a user at all (done)
-  - first run should guide the user through the setup, choosing single user mode or multi user, downloading sign bundles, etc... (done)
-  - automatically open browser when the app start (done)
-  - should work on Linux, Windows and MacOS (packaged by CI for the three; tried on Linux only)
+  - [x] app should be able to run just by double clicking the jar file (if a JRE is present) (done: `-standalone.jar`)
+  - [x] also provide a version with an embedded JRE (done: jpackage application images, built by CI; installers to come)
+  - [x] search runs embedded in the same jar (done: Lucene), no need to run a docker image or connect to an external instance
+  - [x] embedded DB (done: H2)
+  - [x] state (DB, search index) should be persisted in a reasonable location, OS specific (done: XDG state directory)
+  - [x] uses the same logic / implementation, this is mostly a repackaging, not a new implementation (done: the web application with the `standalone` profile)
+  - [x] option to run single user, without having to create a user at all (done)
+  - [x] first run should guide the user through the setup, choosing single user mode or multi user, downloading sign bundles, etc... (done)
+  - [x] automatically open browser when the app start (done)
+  - [ ] should work on Linux, Windows and MacOS (packaged by CI for the three; tried on Linux only)
 - [x] guided presentation: on first use, the user is guided through the various features of the app
 - [x] optimize build times (give me a plan before implementing and ask for my verification): local build done (build cache, faster test JVMs); GitHub Actions to be decided
+- [ ] custom user agent for outgoing HTTP requests, with a link to the github project, add a configuration option to change that user agent, encourage the users to have their email address in the user agent
+- [ ] Modify the guided tour by something nicer, with an overlay. Webtour.js is a good example of the kind of look I want, but use whatever implementation makes the most sense in this project.
+- [ ] explore fixing issues reported by Sonar. For each issue, propose a resolution, but check with me before implementing.
+- [ ] debian package using jdeb
+- [ ] in synchronisation with SignSuisse: add the option to download only videos, only images or both (or none)
+- [x] When running the standalone version and using the web ui, in administration when I try to synchronize with SignSuisse, the system seems stuck, extracting zero signs (done: finding the signs takes hundreds of searches, now shown while they run, and stoppable). Log: `2026-11-19T09:14:22.507+01:00  WARN 146543 --- [signsuisse-sync] f.l.signaire.extractor.SignEnumerator    : Search for "0" failed, refining it: Cannot fetch https://www.sgb-fss.ch/signsuisse/index.php?eID=signsuisse_search&sword=0&lang=fr&category=6815&curlang=fr: HTTP status 500`
+- [x] When extracting signs, give the following feedback, in the UI and in the logs:
+  - [x] Number of signs found
+  - [x] Number of signs fully imported (including media)
+  - [x] Number of video / images queued for download (media of the signs read, not downloaded yet: they are downloaded sign by sign)
+  - [x] Number of video / images fully downloaded
+- [ ] Remove JavaDoc that is just a restatement of the code. Only add JavaDoc if it adds value and understanding that isn't immediately understandable from reading the code.
 - [ ] Android app (on hold)
 - [ ] iOS app (to be decided)

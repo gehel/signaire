@@ -98,6 +98,36 @@ class CategoryExtractorTest {
     }
 
     @Test
+    void tellsTheMediaToDownloadThenEachDownload() throws IOException {
+        Path cached = output.resolve(CategoryExtractor.MEDIA_CACHE).resolve("media/LAUSANNE.mp4");
+        Files.createDirectories(cached.getParent());
+        Files.writeString(cached, "downloaded before");
+        List<String> events = new ArrayList<>();
+        CategoryExtractor followed = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
+                new BundleWriter(Clock.systemUTC()), new ExtractionListener() {
+                    @Override
+                    public void mediaQueued(Sign sign, int count) {
+                        events.add("queued " + sign.name() + " " + count);
+                    }
+
+                    @Override
+                    public void mediaDownloaded(URI uri) {
+                        events.add("downloaded " + uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1));
+                    }
+
+                    @Override
+                    public void signExtracted(Sign sign) {
+                        events.add("extracted " + sign.name());
+                    }
+                });
+
+        followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, true);
+
+        assertThat(events).containsExactly("queued LAUSANNE 1", "downloaded LAUSANNE-EXAMPLE.mp4",
+                "extracted LAUSANNE");
+    }
+
+    @Test
     void reportsSignsThatCannotBeExtractedAndKeepsTheOthers() {
         source.failingUid = "1";
 

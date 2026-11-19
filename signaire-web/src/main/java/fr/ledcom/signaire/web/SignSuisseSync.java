@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.web;
 
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Path;
@@ -44,6 +45,8 @@ public class SignSuisseSync {
 
     private static final Logger LOG = System.getLogger(SignSuisseSync.class.getName());
     private static final int MAX_QUERY_LENGTH = 6;
+    /** Signs between two progress messages in the log. */
+    private static final int LOG_EVERY = 25;
 
     private final SignSource source;
     private final BundleLoader loader;
@@ -84,16 +87,22 @@ public class SignSuisseSync {
      *
      * @param category the category being extracted, or null
      * @param language the language being extracted, or null
-     * @param found signs found in the current category and language
-     * @param extracted signs extracted so far
+     * @param listing whether the signs of the category and language are still being searched
+     * @param searches the searches sent for the current category and language
+     * @param found signs found in the current category and language (so far, while listing)
+     * @param extracted signs extracted so far, with their media when they are downloaded
      * @param failed signs that could not be extracted so far
+     * @param mediaQueued media of the signs read so far that were not downloaded yet
+     * @param mediaDownloaded media downloaded so far
      * @param done the categories done
      * @param error why the synchronization failed, or null
      */
-    public record Progress(State state, Category category, Language language, int found, int extracted,
-            int failed, List<CategoryResult> done, String error) {
+    public record Progress(State state, Category category, Language language, boolean listing, int searches,
+            int found, int extracted, int failed, int mediaQueued, int mediaDownloaded, List<CategoryResult> done,
+            String error) {
 
-        static final Progress IDLE = new Progress(State.IDLE, null, null, 0, 0, 0, List.of(), null);
+        static final Progress IDLE = new Progress(State.IDLE, null, null, false, 0, 0, 0, 0, 0, 0, List.of(), null);
+        static final Progress STARTED = IDLE.with(State.RUNNING, null);
 
         public Progress {
             done = List.copyOf(done);
@@ -104,7 +113,40 @@ public class SignSuisseSync {
         }
 
         Progress with(State newState, String newError) {
-            return new Progress(newState, null, null, found, extracted, failed, done, newError);
+            return new Progress(newState, null, null, false, 0, found, extracted, failed, mediaQueued,
+                    mediaDownloaded, done, newError);
+        }
+
+        Progress listing(Category newCategory, Language newLanguage, int newSearches, int newFound) {
+            return new Progress(state, newCategory, newLanguage, true, newSearches, newFound, extracted, failed,
+                    mediaQueued, mediaDownloaded, done, error);
+        }
+
+        Progress listed(int newFound) {
+            return new Progress(state, category, language, false, searches, newFound, extracted, failed,
+                    mediaQueued, mediaDownloaded, done, error);
+        }
+
+        Progress plusExtracted() {
+            return new Progress(state, category, language, false, searches, found, extracted + 1, failed,
+                    mediaQueued, mediaDownloaded, done, error);
+        }
+
+        Progress plusFailed() {
+            return new Progress(state, category, language, false, searches, found, extracted, failed + 1,
+                    mediaQueued, mediaDownloaded, done, error);
+        }
+
+        Progress plusMedia(int queued, int downloaded) {
+            return new Progress(state, category, language, listing, searches, found, extracted, failed,
+                    mediaQueued + queued, mediaDownloaded + downloaded, done, error);
+        }
+
+        Progress plusDone(CategoryResult result) {
+            List<CategoryResult> newDone = new ArrayList<>(done);
+            newDone.add(result);
+            return new Progress(state, null, null, false, 0, 0, extracted, failed, mediaQueued, mediaDownloaded,
+                    newDone, error);
         }
     }
 
@@ -127,13 +169,13 @@ public class SignSuisseSync {
         Set<Language> selectedLanguages = languages.isEmpty() ? EnumSet.allOf(Language.class)
                 : EnumSet.copyOf(languages);
         cancelled.set(false);
-        progress.set(new Progress(State.RUNNING, null, null, 0, 0, 0, List.of(), null));
+        progress.set(Progress.STARTED);
         worker = Thread.ofVirtual().name("signsuisse-sync")
                 .start(() -> run(selectedCategories, selectedLanguages, withMedia));
         return true;
     }
 
-    /** Stops the synchronization after the current sign; the categories done stay loaded. */
+    /** Stops the synchronization after the current search or sign; the categories done stay loaded. */
     public void cancel() {
         cancelled.set(true);
     }
@@ -155,12 +197,10 @@ public class SignSuisseSync {
             for (Category category : categories) {
                 ExtractionReport report = extractor.extract(category, languages, bundles, mediaCache, withMedia);
                 loader.load(report.bundle());
-                progress.updateAndGet(p -> {
-                    List<CategoryResult> done = new ArrayList<>(p.done());
-                    done.add(new CategoryResult(category, report.signCount(), report.failures().size(),
-                            report.enumerationComplete()));
-                    return new Progress(State.RUNNING, null, null, 0, p.extracted(), p.failed(), done, null);
-                });
+                LOG.log(Level.INFO, "{0}: {1} signs written to {2} and loaded, {3} failed", category,
+                        report.signCount(), report.bundle(), report.failures().size());
+                progress.updateAndGet(p -> p.plusDone(new CategoryResult(category, report.signCount(),
+                        report.failures().size(), report.enumerationComplete())));
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
         } catch (CancellationException e) {
@@ -177,24 +217,50 @@ public class SignSuisseSync {
     /** Follows the extraction, and stops it when cancelled. */
     private final class Listener implements ExtractionListener {
         @Override
+        public void searched(Category category, Language language, int queries, int found) {
+            checkCancelled();
+            progress.updateAndGet(p -> p.listing(category, language, queries, found));
+        }
+
+        @Override
         public void enumerated(Category category, Language language, SignEnumerator.Result result) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, category, language, result.hits().size(), p.extracted(),
-                    p.failed(), p.done(), null));
+            LOG.log(Level.INFO, "{0} ({1}): {2} signs found in {3} searches", category, language.code(),
+                    result.hits().size(), result.queries());
+            progress.updateAndGet(p -> p.listed(result.hits().size()));
+        }
+
+        @Override
+        public void mediaQueued(Sign sign, int count) {
+            checkCancelled();
+            progress.updateAndGet(p -> p.plusMedia(count, 0));
+        }
+
+        @Override
+        public void mediaDownloaded(URI uri) {
+            checkCancelled();
+            progress.updateAndGet(p -> p.plusMedia(0, 1));
         }
 
         @Override
         public void signExtracted(Sign sign) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), p.found(), p.extracted() + 1,
-                    p.failed(), p.done(), null));
+            logEvery(progress.updateAndGet(Progress::plusExtracted));
         }
 
         @Override
         public void signFailed(SearchHit hit, RuntimeException cause) {
             checkCancelled();
-            progress.updateAndGet(p -> new Progress(State.RUNNING, p.category(), p.language(), p.found(), p.extracted(),
-                    p.failed() + 1, p.done(), null));
+            LOG.log(Level.WARNING, "Cannot extract {0} ({1}): {2}", hit.name(), hit.uid(), cause.getMessage());
+            logEvery(progress.updateAndGet(Progress::plusFailed));
+        }
+
+        private void logEvery(Progress current) {
+            if ((current.extracted() + current.failed()) % LOG_EVERY == 0) {
+                LOG.log(Level.INFO, "{0} ({1}): {2} signs extracted, {3} failed, {4} of {5} media downloaded",
+                        current.category(), current.language().code(), current.extracted(), current.failed(),
+                        current.mediaDownloaded(), current.mediaQueued());
+            }
         }
 
         private void checkCancelled() {

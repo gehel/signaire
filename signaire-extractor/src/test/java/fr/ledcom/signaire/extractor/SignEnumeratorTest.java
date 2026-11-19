@@ -63,6 +63,19 @@ class SignEnumeratorTest {
     }
 
     @Test
+    void reportsItsProgressAfterEachSearch() {
+        FakeLexicon lexicon = new FakeLexicon("AARAU", "BERNE", "SION", "ZOUG");
+        List<List<Integer>> progress = new ArrayList<>();
+
+        SignEnumerator.Result result = new SignEnumerator(lexicon, CAP, 10).enumerate(Language.FRENCH, Category.CITY,
+                (queries, found) -> progress.add(List.of(queries, found)));
+
+        assertThat(progress).hasSize(result.queries());
+        assertThat(progress.getFirst()).isEqualTo(List.of(1, 1));
+        assertThat(progress.getLast()).isEqualTo(List.of(result.queries(), 4));
+    }
+
+    @Test
     void keepsOnlyHitsInTheRequestedLanguage() {
         FakeLexicon lexicon = new FakeLexicon("ZURICH");
         lexicon.extraHit = new SearchHit("999", "ZÜRICH", Language.GERMAN, "https://example.org/999");

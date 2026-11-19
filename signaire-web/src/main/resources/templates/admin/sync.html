@@ -13,11 +13,18 @@
              th:hx-get="${progress.running()} ? @{/admin/sync/status}"
              th:hx-trigger="${progress.running()} ? 'every 2s'" hx-swap="outerHTML">
         <p><strong th:text="#{'admin.sync.state.' + ${progress.state().name()}(${progress.error()})}">Done</strong></p>
-        <p th:if="${progress.category() != null}"
+        <p th:if="${progress.category() != null and progress.listing()}"
+           th:text="#{admin.sync.listing(#{'category.' + ${progress.category().name()}},
+                    ${progress.language().code()}, ${progress.searches()}, ${progress.found()})}">City (fr): searching,
+            40 searches, 12 signs found so far</p>
+        <p th:if="${progress.category() != null and !progress.listing()}"
            th:text="#{admin.sync.current(#{'category.' + ${progress.category().name()}},
                     ${progress.language().code()}, ${progress.found()})}">City (fr): 12 signs found</p>
         <p th:if="${progress.state().name() != 'IDLE'}"
            th:text="#{admin.sync.counts(${progress.extracted()}, ${progress.failed()})}">10 extracted, 0 failed</p>
+        <p th:if="${progress.mediaQueued() > 0}"
+           th:text="#{admin.sync.media(${progress.mediaDownloaded()}, ${progress.mediaQueued()})}">Media downloaded:
+            12 of 40.</p>
         <ul th:unless="${progress.done().isEmpty()}">
             <li th:each="result : ${progress.done()}">
                 <span th:text="#{admin.sync.category(#{'category.' + ${result.category().name()}}, ${result.signs()})}">

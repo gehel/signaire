@@ -63,14 +63,34 @@ public class SignEnumerator {
         }
     }
 
+    /** Follows an enumeration, which can take hundreds of searches. */
+    @FunctionalInterface
+    public interface SearchProgress {
+
+        SearchProgress NONE = (queries, found) -> { };
+
+        /**
+         * Called after each search.
+         *
+         * @param queries the number of searches sent so far
+         * @param found the number of signs found so far
+         */
+        void searched(int queries, int found);
+    }
+
     public Result enumerate(Language language, Category category) {
-        return new Run(language, category).run();
+        return enumerate(language, category, SearchProgress.NONE);
+    }
+
+    public Result enumerate(Language language, Category category, SearchProgress progress) {
+        return new Run(language, category, progress).run();
     }
 
     /** State of one enumeration. */
     private final class Run {
         private final Language language;
         private final Category category;
+        private final SearchProgress progress;
         private final Set<Character> alphabet = new TreeSet<>();
         private final Deque<String> pending = new ArrayDeque<>();
         /** Number of results by query, as the search sees it (stripped). */
@@ -82,9 +102,10 @@ public class SignEnumerator {
         private int queries;
         private boolean complete = true;
 
-        Run(Language language, Category category) {
+        Run(Language language, Category category, SearchProgress progress) {
             this.language = language;
             this.category = category;
+            this.progress = progress;
         }
 
         Result run() {
@@ -111,18 +132,25 @@ public class SignEnumerator {
             if (known != null) {
                 return known;
             }
-            List<SearchHit> results;
             queries++;
+            int count = search(query);
+            resultCounts.put(key, count);
+            progress.searched(queries, hits.size());
+            return count;
+        }
+
+        /** The number of results of a search, the maximum when it fails. */
+        private int search(String query) {
+            List<SearchHit> results;
             try {
                 results = search.search(query, language, category);
             } catch (ExtractionException e) {
-                // e.g. SignSuisse fails on "0": refining the query is the way around
-                LOG.log(Level.WARNING, "Search for \"{0}\" failed, refining it: {1}", query, e.getMessage());
-                resultCounts.put(key, maxResults);
-                failed.add(key);
+                // e.g. SignSuisse always fails on "0": the longer queries starting with it find the same signs
+                LOG.log(Level.INFO, "Search for \"{0}\" failed, searching longer queries instead: {1}", query,
+                        e.getMessage());
+                failed.add(query.strip());
                 return maxResults;
             }
-            resultCounts.put(key, results.size());
             for (SearchHit hit : results) {
                 if (hit.language() == language) {
                     hits.putIfAbsent(hit.uid(), hit);
