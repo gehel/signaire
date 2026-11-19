@@ -285,6 +285,9 @@ the CLI and web never reach Lucene or JPA directly. Change the rules there when 
 
 ## Conventions
 
+- **Design first**: a feature, or a change to the design of one, starts with its design document in `docs/design/`
+  (why, design, decisions and rejected alternatives; template in `docs/design/README.md`), as the first commit of its
+  branch. Keep it in step with the implementation.
 - **Test first**: write the failing test before the implementation, JUnit 5 + AssertJ (no Hamcrest, no
   JUnit assertions).
 - **Branch per feature** (`feature/<name>`), merged to `main` through a GitHub PR. Commits tell a story
