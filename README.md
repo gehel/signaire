@@ -84,6 +84,8 @@ Signaire follows the [XDG base directories](https://specifications.freedesktop.o
 | `signaire.accounts.admins` | | Usernames of the administrators, comma separated |
 | `signaire.accounts.registration-enabled` | `true` | Whether anyone can create an account |
 | `signaire.sync.interval` | `500ms` | Delay between two requests to SignSuisse |
+| `signaire.signsuisse.contact` | | Your email address (or a URL), added to the `User-Agent` of the requests to SignSuisse so that they can reach you if Signaire loads their site too much. **Sent with every request**: SignSuisse and its host keep it in their logs. Recommended |
+| `signaire.signsuisse.user-agent` | `Signaire (+https://github.com/gehel/signaire)` | Replaces the whole `User-Agent` |
 | `spring.datasource.url`, `.username`, `.password` | local PostgreSQL of `compose.yaml` | |
 | `spring.security.oauth2.client.*` | | OpenID Connect providers, see [CLAUDE.md](CLAUDE.md) |
 

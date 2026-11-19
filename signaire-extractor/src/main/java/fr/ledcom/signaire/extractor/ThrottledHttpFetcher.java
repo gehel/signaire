@@ -19,17 +19,17 @@ import java.util.function.Supplier;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Fetches resources politely: requests are spaced by a minimum interval, and transient failures (network
- * errors, 5xx and 429 responses) are retried with an increasing delay.
+ * Fetches resources politely: requests say who sends them ({@link UserAgent}), are spaced by a minimum interval, and
+ * transient failures (network errors, 5xx and 429 responses) are retried with an increasing delay.
  */
 public class ThrottledHttpFetcher implements HttpFetcher {
 
-    static final String USER_AGENT = "signaire-extractor/1.0";
     private static final Duration TIMEOUT = Duration.ofMinutes(2);
 
     private final HttpClient client;
     private final Duration minInterval;
     private final int maxAttempts;
+    private final UserAgent userAgent;
     private final Supplier<Instant> clock;
     private final Sleeper sleeper;
     private Instant lastRequest;
@@ -40,15 +40,16 @@ public class ThrottledHttpFetcher implements HttpFetcher {
         void sleep(Duration duration) throws InterruptedException;
     }
 
-    public ThrottledHttpFetcher(HttpClient client, Duration minInterval, int maxAttempts) {
-        this(client, minInterval, maxAttempts, Instant::now, duration -> Thread.sleep(duration.toMillis()));
+    public ThrottledHttpFetcher(HttpClient client, Duration minInterval, int maxAttempts, UserAgent userAgent) {
+        this(client, minInterval, maxAttempts, userAgent, Instant::now, duration -> Thread.sleep(duration.toMillis()));
     }
 
-    ThrottledHttpFetcher(HttpClient client, Duration minInterval, int maxAttempts, Supplier<Instant> clock,
-            Sleeper sleeper) {
+    ThrottledHttpFetcher(HttpClient client, Duration minInterval, int maxAttempts, UserAgent userAgent,
+            Supplier<Instant> clock, Sleeper sleeper) {
         this.client = client;
         this.minInterval = minInterval;
         this.maxAttempts = maxAttempts;
+        this.userAgent = userAgent;
         this.clock = clock;
         this.sleeper = sleeper;
     }
@@ -79,7 +80,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
 
     private synchronized <T> HttpResponse<T> send(URI uri, BodyHandler<T> bodyHandler) {
         HttpRequest request = HttpRequest.newBuilder(uri)
-                .header("User-Agent", USER_AGENT)
+                .header("User-Agent", userAgent.value())
                 .timeout(TIMEOUT)
                 .GET()
                 .build();

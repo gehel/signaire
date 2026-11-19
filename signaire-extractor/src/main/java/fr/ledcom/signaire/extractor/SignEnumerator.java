@@ -67,15 +67,17 @@ public class SignEnumerator {
     @FunctionalInterface
     public interface SearchProgress {
 
-        SearchProgress NONE = (queries, found) -> { };
+        SearchProgress NONE = (queries, planned, found) -> { };
 
         /**
          * Called after each search.
          *
          * @param queries the number of searches sent so far
+         * @param planned the searches planned so far: their number grows when searches return too many results to
+         *         be complete, and there is no telling how many more there will be
          * @param found the number of signs found so far
          */
-        void searched(int queries, int found);
+        void searched(int queries, int planned, int found);
     }
 
     public Result enumerate(Language language, Category category) {
@@ -135,7 +137,7 @@ public class SignEnumerator {
             queries++;
             int count = search(query);
             resultCounts.put(key, count);
-            progress.searched(queries, hits.size());
+            progress.searched(queries, pending.size(), hits.size());
             return count;
         }
 

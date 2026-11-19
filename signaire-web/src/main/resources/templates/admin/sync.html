@@ -15,7 +15,8 @@
         <p><strong th:text="#{'admin.sync.state.' + ${progress.state().name()}(${progress.error()})}">Done</strong></p>
         <p th:if="${progress.category() != null and progress.listing()}"
            th:text="#{admin.sync.listing(#{'category.' + ${progress.category().name()}},
-                    ${progress.language().code()}, ${progress.searches()}, ${progress.found()})}">City (fr): searching,
+                    ${progress.language().code()}, ${progress.searches()}, ${progress.plannedSearches()},
+                    ${progress.found()})}">City (fr): searching,
             40 searches, 12 signs found so far</p>
         <p th:if="${progress.category() != null and !progress.listing()}"
            th:text="#{admin.sync.current(#{'category.' + ${progress.category().name()}},
@@ -40,6 +41,12 @@
 
     <form th:action="@{/admin/sync}" method="post" class="stacked sync">
         <p th:text="#{admin.sync.help}">Extracts categories from SignSuisse.</p>
+        <p class="note">
+            <span th:text="#{admin.sync.userAgent}">Requests to SignSuisse introduce themselves as:</span>
+            <code th:text="${userAgent.value()}">Signaire (+https://github.com/gehel/signaire)</code>
+            <span th:unless="${userAgent.withContact()}" th:text="#{admin.sync.contact}">Add your email address.</span>
+            <a th:replace="~{fragments/help :: link('admin')}"></a>
+        </p>
         <fieldset>
             <legend th:text="#{admin.sync.categories}">Categories</legend>
             <label th:each="category : ${allCategories}">

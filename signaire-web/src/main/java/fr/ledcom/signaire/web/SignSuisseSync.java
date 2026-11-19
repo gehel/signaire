@@ -89,6 +89,7 @@ public class SignSuisseSync {
      * @param language the language being extracted, or null
      * @param listing whether the signs of the category and language are still being searched
      * @param searches the searches sent for the current category and language
+     * @param plannedSearches the searches planned so far, whose number grows while listing
      * @param found signs found in the current category and language (so far, while listing)
      * @param extracted signs extracted so far, with their media when they are downloaded
      * @param failed signs that could not be extracted so far
@@ -98,10 +99,11 @@ public class SignSuisseSync {
      * @param error why the synchronization failed, or null
      */
     public record Progress(State state, Category category, Language language, boolean listing, int searches,
-            int found, int extracted, int failed, int mediaQueued, int mediaDownloaded, List<CategoryResult> done,
+            int plannedSearches, int found, int extracted, int failed, int mediaQueued, int mediaDownloaded, List<CategoryResult> done,
             String error) {
 
-        static final Progress IDLE = new Progress(State.IDLE, null, null, false, 0, 0, 0, 0, 0, 0, List.of(), null);
+        static final Progress IDLE = new Progress(State.IDLE, null, null, false, 0, 0, 0, 0, 0, 0, 0, List.of(),
+                null);
         static final Progress STARTED = IDLE.with(State.RUNNING, null);
 
         public Progress {
@@ -113,39 +115,39 @@ public class SignSuisseSync {
         }
 
         Progress with(State newState, String newError) {
-            return new Progress(newState, null, null, false, 0, found, extracted, failed, mediaQueued,
+            return new Progress(newState, null, null, false, 0, 0, found, extracted, failed, mediaQueued,
                     mediaDownloaded, done, newError);
         }
 
-        Progress listing(Category newCategory, Language newLanguage, int newSearches, int newFound) {
-            return new Progress(state, newCategory, newLanguage, true, newSearches, newFound, extracted, failed,
-                    mediaQueued, mediaDownloaded, done, error);
+        Progress listing(Category newCategory, Language newLanguage, int newSearches, int planned, int newFound) {
+            return new Progress(state, newCategory, newLanguage, true, newSearches, planned, newFound, extracted,
+                    failed, mediaQueued, mediaDownloaded, done, error);
         }
 
         Progress listed(int newFound) {
-            return new Progress(state, category, language, false, searches, newFound, extracted, failed,
+            return new Progress(state, category, language, false, searches, 0, newFound, extracted, failed,
                     mediaQueued, mediaDownloaded, done, error);
         }
 
         Progress plusExtracted() {
-            return new Progress(state, category, language, false, searches, found, extracted + 1, failed,
+            return new Progress(state, category, language, false, searches, 0, found, extracted + 1, failed,
                     mediaQueued, mediaDownloaded, done, error);
         }
 
         Progress plusFailed() {
-            return new Progress(state, category, language, false, searches, found, extracted, failed + 1,
+            return new Progress(state, category, language, false, searches, 0, found, extracted, failed + 1,
                     mediaQueued, mediaDownloaded, done, error);
         }
 
         Progress plusMedia(int queued, int downloaded) {
-            return new Progress(state, category, language, listing, searches, found, extracted, failed,
-                    mediaQueued + queued, mediaDownloaded + downloaded, done, error);
+            return new Progress(state, category, language, listing, searches, plannedSearches, found, extracted,
+                    failed, mediaQueued + queued, mediaDownloaded + downloaded, done, error);
         }
 
         Progress plusDone(CategoryResult result) {
             List<CategoryResult> newDone = new ArrayList<>(done);
             newDone.add(result);
-            return new Progress(state, null, null, false, 0, 0, extracted, failed, mediaQueued, mediaDownloaded,
+            return new Progress(state, null, null, false, 0, 0, 0, extracted, failed, mediaQueued, mediaDownloaded,
                     newDone, error);
         }
     }
@@ -217,9 +219,9 @@ public class SignSuisseSync {
     /** Follows the extraction, and stops it when cancelled. */
     private final class Listener implements ExtractionListener {
         @Override
-        public void searched(Category category, Language language, int queries, int found) {
+        public void searched(Category category, Language language, int queries, int planned, int found) {
             checkCancelled();
-            progress.updateAndGet(p -> p.listing(category, language, queries, found));
+            progress.updateAndGet(p -> p.listing(category, language, queries, planned, found));
         }
 
         @Override

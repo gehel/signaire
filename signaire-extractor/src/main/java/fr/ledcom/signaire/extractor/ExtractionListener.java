@@ -12,7 +12,7 @@ public interface ExtractionListener {
     ExtractionListener NONE = new ExtractionListener() { };
 
     /** A search for the signs of a language and category, which takes hundreds of them, was sent. */
-    default void searched(Category category, Language language, int queries, int found) {
+    default void searched(Category category, Language language, int queries, int planned, int found) {
     }
 
     /** The search found the signs of a language and category. */

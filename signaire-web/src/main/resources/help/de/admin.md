@@ -26,6 +26,22 @@ dauert es einige Minuten pro Kategorie, mit Medien viel länger. SignSuisse lief
 Gebärden einer Kategorie zu finden braucht Hunderte von Suchen, mit Pausen, um die Website zu schonen. Die Seite zeigt
 ihre Anzahl; vor dem Ende dieses Schritts wird keine Gebärde extrahiert.
 
+## Kontakt für SignSuisse
+
+Jede Anfrage an SignSuisse sagt, dass sie von Signaire kommt, mit einem Link zum Projekt. Fügen Sie Ihre
+E-Mail-Adresse hinzu: Belastet Signaire die Website zu stark, kann SignSuisse Ihnen schreiben, statt Ihre Downloads
+zu sperren. Tragen Sie sie in die Datei `application.properties` des Konfigurationsverzeichnisses von Signaire ein
+(`~/.config/signaire/` unter Linux), die auch die Befehlszeile liest:
+
+```properties
+signaire.signsuisse.contact=sie@beispiel.org
+```
+
+**Datenschutz**: Die Adresse wird mit jeder Anfrage an SignSuisse gesendet, im Klartext im Header `User-Agent`.
+SignSuisse (der Schweizerische Gehörlosenbund) und sein Hoster sehen sie in ihren Protokollen und bewahren sie nach
+ihren Regeln auf; wer diese Anfragen sieht, kann sie ebenfalls lesen. Verwenden Sie eine Adresse, die Sie teilen
+möchten, zum Beispiel eine eigene dafür. `signaire.signsuisse.user-agent` ersetzt den ganzen Header.
+
 ## Gebärdenanfragen
 
 Für jede offene Anfrage: **Auf SignSuisse suchen** und die richtige Gebärde **importieren** (oder sie **verknüpfen**,

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import fr.ledcom.signaire.extractor.SignSource;
 import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.extractor.ThrottledHttpFetcher;
+import fr.ledcom.signaire.extractor.UserAgent;
 
 /** SignSuisse, for synchronizing the bundles and importing requested signs. */
 @Configuration(proxyBeanMethods = false)
@@ -24,11 +25,23 @@ public class ExtractionConfiguration {
      */
     @Bean
     public SignSource signSuisse(@Value("${signaire.sync.interval:500ms}") Duration interval,
-            @Value("${signaire.signsuisse.url:https://www.sgb-fss.ch}") URI baseUri) {
+            @Value("${signaire.signsuisse.url:https://www.sgb-fss.ch}") URI baseUri, UserAgent userAgent) {
         HttpClient client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
-        return new SignSuisseClient(new ThrottledHttpFetcher(client, interval, MAX_ATTEMPTS), baseUri);
+        return new SignSuisseClient(new ThrottledHttpFetcher(client, interval, MAX_ATTEMPTS, userAgent), baseUri);
+    }
+
+    /**
+     * Says who sends the requests to SignSuisse, and how to reach them.
+     *
+     * @param contact the email address (or URL) of the user, sent to SignSuisse with every request
+     * @param override a User-Agent replacing the one of Signaire
+     */
+    @Bean
+    public UserAgent userAgent(@Value("${signaire.signsuisse.contact:}") String contact,
+            @Value("${signaire.signsuisse.user-agent:}") String override) {
+        return UserAgent.of(contact, override);
     }
 }
