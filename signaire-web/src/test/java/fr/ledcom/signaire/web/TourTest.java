@@ -21,6 +21,8 @@ import fr.ledcom.signaire.accounts.AccountService;
 import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignSearchService;
+import fr.ledcom.signaire.model.Language;
+import fr.ledcom.signaire.model.Sign;
 import jakarta.servlet.http.Cookie;
 
 @WebMvcTest({SearchController.class, TourController.class})
@@ -62,14 +64,39 @@ class TourTest {
     }
 
     @Test
-    void theTourPresentsTheFeaturesStepByStep() {
-        MvcTestResult first = mvc.get().uri("/tour/1").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
+    void theTourStartsOnThePageOfItsFirstStep() {
+        assertThat(mvc.get().uri("/tour/1").exchange()).hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/?tour=1");
+        assertThat(mvc.get().uri("/tour/3").exchange()).hasRedirectedUrl("/?q=lac&tour=3");
+    }
+
+    @Test
+    void eachStepIsADialogNextToWhatItPresents() {
+        MvcTestResult first = mvc.get().uri("/?tour=1").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
         assertThat(first).hasStatus(HttpStatus.OK).bodyText()
-                .contains("<html lang=\"de\">", "1 / 5", "href=\"/tour/2\"", "href=\"/help/search\"")
-                .doesNotContain("href=\"/tour/0\"");
-        assertThat(mvc.get().uri("/tour/5").exchange()).bodyText()
-                .contains("5 / 5", "href=\"/tour/4\"", "href=\"/tour/done\"").doesNotContain("href=\"/tour/6\"");
+                .contains("<html lang=\"de\">", "<dialog id=\"tour\"", "data-target=\"search\"", "1 / 5",
+                        "href=\"/?q=lac&amp;tour=2\"", "href=\"/help/search\"", "href=\"/tour/done\"",
+                        "src=\"/js/tour.js\"")
+                .doesNotContain("tour=0");
+        assertThat(mvc.get().uri("/?q=lac&tour=5").exchange()).bodyText()
+                .contains("data-target=\"help\"", "5 / 5", "href=\"/?q=lac&amp;tour=4\"", "href=\"/tour/done\"")
+                .doesNotContain("tour=6");
+    }
+
+    @Test
+    void pagesOutsideTheTourHaveNoDialog() {
+        assertThat(mvc.get().uri("/").exchange()).bodyText().doesNotContain("<dialog", "tour.js");
+        assertThat(mvc.get().uri("/?tour=6").exchange()).bodyText().doesNotContain("<dialog");
+    }
+
+    @Test
+    void theStepsPointAtTheFeatures() {
+        when(search.search(any())).thenReturn(new SearchResults(1, List.of(
+                Sign.builder("1", Language.FRENCH, "LAC").build())));
+
+        assertThat(mvc.get().uri("/?q=lac").exchange()).bodyText()
+                .contains("data-tour=\"search\"", "data-tour=\"results\"", "data-tour=\"account\"",
+                        "data-tour=\"export\"", "data-tour=\"help\"");
     }
 
     @Test

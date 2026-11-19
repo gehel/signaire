@@ -306,7 +306,7 @@ main.help pre {
     }
 }
 
-section.welcome, main.tour {
+section.welcome, dialog.tour {
     background: #fff8f0;
     border-left: 4px solid var(--accent);
     margin: 1rem 0;
@@ -332,4 +332,52 @@ nav.tour-steps .skip-tour {
     position: absolute;
     white-space: nowrap;
     width: 1px;
+}
+
+/* The guided tour: without script, the dialog is a card under the header; tour.js places it next to the element it
+   presents, the rest of the page dimmed by the shadow of that element. */
+dialog.tour {
+    border: none;
+    border-left: 4px solid var(--accent);
+    color: inherit;
+    flex-basis: 100%;
+    max-width: 40rem;
+    position: static;
+}
+
+dialog.tour h2 {
+    margin-top: 0;
+}
+
+/* focused by tour.js so that screen readers read it; its links show the focus */
+dialog.tour:focus {
+    outline: none;
+}
+
+dialog.tour.floating {
+    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 40%);
+    margin: 0;
+    max-width: min(28rem, calc(100vw - 24px));
+    position: fixed;
+    z-index: 30;
+}
+
+dialog.tour.centered {
+    box-shadow: 0 0 0 9999px rgb(0 0 0 / 55%);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.tour-target {
+    border-radius: 0.25rem;
+    box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgb(0 0 0 / 55%);
+    position: relative;
+    z-index: 20;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .tour-target {
+        transition: box-shadow 0.2s;
+    }
 }

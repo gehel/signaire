@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 class SetupFilter extends OncePerRequestFilter {
 
     /** What the setup page needs, and the manual. */
-    private static final List<String> ALWAYS = List.of("/setup", "/help", "/css/", "/webjars/", "/favicon", "/error");
+    private static final List<String> ALWAYS = List.of("/setup", "/help", "/css/", "/js/", "/webjars/", "/favicon", "/error");
 
     private final Standalone standalone;
 

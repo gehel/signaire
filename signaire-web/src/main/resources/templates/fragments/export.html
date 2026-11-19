@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <!--/* Downloads a list or search results; the search parameters, when on the page, are kept. */-->
-<details th:fragment="export(action)" class="export">
+<details th:fragment="export(action)" class="export" data-tour="export">
     <summary><span th:text="#{export.title}">Export</span>
         <a th:replace="~{fragments/help :: link('exports')}"></a></summary>
     <form th:action="@{${action}}" method="get" class="stacked">

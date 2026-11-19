@@ -34,7 +34,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [x] guided presentation: on first use, the user is guided through the various features of the app
 - [x] optimize build times (give me a plan before implementing and ask for my verification): local build done (build cache, faster test JVMs); GitHub Actions to be decided
 - [x] custom user agent for outgoing HTTP requests, with a link to the github project, add a configuration option to change that user agent, encourage the users to have their email address in the user agent (done: `signaire.signsuisse.contact`, `signaire.signsuisse.user-agent`; the help explains the privacy implications)
-- [ ] Modify the guided tour by something nicer, with an overlay. Webtour.js is a good example of the kind of look I want, but use whatever implementation makes the most sense in this project.
+- [x] Modify the guided tour by something nicer, with an overlay. Webtour.js is a good example of the kind of look I want, but use whatever implementation makes the most sense in this project. (done: a dialog next to the element it presents, the rest dimmed, no library)
 - [ ] explore fixing issues reported by Sonar. For each issue, propose a resolution, but check with me before implementing.
 - [ ] debian package using jdeb
 - [x] in synchronisation with SignSuisse: add the option to download only videos, only images or both (or none) (done: synchronization and setup pages, `--medias` of the command line)
