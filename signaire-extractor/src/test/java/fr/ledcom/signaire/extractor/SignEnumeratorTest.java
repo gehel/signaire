@@ -68,11 +68,12 @@ class SignEnumeratorTest {
         List<List<Integer>> progress = new ArrayList<>();
 
         SignEnumerator.Result result = new SignEnumerator(lexicon, CAP, 10).enumerate(Language.FRENCH, Category.CITY,
-                (queries, found) -> progress.add(List.of(queries, found)));
+                (queries, planned, found) -> progress.add(List.of(queries, planned, found)));
 
         assertThat(progress).hasSize(result.queries());
-        assertThat(progress.getFirst()).isEqualTo(List.of(1, 1));
-        assertThat(progress.getLast()).isEqualTo(List.of(result.queries(), 4));
+        // "a" finds one sign: the 35 other characters of the alphabet are planned
+        assertThat(progress.getFirst()).isEqualTo(List.of(1, 35, 1));
+        assertThat(progress.getLast()).isEqualTo(List.of(result.queries(), 0, 4));
     }
 
     @Test

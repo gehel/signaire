@@ -48,6 +48,7 @@ class SignSuisseSyncTest {
         assertThat(progress.category()).isEqualTo(Category.CITY);
         assertThat(progress.language()).isEqualTo(Language.FRENCH);
         assertThat(progress.searches()).isEqualTo(2);
+        assertThat(progress.plannedSearches()).isEqualTo(34);
         assertThat(progress.found()).isEqualTo(1);
 
         sync.cancel();

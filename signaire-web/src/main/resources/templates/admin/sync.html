@@ -15,7 +15,8 @@
         <p><strong th:text="#{'admin.sync.state.' + ${progress.state().name()}(${progress.error()})}">Done</strong></p>
         <p th:if="${progress.category() != null and progress.listing()}"
            th:text="#{admin.sync.listing(#{'category.' + ${progress.category().name()}},
-                    ${progress.language().code()}, ${progress.searches()}, ${progress.found()})}">City (fr): searching,
+                    ${progress.language().code()}, ${progress.searches()}, ${progress.plannedSearches()},
+                    ${progress.found()})}">City (fr): searching,
             40 searches, 12 signs found so far</p>
         <p th:if="${progress.category() != null and !progress.listing()}"
            th:text="#{admin.sync.current(#{'category.' + ${progress.category().name()}},
