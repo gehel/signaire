@@ -57,11 +57,11 @@ public class CategoryExtractor {
      * @param category the category to extract
      * @param languages the sign languages to extract
      * @param outputDir where to write the bundle
-     * @param withMedia whether to download the media into the bundle, or only reference their URLs
+     * @param media the media to download into the bundle; the others are only referenced by their URLs
      */
     public ExtractionReport extract(Category category, Collection<Language> languages, Path outputDir,
-            boolean withMedia) {
-        return extract(category, languages, outputDir, outputDir.resolve(MEDIA_CACHE), withMedia);
+            MediaChoice media) {
+        return extract(category, languages, outputDir, outputDir.resolve(MEDIA_CACHE), media);
     }
 
     /**
@@ -70,7 +70,7 @@ public class CategoryExtractor {
      * @param cache where media are downloaded, and found when already downloaded
      */
     public ExtractionReport extract(Category category, Collection<Language> languages, Path outputDir, Path cache,
-            boolean withMedia) {
+            MediaChoice media) {
         createDirectories(outputDir);
         createDirectories(cache);
         List<Sign> signs = new ArrayList<>();
@@ -84,8 +84,8 @@ public class CategoryExtractor {
             for (SearchHit hit : result.hits()) {
                 try {
                     Sign sign = source.fetchSign(hit);
-                    if (withMedia) {
-                        sign = withDownloadedMedia(sign, cache);
+                    if (media != MediaChoice.NONE) {
+                        sign = withDownloadedMedia(sign, cache, media);
                     }
                     signs.add(sign);
                     listener.signExtracted(sign);
@@ -104,28 +104,37 @@ public class CategoryExtractor {
         return category.name().toLowerCase(Locale.ROOT).replace('_', '-') + ".zip";
     }
 
-    private Sign withDownloadedMedia(Sign sign, Path cache) {
-        listener.mediaQueued(sign, (int) allMedia(sign).stream().map(CategoryExtractor::file).distinct()
+    private Sign withDownloadedMedia(Sign sign, Path cache, MediaChoice choice) {
+        listener.mediaQueued(sign, (int) chosenMedia(sign, choice).stream().map(CategoryExtractor::file).distinct()
                 .filter(file -> !Files.isRegularFile(cache.resolve(file))).count());
-        return sign.toBuilder()
-                .videos(sign.videos().stream().map(media -> download(media, cache)).toList())
-                .examples(sign.examples().stream()
-                        .map(example -> example.video() == null ? example
-                                : new Example(example.text(), download(example.video(), cache)))
-                        .toList())
-                .images(sign.images().stream().map(media -> download(media, cache)).toList())
-                .dialectVariants(sign.dialectVariants().stream()
-                        .map(variant -> new DialectVariant(variant.dialects(), download(variant.video(), cache)))
-                        .toList())
-                .build();
+        Sign.Builder builder = sign.toBuilder();
+        if (choice.videos()) {
+            builder.videos(sign.videos().stream().map(media -> download(media, cache)).toList())
+                    .examples(sign.examples().stream()
+                            .map(example -> example.video() == null ? example
+                                    : new Example(example.text(), download(example.video(), cache)))
+                            .toList())
+                    .dialectVariants(sign.dialectVariants().stream()
+                            .map(variant -> new DialectVariant(variant.dialects(), download(variant.video(), cache)))
+                            .toList());
+        }
+        if (choice.images()) {
+            builder.images(sign.images().stream().map(media -> download(media, cache)).toList());
+        }
+        return builder.build();
     }
 
-    private static List<Media> allMedia(Sign sign) {
-        List<Media> all = new ArrayList<>(sign.videos());
-        sign.examples().stream().map(Example::video).filter(Objects::nonNull).forEach(all::add);
-        all.addAll(sign.images());
-        sign.dialectVariants().forEach(variant -> all.add(variant.video()));
-        return all;
+    private static List<Media> chosenMedia(Sign sign, MediaChoice choice) {
+        List<Media> chosen = new ArrayList<>();
+        if (choice.videos()) {
+            chosen.addAll(sign.videos());
+            sign.examples().stream().map(Example::video).filter(Objects::nonNull).forEach(chosen::add);
+            sign.dialectVariants().forEach(variant -> chosen.add(variant.video()));
+        }
+        if (choice.images()) {
+            chosen.addAll(sign.images());
+        }
+        return chosen;
     }
 
     private Media download(Media media, Path cache) {

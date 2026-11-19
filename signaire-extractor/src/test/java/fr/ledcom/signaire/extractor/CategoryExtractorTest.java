@@ -26,6 +26,7 @@ import fr.ledcom.signaire.model.Sign;
 class CategoryExtractorTest {
 
     private static final String VIDEOS = "https://www.sgb-fss.ch/signsuisse/fileadmin/signsuisse_ressources/videos/";
+    private static final String IMAGES = "https://www.sgb-fss.ch/signsuisse/fileadmin/signsuisse_ressources/images/";
 
     @TempDir
     Path output;
@@ -37,7 +38,7 @@ class CategoryExtractorTest {
     @Test
     void writesTheSignsOfAllRequestedLanguagesInABundle() {
         ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH, Language.GERMAN),
-                output, false);
+                output, MediaChoice.NONE);
 
         assertThat(report.bundle()).isEqualTo(output.resolve("city.zip"));
         assertThat(report.signCount()).isEqualTo(2);
@@ -51,7 +52,8 @@ class CategoryExtractorTest {
 
     @Test
     void withoutMediaOnlyReferencesTheSignSuisseUrls() {
-        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, false);
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.NONE);
 
         assertThat(source.downloads).isEmpty();
         try (Bundle bundle = new BundleReader().read(report.bundle())) {
@@ -61,10 +63,11 @@ class CategoryExtractorTest {
 
     @Test
     void downloadsMediaIntoTheBundle() {
-        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, true);
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.ALL);
 
-        assertThat(source.downloads).containsExactlyInAnyOrder(
-                URI.create(VIDEOS + "LAUSANNE.mp4"), URI.create(VIDEOS + "LAUSANNE-EXAMPLE.mp4"));
+        assertThat(source.downloads).containsExactlyInAnyOrder(URI.create(VIDEOS + "LAUSANNE.mp4"),
+                URI.create(VIDEOS + "LAUSANNE-EXAMPLE.mp4"), URI.create(IMAGES + "LAUSANNE.jpg"));
         try (Bundle bundle = new BundleReader().read(report.bundle())) {
             Sign sign = bundle.signs().get(0);
             assertThat(sign.videos()).containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", "media/LAUSANNE.mp4"));
@@ -74,12 +77,41 @@ class CategoryExtractorTest {
     }
 
     @Test
+    void downloadsOnlyTheVideos() {
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.VIDEOS);
+
+        assertThat(source.downloads).containsExactlyInAnyOrder(URI.create(VIDEOS + "LAUSANNE.mp4"),
+                URI.create(VIDEOS + "LAUSANNE-EXAMPLE.mp4"));
+        try (Bundle bundle = new BundleReader().read(report.bundle())) {
+            Sign sign = bundle.signs().get(0);
+            assertThat(sign.videos()).containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", "media/LAUSANNE.mp4"));
+            assertThat(sign.images()).containsExactly(new Media(IMAGES + "LAUSANNE.jpg", null));
+            bundle.verifyMedia();
+        }
+    }
+
+    @Test
+    void downloadsOnlyTheImages() {
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.IMAGES);
+
+        assertThat(source.downloads).containsExactly(URI.create(IMAGES + "LAUSANNE.jpg"));
+        try (Bundle bundle = new BundleReader().read(report.bundle())) {
+            Sign sign = bundle.signs().get(0);
+            assertThat(sign.videos()).containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", null));
+            assertThat(sign.examples().get(0).video().file()).isNull();
+            assertThat(sign.images()).containsExactly(new Media(IMAGES + "LAUSANNE.jpg", "media/LAUSANNE.jpg"));
+        }
+    }
+
+    @Test
     void writesIntoNewDirectoriesWithTheMediaCacheElsewhere() {
         Path newOutput = output.resolve("new/bundles");
         Path cache = output.resolve("cache/media");
 
         ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), newOutput, cache,
-                true);
+                MediaChoice.ALL);
 
         assertThat(report.bundle()).exists().hasParent(newOutput);
         assertThat(cache).isDirectory();
@@ -92,9 +124,10 @@ class CategoryExtractorTest {
         Files.createDirectories(cached.getParent());
         Files.writeString(cached, "downloaded before");
 
-        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, true);
+        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.ALL);
 
-        assertThat(source.downloads).containsExactly(URI.create(VIDEOS + "LAUSANNE-EXAMPLE.mp4"));
+        assertThat(source.downloads).containsExactly(URI.create(VIDEOS + "LAUSANNE-EXAMPLE.mp4"),
+                URI.create(IMAGES + "LAUSANNE.jpg"));
     }
 
     @Test
@@ -121,10 +154,10 @@ class CategoryExtractorTest {
                     }
                 });
 
-        followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, true);
+        followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.ALL);
 
-        assertThat(events).containsExactly("queued LAUSANNE 1", "downloaded LAUSANNE-EXAMPLE.mp4",
-                "extracted LAUSANNE");
+        assertThat(events).containsExactly("queued LAUSANNE 2", "downloaded LAUSANNE-EXAMPLE.mp4",
+                "downloaded LAUSANNE.jpg", "extracted LAUSANNE");
     }
 
     @Test
@@ -132,7 +165,7 @@ class CategoryExtractorTest {
         source.failingUid = "1";
 
         ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH, Language.GERMAN),
-                output, false);
+                output, MediaChoice.NONE);
 
         assertThat(report.signCount()).isEqualTo(1);
         assertThat(report.failures()).extracting(SearchHit::uid).containsExactly("1");
@@ -165,7 +198,8 @@ class CategoryExtractorTest {
                     .videos(List.of(new Media(VIDEOS + hit.name() + ".mp4", null)));
             if ("1".equals(hit.uid())) {
                 builder.examples(List.of(
-                        new Example("Exemple", new Media(VIDEOS + hit.name() + "-EXAMPLE.mp4", null))));
+                        new Example("Exemple", new Media(VIDEOS + hit.name() + "-EXAMPLE.mp4", null))))
+                        .images(List.of(new Media(IMAGES + hit.name() + ".jpg", null)));
             }
             return builder.build();
         }

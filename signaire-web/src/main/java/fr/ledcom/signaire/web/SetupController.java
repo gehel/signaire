@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import fr.ledcom.signaire.accounts.AccountException;
 import fr.ledcom.signaire.accounts.AccountService;
+import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,12 +51,12 @@ public class SetupController {
      * @param languages the sign languages to download, all when empty
      */
     public record Setup(Boolean alone, String username, String displayName, String password, String confirmation,
-            List<Category> categories, List<Language> languages, Boolean withMedia) {
+            List<Category> categories, List<Language> languages, MediaChoice media) {
 
         /** Unchecked boxes are not sent. */
         public Setup {
             alone = alone == null || alone;
-            withMedia = withMedia != null && withMedia;
+            media = media == null ? MediaChoice.NONE : media;
             categories = categories == null ? List.of() : List.copyOf(categories);
             languages = languages == null ? List.of() : List.copyOf(languages);
         }
@@ -65,6 +66,7 @@ public class SetupController {
     void choices(Model model) {
         model.addAttribute("allCategories", Arrays.asList(Category.values()));
         model.addAttribute("allLanguages", Arrays.asList(Language.values()));
+        model.addAttribute("allMedia", Arrays.asList(MediaChoice.values()));
         model.addAttribute("minPasswordLength", AccountService.MIN_PASSWORD_LENGTH);
     }
 
@@ -74,7 +76,7 @@ public class SetupController {
             return HOME;
         }
         model.addAttribute(SETUP, new Setup(Boolean.TRUE, "", "", "", "", List.of(), List.of(signLanguage(locale)),
-                Boolean.FALSE));
+                MediaChoice.NONE));
         return SETUP;
     }
 
@@ -93,7 +95,7 @@ public class SetupController {
         }
         standalone.completeSetup(alone, admin);
         if (!setup.categories().isEmpty()) {
-            sync.start(setup.categories(), setup.languages(), setup.withMedia());
+            sync.start(setup.categories(), setup.languages(), setup.media());
         }
         return next(setup);
     }

@@ -1,11 +1,9 @@
 package fr.ledcom.signaire.web;
 
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,21 +18,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import fr.ledcom.signaire.bundle.BundleException;
-import fr.ledcom.signaire.bundle.BundleWriter;
 import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SearchException;
-import fr.ledcom.signaire.extractor.CategoryExtractor;
 import fr.ledcom.signaire.extractor.ExtractionException;
-import fr.ledcom.signaire.extractor.ExtractionListener;
-import fr.ledcom.signaire.extractor.ExtractionReport;
-import fr.ledcom.signaire.extractor.SearchHit;
-import fr.ledcom.signaire.extractor.SignEnumerator;
+import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SignSource;
-import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
-import fr.ledcom.signaire.model.Sign;
 
 /**
  * Synchronizes the bundles with SignSuisse, in the background: extracts categories into the bundle directory,
@@ -44,9 +35,6 @@ import fr.ledcom.signaire.model.Sign;
 public class SignSuisseSync {
 
     private static final Logger LOG = System.getLogger(SignSuisseSync.class.getName());
-    private static final int MAX_QUERY_LENGTH = 6;
-    /** Signs between two progress messages in the log. */
-    private static final int LOG_EVERY = 25;
 
     private final SignSource source;
     private final BundleLoader loader;
@@ -162,7 +150,7 @@ public class SignSuisseSync {
      * @return false when a synchronization is already running
      */
     public synchronized boolean start(Collection<Category> categories, Collection<Language> languages,
-            boolean withMedia) {
+            MediaChoice media) {
         if (progress.get().running()) {
             return false;
         }
@@ -173,7 +161,7 @@ public class SignSuisseSync {
         cancelled.set(false);
         progress.set(Progress.STARTED);
         worker = Thread.ofVirtual().name("signsuisse-sync")
-                .start(() -> run(selectedCategories, selectedLanguages, withMedia));
+                .start(() -> run(selectedCategories, selectedLanguages, media));
         return true;
     }
 
@@ -191,18 +179,11 @@ public class SignSuisseSync {
         return running == null || running.join(timeout);
     }
 
-    private void run(Set<Category> categories, Set<Language> languages, boolean withMedia) {
-        CategoryExtractor extractor = new CategoryExtractor(source,
-                new SignEnumerator(source, SignSuisseClient.MAX_RESULTS, MAX_QUERY_LENGTH),
-                new BundleWriter(Clock.systemUTC()), new Listener());
+    private void run(Set<Category> categories, Set<Language> languages, MediaChoice chosenMedia) {
+        SyncExtraction extraction = new SyncExtraction(source, loader, bundles, mediaCache, progress, cancelled);
         try {
             for (Category category : categories) {
-                ExtractionReport report = extractor.extract(category, languages, bundles, mediaCache, withMedia);
-                loader.load(report.bundle());
-                LOG.log(Level.INFO, "{0}: {1} signs written to {2} and loaded, {3} failed", category,
-                        report.signCount(), report.bundle(), report.failures().size());
-                progress.updateAndGet(p -> p.plusDone(new CategoryResult(category, report.signCount(),
-                        report.failures().size(), report.enumerationComplete())));
+                extraction.extract(category, languages, chosenMedia);
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
         } catch (CancellationException e) {
@@ -213,62 +194,6 @@ public class SignSuisseSync {
         } finally {
             media.refresh();
             editor.reapply();
-        }
-    }
-
-    /** Follows the extraction, and stops it when cancelled. */
-    private final class Listener implements ExtractionListener {
-        @Override
-        public void searched(Category category, Language language, int queries, int planned, int found) {
-            checkCancelled();
-            progress.updateAndGet(p -> p.listing(category, language, queries, planned, found));
-        }
-
-        @Override
-        public void enumerated(Category category, Language language, SignEnumerator.Result result) {
-            checkCancelled();
-            LOG.log(Level.INFO, "{0} ({1}): {2} signs found in {3} searches", category, language.code(),
-                    result.hits().size(), result.queries());
-            progress.updateAndGet(p -> p.listed(result.hits().size()));
-        }
-
-        @Override
-        public void mediaQueued(Sign sign, int count) {
-            checkCancelled();
-            progress.updateAndGet(p -> p.plusMedia(count, 0));
-        }
-
-        @Override
-        public void mediaDownloaded(URI uri) {
-            checkCancelled();
-            progress.updateAndGet(p -> p.plusMedia(0, 1));
-        }
-
-        @Override
-        public void signExtracted(Sign sign) {
-            checkCancelled();
-            logEvery(progress.updateAndGet(Progress::plusExtracted));
-        }
-
-        @Override
-        public void signFailed(SearchHit hit, RuntimeException cause) {
-            checkCancelled();
-            LOG.log(Level.WARNING, "Cannot extract {0} ({1}): {2}", hit.name(), hit.uid(), cause.getMessage());
-            logEvery(progress.updateAndGet(Progress::plusFailed));
-        }
-
-        private void logEvery(Progress current) {
-            if ((current.extracted() + current.failed()) % LOG_EVERY == 0) {
-                LOG.log(Level.INFO, "{0} ({1}): {2} signs extracted, {3} failed, {4} of {5} media downloaded",
-                        current.category(), current.language().code(), current.extracted(), current.failed(),
-                        current.mediaDownloaded(), current.mediaQueued());
-            }
-        }
-
-        private void checkCancelled() {
-            if (cancelled.get()) {
-                throw new CancellationException("Synchronization cancelled");
-            }
         }
     }
 }

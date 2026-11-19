@@ -56,7 +56,7 @@ class StandaloneIT {
         // the first run: the setup, whatever the page
         assertThat(me.get("/lists").headers().firstValue("Location")).hasValue(base + "/setup");
         HttpResponse<String> setup = me.post("/setup", Map.of("alone", "true", "categories", "CITY",
-                "languages", "fr", "withMedia", "true"), "/setup");
+                "languages", "fr", "media", "ALL"), "/setup");
         assertThat(setup.headers().firstValue("Location")).hasValue(base + "/admin/sync");
 
         // the signs are downloaded in the background

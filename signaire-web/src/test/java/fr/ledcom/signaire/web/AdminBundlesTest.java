@@ -149,6 +149,6 @@ class AdminBundlesTest {
     void theSynchronizationPageOffersAllCategories() {
         assertThat(mvc.get().uri("/admin/sync").with(ADMIN).exchange()).bodyText()
                 .contains("name=\"categories\"", "value=\"EVENTS_MEDIA\"", "name=\"languages\"", "value=\"it\"",
-                        "name=\"withMedia\"");
+                        "name=\"media\" value=\"IMAGES\"", "Images seulement");
     }
 }

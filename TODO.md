@@ -37,7 +37,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
 - [ ] Modify the guided tour by something nicer, with an overlay. Webtour.js is a good example of the kind of look I want, but use whatever implementation makes the most sense in this project.
 - [ ] explore fixing issues reported by Sonar. For each issue, propose a resolution, but check with me before implementing.
 - [ ] debian package using jdeb
-- [ ] in synchronisation with SignSuisse: add the option to download only videos, only images or both (or none)
+- [x] in synchronisation with SignSuisse: add the option to download only videos, only images or both (or none) (done: synchronization and setup pages, `--medias` of the command line)
 - [x] When running the standalone version and using the web ui, in administration when I try to synchronize with SignSuisse, the system seems stuck, extracting zero signs (done: finding the signs takes hundreds of searches, now shown while they run, and stoppable). Log: `2026-11-19T09:14:22.507+01:00  WARN 146543 --- [signsuisse-sync] f.l.signaire.extractor.SignEnumerator    : Search for "0" failed, refining it: Cannot fetch https://www.sgb-fss.ch/signsuisse/index.php?eID=signsuisse_search&sword=0&lang=fr&category=6815&curlang=fr: HTTP status 500`
 - [x] When extracting signs, give the following feedback, in the UI and in the logs:
   - [x] Number of signs found

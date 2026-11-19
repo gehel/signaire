@@ -20,11 +20,12 @@ update of Signaire that changes the index).
 
 ## Synchronization with SignSuisse
 
-Choose categories and sign languages (none checked: all), and whether to download the videos and images. The
-synchronization runs in the background; each category is loaded as soon as it is ready. Without media, count a few
-minutes per category; with the media, much longer. SignSuisse gives only 100 results per search: finding all the
-signs of a category takes hundreds of searches, spaced out to spare the site. The page shows how many; no sign is
-extracted before the end of this step.
+Choose categories and sign languages (none checked: all), and the media to download: videos and images, videos only,
+images only, or none. Media not downloaded are shown from SignSuisse, but are missing from exports and without a
+connection. The synchronization runs in the background; each category is loaded as soon as it is ready. Without media,
+count a few minutes per category; with the media, much longer. SignSuisse gives only 100 results per search: finding
+all the signs of a category takes hundreds of searches, spaced out to spare the site. The page shows how many; no sign
+is extracted before the end of this step.
 
 ## Contact for SignSuisse
 
