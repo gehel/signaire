@@ -69,10 +69,11 @@ jobs:
           distribution: temurin
           java-version: '27'
           cache: maven
+      # -U: a failed download of the plugin, kept in the cached ~/.m2, would otherwise not be retried
       - name: Analyze
         if: env.SONAR_TOKEN != ''
         run: >
-          ./mvnw -B -ntp -Dmaven.build.cache.enabled=false verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar
+          ./mvnw -B -ntp -U -Dmaven.build.cache.enabled=false verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar
           -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=gehel-github -Dsonar.projectKey=gehel_signaire
           -Dsonar.qualitygate.wait=true
       - name: Not configured
