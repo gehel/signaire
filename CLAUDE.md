@@ -127,7 +127,9 @@ Key decisions:
   `/signsuisse/it/lexikon/…`). Each `uid` is one sign in one language: the same concept in DE and FR has
   different uids. Page labels are in the sign's language, so `SignPageParser` recognizes sections by the
   start of their FR/DE/IT label. German pages also have dialects and dialect variant videos.
-- Plain HTTP + jsoup, throttled (`ThrottledHttpFetcher`, generic user agent). Parser test fixtures copy the
+- Plain HTTP + jsoup, throttled (`ThrottledHttpFetcher`). The `User-Agent` (`UserAgent`) names the project and, when
+  the user gives one (`signaire.signsuisse.contact`), their email address: politeness towards SignSuisse wins over
+  privacy, and the help says so where the address is configured. Parser test fixtures copy the
   page structure with invented text.
 
 ## Build and test

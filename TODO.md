@@ -33,7 +33,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
   - [ ] should work on Linux, Windows and MacOS (packaged by CI for the three; tried on Linux only)
 - [x] guided presentation: on first use, the user is guided through the various features of the app
 - [x] optimize build times (give me a plan before implementing and ask for my verification): local build done (build cache, faster test JVMs); GitHub Actions to be decided
-- [ ] custom user agent for outgoing HTTP requests, with a link to the github project, add a configuration option to change that user agent, encourage the users to have their email address in the user agent
+- [x] custom user agent for outgoing HTTP requests, with a link to the github project, add a configuration option to change that user agent, encourage the users to have their email address in the user agent (done: `signaire.signsuisse.contact`, `signaire.signsuisse.user-agent`; the help explains the privacy implications)
 - [ ] Modify the guided tour by something nicer, with an overlay. Webtour.js is a good example of the kind of look I want, but use whatever implementation makes the most sense in this project.
 - [ ] explore fixing issues reported by Sonar. For each issue, propose a resolution, but check with me before implementing.
 - [ ] debian package using jdeb
@@ -44,6 +44,7 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
   - [x] Number of signs fully imported (including media)
   - [x] Number of video / images queued for download (media of the signs read, not downloaded yet: they are downloaded sign by sign)
   - [x] Number of video / images fully downloaded
+  - [ ] There is feedback on the number of searches, can we also give feedback on the total expected number of searches?
 - [ ] Remove JavaDoc that is just a restatement of the code. Only add JavaDoc if it adds value and understanding that isn't immediately understandable from reading the code.
 - [ ] Android app (on hold)
 - [ ] iOS app (to be decided)

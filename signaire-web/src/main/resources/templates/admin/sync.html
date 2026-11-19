@@ -40,6 +40,12 @@
 
     <form th:action="@{/admin/sync}" method="post" class="stacked sync">
         <p th:text="#{admin.sync.help}">Extracts categories from SignSuisse.</p>
+        <p class="note">
+            <span th:text="#{admin.sync.userAgent}">Requests to SignSuisse introduce themselves as:</span>
+            <code th:text="${userAgent.value()}">Signaire (+https://github.com/gehel/signaire)</code>
+            <span th:unless="${userAgent.withContact()}" th:text="#{admin.sync.contact}">Add your email address.</span>
+            <a th:replace="~{fragments/help :: link('admin')}"></a>
+        </p>
         <fieldset>
             <legend th:text="#{admin.sync.categories}">Categories</legend>
             <label th:each="category : ${allCategories}">

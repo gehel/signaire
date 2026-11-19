@@ -28,6 +28,8 @@ import com.sun.net.httpserver.HttpServer;
 @SuppressForbidden(reason = "jdk.httpserver is a supported JDK module, flagged because of its com.sun package")
 class ThrottledHttpFetcherTest {
 
+    private static final UserAgent AGENT = UserAgent.of("alice@example.org", null);
+
     private static final Duration INTERVAL = Duration.ofMillis(500);
 
     @TempDir
@@ -52,7 +54,7 @@ class ThrottledHttpFetcherTest {
             }
         });
         server.start();
-        fetcher = new ThrottledHttpFetcher(HttpClient.newHttpClient(), INTERVAL, 3, time::now, time::sleep);
+        fetcher = new ThrottledHttpFetcher(HttpClient.newHttpClient(), INTERVAL, 3, AGENT, time::now, time::sleep);
     }
 
     @AfterEach
@@ -63,7 +65,7 @@ class ThrottledHttpFetcherTest {
     @Test
     void fetchesText() {
         assertThat(fetcher.fetchText(uri("/page"))).isEqualTo("héllo");
-        assertThat(userAgents).singleElement().asString().startsWith("signaire");
+        assertThat(userAgents).containsExactly(AGENT.value());
     }
 
     @Test

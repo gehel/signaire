@@ -26,6 +26,22 @@ categoria; con i media, molto di più. SignSuisse dà solo 100 risultati per ric
 categoria richiede centinaia di ricerche, distanziate per non sovraccaricare il sito. La pagina ne mostra il numero;
 nessun segno viene estratto prima della fine di questa fase.
 
+## Contatto per SignSuisse
+
+Ogni richiesta a SignSuisse dice che viene da Signaire, con un link al progetto. Aggiungi il tuo indirizzo e-mail: se
+Signaire sovraccarica il sito, SignSuisse potrà scriverti invece di bloccare i tuoi download. Scrivilo nel file
+`application.properties` della cartella di configurazione di Signaire (`~/.config/signaire/` su Linux), letto anche
+dalla riga di comando:
+
+```properties
+signaire.signsuisse.contact=tu@esempio.org
+```
+
+**Privacy**: l'indirizzo viene inviato a SignSuisse con ogni richiesta, in chiaro nell'intestazione `User-Agent`.
+SignSuisse (la Federazione Svizzera dei Sordi) e il suo hosting lo vedranno nei loro log e lo conserveranno secondo
+le loro regole; chiunque veda passare queste richieste può leggerlo. Usa un indirizzo che accetti di condividere, per
+esempio uno dedicato. `signaire.signsuisse.user-agent` sostituisce l'intera intestazione.
+
 ## Richieste di segni
 
 Per ogni richiesta in attesa: **Cerca su SignSuisse** e **importa** il segno giusto (o **collegalo** se è già nel

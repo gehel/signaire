@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import fr.ledcom.signaire.extractor.UserAgent;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 
@@ -21,10 +22,12 @@ public class AdminSyncController {
 
     private final SignSuisseSync sync;
     private final MessageSource messages;
+    private final UserAgent userAgent;
 
-    public AdminSyncController(SignSuisseSync sync, MessageSource messages) {
+    public AdminSyncController(SignSuisseSync sync, MessageSource messages, UserAgent userAgent) {
         this.sync = sync;
         this.messages = messages;
+        this.userAgent = userAgent;
     }
 
     @GetMapping("/admin/sync")
@@ -32,6 +35,7 @@ public class AdminSyncController {
         model.addAttribute("allCategories", Arrays.asList(Category.values()));
         model.addAttribute("allLanguages", Arrays.asList(Language.values()));
         model.addAttribute("progress", sync.progress());
+        model.addAttribute("userAgent", userAgent);
         return "admin/sync";
     }
 

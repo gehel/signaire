@@ -28,6 +28,15 @@ class AdminSyncTest {
     private SignSuisseSync sync;
 
     @Test
+    void showsTheUserAgentAndAsksForAContact() {
+        when(sync.progress()).thenReturn(SignSuisseSync.Progress.IDLE);
+
+        assertThat(mvc.get().uri("/admin/sync").with(ADMIN).exchange()).bodyText()
+                .contains("<code>Signaire (+https://github.com/gehel/signaire)</code>", "signaire.signsuisse.contact",
+                        "href=\"/help/admin\"");
+    }
+
+    @Test
     void showsTheSearchesWhileFindingTheSigns() {
         when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, true, 40, 12,
                 0, 0, 0, 0, List.of(), null));

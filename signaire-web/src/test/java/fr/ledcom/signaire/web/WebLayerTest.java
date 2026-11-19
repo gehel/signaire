@@ -24,7 +24,7 @@ import fr.ledcom.signaire.core.SignaireCoreConfiguration;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @WebMvcTest
-@Import({SecurityConfiguration.class, AdminUsers.class, SignaireCoreConfiguration.class})
+@Import({SecurityConfiguration.class, AdminUsers.class, SignaireCoreConfiguration.class, TestUserAgent.class})
 @MockitoBean(types = {AccountService.class, WordListService.class, SignOverrideService.class,
     SignRequestService.class})
 public @interface WebLayerTest {
