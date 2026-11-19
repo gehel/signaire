@@ -22,6 +22,9 @@
                     ${progress.language().code()}, ${progress.found()})}">City (fr): 12 signs found</p>
         <p th:if="${progress.state().name() != 'IDLE'}"
            th:text="#{admin.sync.counts(${progress.extracted()}, ${progress.failed()})}">10 extracted, 0 failed</p>
+        <p th:if="${progress.mediaQueued() > 0}"
+           th:text="#{admin.sync.media(${progress.mediaDownloaded()}, ${progress.mediaQueued()})}">Media downloaded:
+            12 of 40.</p>
         <ul th:unless="${progress.done().isEmpty()}">
             <li th:each="result : ${progress.done()}">
                 <span th:text="#{admin.sync.category(#{'category.' + ${result.category().name()}}, ${result.signs()})}">

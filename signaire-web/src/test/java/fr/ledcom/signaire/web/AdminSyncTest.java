@@ -30,7 +30,7 @@ class AdminSyncTest {
     @Test
     void showsTheSearchesWhileFindingTheSigns() {
         when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, true, 40, 12,
-                0, 0, List.of(), null));
+                0, 0, 0, 0, List.of(), null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
                 .contains("Ville (fr) : recherche des signes dans SignSuisse, 40 recherches, 12 signes trouvés pour "
@@ -42,10 +42,19 @@ class AdminSyncTest {
     @Test
     void showsTheSignsFoundOnceTheyAreAllFound() {
         when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, false, 40, 12,
-                3, 0, List.of(), null));
+                3, 1, 0, 0, List.of(), null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
-                .contains("Ville (fr) : 12 signes trouvés", "Signes extraits : 3")
-                .doesNotContain("recherches");
+                .contains("Ville (fr) : 12 signes trouvés", "Signes extraits : 3, en échec : 1.")
+                .doesNotContain("recherches", "Médias");
+    }
+
+    @Test
+    void showsTheMediaDownloaded() {
+        when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, false, 40, 12,
+                3, 0, 9, 7, List.of(), null));
+
+        assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
+                .contains("Médias téléchargés : 7 sur 9.");
     }
 }
