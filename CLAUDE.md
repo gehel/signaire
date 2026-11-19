@@ -82,7 +82,7 @@ Key decisions:
   through `EnvironmentDefaults`. Tests always set these directories under `target/`.
 - **Signs are transient**: bundles and index can be deleted and rebuilt at any time. Everything else refers
   to signs by uid (SignSuisse uid, or the `local-…` uid of signs added by administrators), never by an id of
-  the index; `TransientSignsIT` checks it. Keep it that way.
+  the index; `FullStackIT.everythingSurvivesTheDeletionAndExtractionOfAllTheSigns` checks it. Keep it that way.
 - **Standalone application** (`StandaloneApplication` in web, the `-standalone.jar` of signaire-web): the web
   application with the `standalone` profile (`application-standalone.properties`: H2 file database in
   `signaire.state.directory`, `127.0.0.1:8180`, log file, `standalone.properties` of the config directory imported).

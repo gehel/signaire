@@ -41,6 +41,7 @@ class FullStackIT {
     private static PostgreSQLContainer postgres;
     private static JavaProcess web;
     private static URI base;
+    private static Path bundles;
 
     @BeforeAll
     static void startTheStack() throws Exception {
@@ -51,14 +52,8 @@ class FullStackIT {
         postgres = new PostgreSQLContainer(DockerImageName.parse(POSTGRES));
         postgres.start();
 
-        Path bundles = work.resolve("bundles");
-        try (JavaProcess cli = JavaProcess.start(JavaProcess.jar("signaire.cli.jar"), work, "cli", List.of(
-                "--signaire.signsuisse.url=" + signSuisse.uri(),
-                "extraire", "--categorie", "ville", "--langue", "fr", "--sortie", bundles.toString(),
-                "--intervalle", "0"))) {
-            assertThat(cli.await(Duration.ofMinutes(2))).as("extraction, see %s", cli.log()).isZero();
-        }
-        assertThat(bundles.resolve("city.zip")).exists();
+        bundles = work.resolve("bundles");
+        extract("cli");
 
         int port = JavaProcess.freePort();
         base = URI.create("http://127.0.0.1:" + port);
@@ -68,7 +63,7 @@ class FullStackIT {
                 "--spring.datasource.username=" + postgres.getUsername(),
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--signaire.bundles.directory=" + bundles,
-                "--signaire.accounts.admins=admin",
+                "--signaire.accounts.admins=admin,curator",
                 "--signaire.signsuisse.url=" + signSuisse.uri()));
         awaitSigns();
     }
@@ -134,6 +129,63 @@ class FullStackIT {
 
         assertThat(saved.statusCode()).isEqualTo(302);
         assertThat(new Session(base).get("/signs/9001").body()).contains("La ville olympique.");
+    }
+
+    /**
+     * Signs are transient: the bundles and the index can be deleted and made again from SignSuisse at any time.
+     * Everything that refers to signs (lists, changes of administrators, requests) keeps working, because signs are
+     * identified by their SignSuisse uid, or by the uid given by Signaire to the signs it added.
+     */
+    @Test
+    void everythingSurvivesTheDeletionAndExtractionOfAllTheSigns() throws Exception {
+        Session carol = Session.registered(base, "carol");
+        Session curator = Session.registered(base, "curator");
+        String location = carol.post("/lists", Map.of("name", "Genève")).headers().firstValue("Location")
+                .orElseThrow();
+        String list = location.substring(location.indexOf("/lists/"));
+        carol.post("/signs/9002" + list, Map.of());
+        // 9001, as administratorsEditSigns: the form drops the media of the sign, that other tests export
+        curator.post("/admin/signs/9001", Map.of("name", "LAUSANNE", "language", "fr", "categories", "CITY",
+                "definition", "Ville au bord du lac."));
+        String added = curator.post("/admin/signs", Map.of("name", "SIGNAIRE", "language", "fr",
+                "definition", "Ce logiciel.")).headers().firstValue("Location").orElseThrow();
+        String addedUid = added.substring(added.lastIndexOf('/') + 1);
+        assertThat(addedUid).startsWith("local-");
+        carol.post("/requests", Map.of("word", "Signaire", "language", "fr"));
+        Matcher request = Pattern.compile("/admin/requests/(\\d+)/reject")
+                .matcher(curator.get("/admin/requests").body());
+        assertThat(request.find()).as("the request of carol").isTrue();
+        curator.post("/admin/requests/" + request.group(1) + "/link", Map.of("uid", addedUid));
+
+        // all the signs are gone
+        try (var files = Files.list(bundles)) {
+            for (Path file : files.filter(f -> f.toString().endsWith(".zip")).toList()) {
+                Files.delete(file);
+            }
+        }
+        curator.post("/admin/bundles/reindex", Map.of());
+        assertThat(carol.get("/signs/9002").statusCode()).isEqualTo(404);
+        assertThat(carol.get(list).body()).contains("Signes absents du lexique : 1.");
+
+        // and extracted again from SignSuisse
+        extract("cli-again");
+        curator.post("/admin/bundles/reload", Map.of());
+
+        assertThat(carol.get(list).body()).contains("GENÈVE").doesNotContain("absents");
+        assertThat(carol.get("/signs/9001").body()).contains("Ville au bord du lac.");
+        assertThat(carol.get(added).body()).contains("SIGNAIRE", "Ce logiciel.");
+        assertThat(carol.get("/requests").body()).contains("href=\"/signs/" + addedUid + "\"");
+    }
+
+    /** Extracts the signs of the fake SignSuisse into the bundles, with the command line. */
+    private static void extract(String name) throws IOException, InterruptedException {
+        try (JavaProcess cli = JavaProcess.start(JavaProcess.jar("signaire.cli.jar"), work, name, List.of(
+                "--signaire.signsuisse.url=" + signSuisse.uri(),
+                "extraire", "--categorie", "ville", "--langue", "fr", "--sortie", bundles.toString(),
+                "--intervalle", "0"))) {
+            assertThat(cli.await(Duration.ofMinutes(2))).as("extraction, see %s", cli.log()).isZero();
+        }
+        assertThat(bundles.resolve("city.zip")).exists();
     }
 
     /** Waits for the web application to start and to load the bundles in the background. */
