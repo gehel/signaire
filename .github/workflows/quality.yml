@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: '22'
       - name: Build
-        run: ./mvnw -B -ntp -PnoVerify install -DskipTests
+        run: ./mvnw -B -ntp -Dmaven.build.cache.enabled=false -PnoVerify install -DskipTests
       - name: Start Signaire on demo signs
         run: ci/start-demo.sh target/demo
       - name: Lighthouse
@@ -72,7 +72,7 @@ jobs:
       - name: Analyze
         if: env.SONAR_TOKEN != ''
         run: >
-          ./mvnw -B -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar
+          ./mvnw -B -ntp -Dmaven.build.cache.enabled=false verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar
           -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=gehel-github -Dsonar.projectKey=gehel_signaire
           -Dsonar.qualitygate.wait=true
       - name: Not configured

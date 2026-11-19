@@ -32,5 +32,6 @@ Tasks to come, roughly in the order they will be done. Check an item when it is 
   - automatically open browser when the app start (done)
   - should work on Linux, Windows and MacOS (packaged by CI for the three; tried on Linux only)
 - [x] guided presentation: on first use, the user is guided through the various features of the app
+- [x] optimize build times (give me a plan before implementing and ask for my verification): local build done (build cache, faster test JVMs); GitHub Actions to be decided
 - [ ] Android app (on hold)
 - [ ] iOS app (to be decided)
