@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.UserAgent;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -34,6 +35,7 @@ public class AdminSyncController {
     public String page(Model model) {
         model.addAttribute("allCategories", Arrays.asList(Category.values()));
         model.addAttribute("allLanguages", Arrays.asList(Language.values()));
+        model.addAttribute("allMedia", Arrays.asList(MediaChoice.values()));
         model.addAttribute("progress", sync.progress());
         model.addAttribute("userAgent", userAgent);
         return "admin/sync";
@@ -49,10 +51,10 @@ public class AdminSyncController {
     @PostMapping("/admin/sync")
     public String start(@RequestParam(name = "categories", required = false) List<Category> categories,
             @RequestParam(name = "languages", required = false) List<Language> languages,
-            @RequestParam(name = "withMedia", defaultValue = "false") boolean withMedia, Locale locale,
+            @RequestParam(name = "media", defaultValue = "NONE") MediaChoice media, Locale locale,
             RedirectAttributes redirect) {
         if (!sync.start(categories == null ? List.of() : categories, languages == null ? List.of() : languages,
-                withMedia)) {
+                media)) {
             redirect.addFlashAttribute("status", messages.getMessage("admin.sync.alreadyRunning", null, locale));
         }
         return "redirect:/admin/sync";

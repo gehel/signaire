@@ -9,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** Table {@code account}. */
 @Entity
 @SuppressFBWarnings(value = {"URF_UNREAD_FIELD", "FCBL_FIELD_COULD_BE_LOCAL"},
         justification = "JPA reads and writes the fields")

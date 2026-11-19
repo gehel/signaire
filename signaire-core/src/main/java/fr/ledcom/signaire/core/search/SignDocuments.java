@@ -71,7 +71,6 @@ final class SignDocuments {
         return document(BUNDLE, file, entry);
     }
 
-    /** The sign of a document. */
     static Sign readSign(StoredFields fields, int doc) throws IOException {
         return readSource(fields, doc, Sign.class);
     }

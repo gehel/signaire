@@ -59,7 +59,6 @@ public class SignIndex implements AutoCloseable {
         void apply(IndexWriter writer) throws IOException;
     }
 
-    /** A read of the index. */
     @FunctionalInterface
     interface Read<T> {
         T apply(IndexSearcher searcher) throws IOException;

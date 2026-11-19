@@ -19,6 +19,7 @@ import fr.ledcom.signaire.bundle.BundleWriter;
 import fr.ledcom.signaire.extractor.CategoryExtractor;
 import fr.ledcom.signaire.extractor.ExtractionListener;
 import fr.ledcom.signaire.extractor.ExtractionReport;
+import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.extractor.SignEnumerator;
 import fr.ledcom.signaire.extractor.SignSource;
@@ -59,6 +60,10 @@ public class ExtractCommand implements Callable<Integer> {
             converter = LanguageCodes.Converter.class, completionCandidates = LanguageCodes.Candidates.class)
     private List<Language> languages;
 
+    @Option(names = "--medias", descriptionKey = "medias", paramLabel = "<medias>",
+            converter = MediaNames.Converter.class, completionCandidates = MediaNames.Candidates.class)
+    private MediaChoice media;
+
     @Option(names = "--sans-medias", descriptionKey = "noMedia")
     private boolean noMedia;
 
@@ -89,7 +94,8 @@ public class ExtractCommand implements Callable<Integer> {
                 ? Arrays.asList(Category.values()) : categories;
         for (Category category : selectedCategories) {
             out.println(messages.get("progress.start", CategoryNames.name(category), codes(selectedLanguages)));
-            ExtractionReport report = extractor.extract(category, selectedLanguages, output, mediaCache, !noMedia);
+            ExtractionReport report = extractor.extract(category, selectedLanguages, output, mediaCache,
+                    mediaChoice());
             out.println(messages.get("progress.done", CategoryNames.name(category), report.signCount(),
                     report.bundle().toString()));
             if (!report.failures().isEmpty()) {
@@ -97,6 +103,13 @@ public class ExtractCommand implements Callable<Integer> {
             }
         }
         return 0;
+    }
+
+    private MediaChoice mediaChoice() {
+        if (noMedia) {
+            return MediaChoice.NONE;
+        }
+        return media == null ? MediaChoice.ALL : media;
     }
 
     private static String codes(EnumSet<Language> languages) {

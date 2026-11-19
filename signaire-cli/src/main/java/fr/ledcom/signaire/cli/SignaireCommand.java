@@ -31,7 +31,6 @@ public class SignaireCommand implements Runnable {
             new ExpectedError(ExtractionException.class, "error.extraction"),
             new ExpectedError(ExportException.class, "error.export"));
 
-    /** A type of expected failure, and the key of its message. */
     private record ExpectedError(Class<? extends Exception> type, String key) {
     }
 

@@ -14,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** Table {@code sign_request}. */
 @Entity
 @Table(name = "sign_request")
 class SignRequestEntity {

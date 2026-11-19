@@ -20,11 +20,12 @@ ou réindexe tout (après une mise à jour de Signaire qui change l'index).
 
 ## Synchronisation avec SignSuisse
 
-Choisissez des catégories et des langues des signes (aucune cochée : toutes), et si les vidéos et images doivent
-être téléchargées. La synchronisation tourne en arrière-plan ; chaque catégorie est chargée dès qu'elle est prête.
-Sans médias, comptez quelques minutes par catégorie ; avec les médias, bien plus. SignSuisse ne donne que 100
-résultats par recherche : trouver tous les signes d'une catégorie demande des centaines de recherches, espacées pour
-ménager le site. La page en montre le nombre ; aucun signe n'est extrait avant la fin de cette étape.
+Choisissez des catégories et des langues des signes (aucune cochée : toutes), et les médias à télécharger : vidéos et
+images, vidéos seulement, images seulement, ou aucun. Les médias non téléchargés sont montrés depuis SignSuisse, mais
+manquent aux exports et sans connexion. La synchronisation tourne en arrière-plan ; chaque catégorie est chargée dès
+qu'elle est prête. Sans médias, comptez quelques minutes par catégorie ; avec les médias, bien plus. SignSuisse ne
+donne que 100 résultats par recherche : trouver tous les signes d'une catégorie demande des centaines de recherches,
+espacées pour ménager le site. La page en montre le nombre ; aucun signe n'est extrait avant la fin de cette étape.
 
 ## Contact pour SignSuisse
 

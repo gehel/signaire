@@ -52,10 +52,13 @@
                 <span th:text="#{'signLanguage.' + ${language.name()}}">LSF</span>
             </label>
         </fieldset>
-        <label>
-            <input type="checkbox" name="withMedia" value="true" th:checked="*{withMedia}">
-            <span th:text="#{admin.sync.withMedia}">Download the videos and images</span>
-        </label>
+        <fieldset>
+            <legend th:text="#{admin.sync.mediaChoice}">Media to download</legend>
+            <label th:each="choice : ${allMedia}">
+                <input type="radio" name="media" th:value="${choice.name()}" th:checked="${setup.media() == choice}">
+                <span th:text="#{'admin.sync.mediaChoice.' + ${choice.name()}}">Videos and images</span>
+            </label>
+        </fieldset>
         <button type="submit" th:text="#{setup.submit}">Start</button>
     </form>
 </main>

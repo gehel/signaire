@@ -284,3 +284,5 @@ the CLI and web never reach Lucene or JPA directly. Change the rules there when 
 - **Branch per feature** (`feature/<name>`), merged to `main` through a GitHub PR. Commits tell a story
   (one logical step each, buildable). History of an unmerged branch may be rewritten.
 - Prefer records and immutable types; no Lombok (doesn't keep up with new JDKs).
+- JavaDoc only where it adds what the code doesn't say (why, constraints, units, side effects): never a comment
+  that restates the name of what it documents.
