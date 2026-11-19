@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import fr.ledcom.signaire.accounts.AccountException;
 import fr.ledcom.signaire.accounts.AccountService;
+import fr.ledcom.signaire.extractor.ExtractionOptions;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -95,7 +96,7 @@ public class SetupController {
         }
         standalone.completeSetup(alone, admin);
         if (!setup.categories().isEmpty()) {
-            sync.start(setup.categories(), setup.languages(), setup.media());
+            sync.start(setup.categories(), setup.languages(), ExtractionOptions.of(setup.media()));
         }
         return next(setup);
     }

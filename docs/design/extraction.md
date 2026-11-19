@@ -49,8 +49,9 @@ is handed to the next stage as soon as it is found.
 
 The previous enumeration refined *every* truncated query with *every* character of the alphabet; with fuzzy
 substring matching, single and double characters are always truncated in large categories, so it sent thousands of
-searches per category and language. The prefix enumeration only searches the branches left after the cursor: a
-category of a few hundred signs takes a few dozen searches.
+searches per category and language. The prefix enumeration only searches the branches left after the cursor. Measured
+on SignSuisse: HOUSE_BUILDING in French, 355 signs in 35 searches; GENERAL in German, 2,199 signs in 132 searches;
+samples of substring searches (`ung`, `sch`, `ä`, `ß`, `-`…) found no sign missed.
 
 ### Pipeline
 
@@ -115,8 +116,8 @@ enumeration).
 - **Media optional**: videos are large (~100 MB for the 76 French signs of "religion"). Without them a bundle
   references the SignSuisse URLs, which pages and exports link to.
 - **No Spring, small dependencies**: the extractor stays plain Java and keeps the CLI start quick.
-- **Tests never use the network**: the root POM sends HTTP(S) to a closed port; fakes stand for SignSuisse (and
-  mimic the order of its results).
+- **Tests never use the network**: the root POM sends HTTP(S) to a closed port; fakes stand for SignSuisse (the
+  enumerator's fake orders its results like SignSuisse; the others have too few signs for the order to matter).
 
 ## Open questions
 

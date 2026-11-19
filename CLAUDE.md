@@ -119,9 +119,12 @@ Key decisions:
 - Search endpoint (JSON, capped at **100 results**, no paging):
   `https://www.sgb-fss.ch/signsuisse/index.php?eID=signsuisse_search&sword=<term>&lang=<fr|de|it|all>&category=<id>&curlang=fr`
   returns `{"items":[{"uid","name","kategorie","sprache","link"}],"count"}`. Matching is case and accent
-  insensitive and **fuzzy** ("vaud" also finds "BAVARD"). An empty `sword` returns HTML, and `sword=0`
-  answers HTTP 500. `SignEnumerator` copes with all of this: it refines truncated or failed queries
-  character by character, and reports when it hit its query length limit.
+  insensitive and **fuzzy** ("vaud" also finds "BAVARD"). Results are ordered: names *starting* with the term
+  first, then the others, each sorted (accents ignored, spaces first), and the cap cuts that list. An empty `sword`
+  returns HTML, and `sword=0` answers HTTP 500. `SignEnumerator` lists names by prefix, resuming after the last name
+  of a truncated search (`docs/design/extraction.md`): a category of 2,000 signs takes about 130 searches.
+- `CategoryExtractor` runs the search, the reading of signs (reused from the existing bundle unless refreshed) and the
+  media downloads in parallel, under the one throttle; `ExtractionStatus` says where it is (CLI, sync page, logs).
 - Category ids are in `Category`. `CategoryLabels` (extractor) maps the FR/DE/IT labels shown on pages.
 - Detail pages are static HTML, reachable only through the `link` given by the search: the slug and the
   language path must match (`/signsuisse/lexikon/…` for German, `/signsuisse/fr/lexikon/…`,
@@ -238,7 +241,7 @@ Running the web UI locally (http://localhost:8080; `docker compose up -d` starts
 java -jar signaire-web/target/signaire-web-1.0-SNAPSHOT.jar --signaire.bundles.directory=bundles
 ```
 
-Extraction is slow on purpose (500 ms between requests), and media are large (~100 MB for the 76 French
+Extraction is slow on purpose (request starts 500 ms apart, at most 2 in flight), and media are large (~100 MB for the 76 French
 signs of "religion"); use `--sans-medias` while developing. After changing the fields or the analysis of the
 index, bump `SignIndex.SCHEMA`: the bundle registry only notices bundle changes, the schema version empties the
 index so that everything is loaded again.

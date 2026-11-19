@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -60,6 +61,7 @@ class ExtractCommandTest {
     void reset() throws IOException {
         source.searchedLanguages.clear();
         source.downloads.clear();
+        source.fetches.clear();
         // media downloaded by a previous test or build would not be downloaded again
         if (Files.isDirectory(mediaCache)) {
             try (Stream<Path> files = Files.walk(mediaCache)) {
@@ -100,6 +102,21 @@ class ExtractCommandTest {
 
         assertThat(exitCode).isZero();
         assertThat(source.downloads).containsExactly(URI.create("https://example.org/lausanne.jpg"));
+    }
+
+    @Test
+    void reusesTheSignsAlreadyExtractedUnlessAskedToReadThemAgain() {
+        execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias");
+        source.fetches.clear();
+
+        execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias");
+        // BERNE failed: it isn't in the bundle
+        assertThat(source.fetches).containsExactly("2");
+
+        source.fetches.clear();
+        execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias",
+                "--rafraichir");
+        assertThat(source.fetches).containsExactlyInAnyOrder("1", "2");
     }
 
     @Test
@@ -152,8 +169,9 @@ class ExtractCommandTest {
     }
 
     static final class FakeSource implements SignSource {
-        private final List<Language> searchedLanguages = new ArrayList<>();
-        private final List<URI> downloads = new ArrayList<>();
+        private final List<Language> searchedLanguages = Collections.synchronizedList(new ArrayList<>());
+        private final List<URI> downloads = Collections.synchronizedList(new ArrayList<>());
+        private final List<String> fetches = Collections.synchronizedList(new ArrayList<>());
 
         @Override
         public List<SearchHit> search(String term, Language language, Category category) {
@@ -167,6 +185,7 @@ class ExtractCommandTest {
 
         @Override
         public Sign fetchSign(SearchHit hit) {
+            fetches.add(hit.uid());
             if ("2".equals(hit.uid())) {
                 throw new ExtractionException("page indisponible");
             }

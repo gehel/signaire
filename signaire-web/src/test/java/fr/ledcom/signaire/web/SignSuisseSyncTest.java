@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import fr.ledcom.signaire.core.bundles.BundleLoader;
+import fr.ledcom.signaire.extractor.ExtractionOptions;
+import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.extractor.SignSource;
@@ -25,31 +27,36 @@ import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
+import fr.ledcom.signaire.web.SignSuisseSync.CategoryResult;
 import fr.ledcom.signaire.web.SignSuisseSync.Progress;
 import fr.ledcom.signaire.web.SignSuisseSync.State;
 
-/** Finding the signs of a category takes hundreds of searches: the synchronization says where it is. */
+/** An extraction takes minutes to hours: the synchronization says where it is and what is left. */
 class SignSuisseSyncTest {
 
     @TempDir
     Path directory;
 
     @Test
-    void showsTheSearchesWhileFindingTheSignsAndCanBeStoppedThen() throws InterruptedException {
+    void showsWhereTheExtractionIsAndCanBeStopped() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(3);
         SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
                 directory.resolve("bundles"), directory.resolve("media"));
 
-        sync.start(List.of(Category.CITY), List.of(Language.FRENCH), MediaChoice.NONE);
+        sync.start(List.of(Category.CITY, Category.NATURE), List.of(Language.FRENCH),
+                ExtractionOptions.of(MediaChoice.NONE));
         assertThat(signSuisse.blocked.await(10, TimeUnit.SECONDS)).isTrue();
 
         Progress progress = sync.progress();
-        assertThat(progress.listing()).isTrue();
-        assertThat(progress.category()).isEqualTo(Category.CITY);
-        assertThat(progress.language()).isEqualTo(Language.FRENCH);
-        assertThat(progress.searches()).isEqualTo(2);
-        assertThat(progress.plannedSearches()).isEqualTo(34);
-        assertThat(progress.found()).isEqualTo(1);
+        ExtractionStatus status = progress.current();
+        assertThat(status.category()).isEqualTo(Category.CITY);
+        assertThat(status.stage()).isEqualTo(ExtractionStatus.Stage.SEARCHING);
+        assertThat(status.language()).isEqualTo(Language.FRENCH);
+        assertThat(status.searches().sent()).isEqualTo(2);
+        assertThat(status.searches().pending()).isEqualTo(33);
+        assertThat(status.searches().current()).isEqualTo("c");
+        assertThat(status.signs().found()).isEqualTo(1);
+        assertThat(progress.left()).containsExactly(Category.NATURE);
 
         sync.cancel();
         signSuisse.release.countDown();
@@ -59,20 +66,19 @@ class SignSuisseSyncTest {
     }
 
     @Test
-    void countsTheSignsAndTheirMedia() throws InterruptedException {
+    void tellsWhatEachCategoryTook() throws InterruptedException {
         SlowSignSuisse signSuisse = new SlowSignSuisse(0);
         SignSuisseSync sync = new SignSuisseSync(signSuisse, mock(BundleLoader.class), mock(BundleLoading.class),
                 directory.resolve("bundles"), directory.resolve("media"));
 
-        sync.start(List.of(Category.CITY), List.of(Language.FRENCH), MediaChoice.ALL);
+        sync.start(List.of(Category.CITY), List.of(Language.FRENCH), ExtractionOptions.of(MediaChoice.ALL));
         assertThat(sync.awaitCompletion(Duration.ofSeconds(10))).isTrue();
 
         Progress progress = sync.progress();
         assertThat(progress.state()).isEqualTo(State.DONE);
-        assertThat(progress.extracted()).isEqualTo(1);
-        assertThat(progress.mediaQueued()).isEqualTo(2);
-        assertThat(progress.mediaDownloaded()).isEqualTo(2);
-        assertThat(progress.done()).singleElement().satisfies(result -> assertThat(result.signs()).isEqualTo(1));
+        assertThat(progress.current()).isNull();
+        // 35 searches, 1 page, 2 videos
+        assertThat(progress.done()).containsExactly(new CategoryResult(Category.CITY, 1, 0, true, 38));
     }
 
     /** Finds one sign with "a", with two videos; blocks on a search until released (none when 0). */

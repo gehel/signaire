@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
 import fr.ledcom.signaire.bundle.BundleWriter;
 import fr.ledcom.signaire.extractor.CategoryExtractor;
 import fr.ledcom.signaire.extractor.ExtractionListener;
+import fr.ledcom.signaire.extractor.ExtractionOptions;
 import fr.ledcom.signaire.extractor.ExtractionReport;
+import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.extractor.SignEnumerator;
@@ -26,6 +28,8 @@ import fr.ledcom.signaire.extractor.SignSource;
 import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
+import fr.ledcom.signaire.model.Media;
+import fr.ledcom.signaire.model.Sign;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -38,8 +42,9 @@ import picocli.CommandLine.Spec;
 @Command(name = "extraire", resourceBundle = "fr.ledcom.signaire.cli.extract")
 public class ExtractCommand implements Callable<Integer> {
 
-    /** Truncated searches are refined up to this query length. */
-    private static final int MAX_QUERY_LENGTH = 6;
+    /** Prefixes with too many names are searched up to this length. */
+    private static final int MAX_QUERY_LENGTH = 12;
+    private static final Duration PROGRESS_INTERVAL = Duration.ofSeconds(10);
 
     private final SignSourceFactory sourceFactory;
     private final Path mediaCache;
@@ -70,6 +75,9 @@ public class ExtractCommand implements Callable<Integer> {
     @Option(names = "--intervalle", descriptionKey = "interval", defaultValue = "500", paramLabel = "<ms>")
     private long intervalMillis;
 
+    @Option(names = "--rafraichir", descriptionKey = "refresh")
+    private boolean refresh;
+
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
@@ -87,7 +95,7 @@ public class ExtractCommand implements Callable<Integer> {
         SignSource source = sourceFactory.create(Duration.ofMillis(intervalMillis));
         CategoryExtractor extractor = new CategoryExtractor(source,
                 new SignEnumerator(source, SignSuisseClient.MAX_RESULTS, MAX_QUERY_LENGTH),
-                new BundleWriter(Clock.systemUTC()), new ProgressListener());
+                new BundleWriter(Clock.systemUTC()), new ProgressListener(), PROGRESS_INTERVAL, Clock.systemUTC());
         EnumSet<Language> selectedLanguages = languages == null || languages.isEmpty()
                 ? EnumSet.allOf(Language.class) : EnumSet.copyOf(languages);
         List<Category> selectedCategories = categories == null || categories.isEmpty()
@@ -95,9 +103,9 @@ public class ExtractCommand implements Callable<Integer> {
         for (Category category : selectedCategories) {
             out.println(messages.get("progress.start", CategoryNames.name(category), codes(selectedLanguages)));
             ExtractionReport report = extractor.extract(category, selectedLanguages, output, mediaCache,
-                    mediaChoice());
+                    new ExtractionOptions(mediaChoice(), refresh));
             out.println(messages.get("progress.done", CategoryNames.name(category), report.signCount(),
-                    report.bundle().toString()));
+                    report.bundle().toString(), report.status().requestsDone()));
             if (!report.failures().isEmpty()) {
                 spec.commandLine().getErr().println(messages.get("progress.failures", report.failures().size()));
             }
@@ -118,6 +126,26 @@ public class ExtractCommand implements Callable<Integer> {
 
     /** Reports progress on the standard and error outputs. */
     private final class ProgressListener implements ExtractionListener {
+        @Override
+        public void progress(ExtractionStatus status) {
+            if (status.stage() == ExtractionStatus.Stage.DONE) {
+                return;
+            }
+            String remaining = status.remaining() == null ? ""
+                    : messages.get("progress.remaining", Math.max(1, status.remaining().toMinutes()));
+            spec.commandLine().getOut().println(messages.get("progress.status", CategoryNames.name(status.category()),
+                    status.searches().sent(), status.searches().pending(), status.signs().found(),
+                    status.signs().read(), status.signs().reused(), status.signs().failed(),
+                    status.media().downloaded(), status.media().queued(), status.requestsDone(),
+                    status.requestsLeft(), remaining));
+        }
+
+        @Override
+        public void mediaFailed(Sign sign, Media media, RuntimeException cause) {
+            spec.commandLine().getErr().println(
+                    messages.get("progress.mediaFailed", sign.name(), media.sourceUrl(), cause.getMessage()));
+        }
+
         @Override
         public void enumerated(Category category, Language language, SignEnumerator.Result result) {
             spec.commandLine().getOut().println(messages.get("progress.enumerated", CategoryNames.name(category),

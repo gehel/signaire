@@ -22,10 +22,14 @@ update of Signaire that changes the index).
 
 Choose categories and sign languages (none checked: all), and the media to download: videos and images, videos only,
 images only, or none. Media not downloaded are shown from SignSuisse, but are missing from exports and without a
-connection. The synchronization runs in the background; each category is loaded as soon as it is ready. Without media,
-count a few minutes per category; with the media, much longer. SignSuisse gives only 100 results per search: finding
-all the signs of a category takes hundreds of searches, spaced out to spare the site. The page shows how many; no sign
-is extracted before the end of this step.
+connection. The synchronization runs in the background; each category is loaded as soon as it is ready.
+
+Signaire spares SignSuisse: requests are at least half a second apart, and signs already extracted are reused from the
+existing bundles rather than read again; check **Read the signs already extracted again** to get the corrections made
+on SignSuisse since. The signs found are read, and their media downloaded, while the search goes on. The page shows
+where the current category is (searches, signs, media: done, left, failed), what is being done right now, an estimate
+of the time left, and the categories left. Without media, a category takes from a few minutes to half an hour; with
+the media, much longer. A media that fails is still shown from SignSuisse; the next synchronization tries it again.
 
 ## Contact for SignSuisse
 

@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.extractor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.net.URI;
@@ -8,10 +9,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 
 import fr.ledcom.signaire.bundle.Bundle;
@@ -131,33 +137,122 @@ class CategoryExtractorTest {
     }
 
     @Test
-    void tellsTheMediaToDownloadThenEachDownload() throws IOException {
+    void theStatusTellsWhatWasDoneOnceDone() throws IOException {
         Path cached = output.resolve(CategoryExtractor.MEDIA_CACHE).resolve("media/LAUSANNE.mp4");
         Files.createDirectories(cached.getParent());
         Files.writeString(cached, "downloaded before");
-        List<String> events = new ArrayList<>();
+        List<ExtractionStatus> progress = new ArrayList<>();
         CategoryExtractor followed = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
                 new BundleWriter(Clock.systemUTC()), new ExtractionListener() {
                     @Override
-                    public void mediaQueued(Sign sign, int count) {
-                        events.add("queued " + sign.name() + " " + count);
-                    }
-
-                    @Override
-                    public void mediaDownloaded(URI uri) {
-                        events.add("downloaded " + uri.getPath().substring(uri.getPath().lastIndexOf('/') + 1));
-                    }
-
-                    @Override
-                    public void signExtracted(Sign sign) {
-                        events.add("extracted " + sign.name());
+                    public void progress(ExtractionStatus status) {
+                        progress.add(status);
                     }
                 });
 
-        followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.ALL);
+        ExtractionStatus status = followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.ALL).status();
 
-        assertThat(events).containsExactly("queued LAUSANNE 2", "downloaded LAUSANNE-EXAMPLE.mp4",
-                "downloaded LAUSANNE.jpg", "extracted LAUSANNE");
+        assertThat(status.stage()).isEqualTo(ExtractionStatus.Stage.DONE);
+        assertThat(status.searches()).isEqualTo(new ExtractionStatus.Searches(35, 0, 0, true, null));
+        assertThat(status.signs()).isEqualTo(new ExtractionStatus.Signs(1, 1, 0, 0, null));
+        assertThat(status.signs().pending()).isZero();
+        // the video was in the cache already
+        assertThat(status.media().queued()).isEqualTo(2);
+        assertThat(status.media().downloaded()).isEqualTo(2);
+        assertThat(status.media().bytes()).isPositive();
+        assertThat(status.requestsDone()).isEqualTo(35 + 1 + 2);
+        assertThat(status.requestsLeft()).isZero();
+        assertThat(progress).last().isEqualTo(status);
+        assertThat(followed.status()).contains(status);
+    }
+
+    @Test
+    void reusesTheSignsOfTheExistingBundle() {
+        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.NONE);
+        source.fetches.clear();
+
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.NONE);
+
+        assertThat(source.fetches).isEmpty();
+        assertThat(report.signCount()).isEqualTo(1);
+        assertThat(report.status().signs().reused()).isEqualTo(1);
+        assertThat(report.status().requestsDone()).isEqualTo(35);
+    }
+
+    @Test
+    void readsAllTheSignsAgainWhenAskedToRefresh() {
+        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.NONE);
+        source.fetches.clear();
+
+        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, output.resolve(".media"),
+                new ExtractionOptions(MediaChoice.NONE, true));
+
+        assertThat(source.fetches).containsExactly("1");
+    }
+
+    @Test
+    void reusedSignsGetTheChosenMedia() {
+        extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output, MediaChoice.NONE);
+
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.VIDEOS);
+
+        try (Bundle bundle = new BundleReader().read(report.bundle())) {
+            assertThat(bundle.signs().get(0).videos())
+                    .containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", "media/LAUSANNE.mp4"));
+            bundle.verifyMedia();
+        }
+    }
+
+    @Test
+    void keepsTheSignsWhoseMediaFailLinkedToSignSuisse() {
+        source.failingDownload = URI.create(IMAGES + "LAUSANNE.jpg");
+        List<String> failed = new ArrayList<>();
+        CategoryExtractor followed = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
+                new BundleWriter(Clock.systemUTC()), new ExtractionListener() {
+                    @Override
+                    public void mediaFailed(Sign sign, Media media, RuntimeException cause) {
+                        failed.add(sign.name() + " " + media.sourceUrl());
+                    }
+                });
+
+        ExtractionReport report = followed.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.ALL);
+
+        assertThat(failed).containsExactly("LAUSANNE " + IMAGES + "LAUSANNE.jpg");
+        assertThat(report.status().media().failed()).isEqualTo(1);
+        try (Bundle bundle = new BundleReader().read(report.bundle())) {
+            Sign sign = bundle.signs().get(0);
+            assertThat(sign.images()).containsExactly(new Media(IMAGES + "LAUSANNE.jpg", null));
+            assertThat(sign.videos()).containsExactly(new Media(VIDEOS + "LAUSANNE.mp4", "media/LAUSANNE.mp4"));
+        }
+    }
+
+    @Test
+    @Timeout(10)
+    void readsSignsWhileTheSearchGoesOn() throws InterruptedException {
+        // the search of "z" waits until LAUSANNE, found by "a", is read: it would never end without parallel stages
+        source.searchWaitsForAFetch = new CountDownLatch(1);
+
+        ExtractionReport report = extractor.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.NONE);
+
+        assertThat(source.searchWaitsForAFetch.await(0, TimeUnit.SECONDS)).isTrue();
+        assertThat(report.signCount()).isEqualTo(1);
+    }
+
+    @Test
+    @Timeout(10)
+    void cancellingStopsTheExtractionWithoutWritingTheBundle() {
+        CategoryExtractor cancelling = new CategoryExtractor(source, new SignEnumerator(source, 100, 3),
+                new BundleWriter(Clock.systemUTC()));
+        source.onFetch = cancelling::cancel;
+
+        assertThatThrownBy(() -> cancelling.extract(Category.CITY, EnumSet.of(Language.FRENCH), output,
+                MediaChoice.NONE)).isInstanceOf(CancellationException.class);
+        assertThat(output.resolve("city.zip")).doesNotExist();
     }
 
     @Test
@@ -173,11 +268,23 @@ class CategoryExtractorTest {
 
     /** A lexicon with one French and one German sign in the CITY category. */
     private static final class FakeSource implements SignSource {
-        private final List<URI> downloads = new ArrayList<>();
+        private final List<URI> downloads = Collections.synchronizedList(new ArrayList<>());
+        private final List<String> fetches = Collections.synchronizedList(new ArrayList<>());
         private String failingUid;
+        private URI failingDownload;
+        private CountDownLatch searchWaitsForAFetch;
+        private Runnable onFetch = () -> { };
 
         @Override
         public List<SearchHit> search(String term, Language language, Category category) {
+            if (searchWaitsForAFetch != null && "z".equals(term)) {
+                try {
+                    searchWaitsForAFetch.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new ExtractionException("Interrupted", e);
+                }
+            }
             if (category != Category.CITY) {
                 return List.of();
             }
@@ -190,6 +297,11 @@ class CategoryExtractorTest {
 
         @Override
         public Sign fetchSign(SearchHit hit) {
+            fetches.add(hit.uid());
+            onFetch.run();
+            if (searchWaitsForAFetch != null) {
+                searchWaitsForAFetch.countDown();
+            }
             if (hit.uid().equals(failingUid)) {
                 throw new ExtractionException("Cannot fetch " + hit.url());
             }
@@ -206,6 +318,9 @@ class CategoryExtractorTest {
 
         @Override
         public void download(URI uri, Path target) {
+            if (uri.equals(failingDownload)) {
+                throw new ExtractionException("HTTP status 404");
+            }
             downloads.add(uri);
             try {
                 Files.createDirectories(target.getParent());

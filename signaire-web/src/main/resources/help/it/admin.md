@@ -22,10 +22,15 @@ tutto (dopo un aggiornamento di Signaire che cambia l'indice).
 
 Scegli categorie e lingue dei segni (nessuna selezionata: tutte), e i media da scaricare: video e immagini, solo
 video, solo immagini o nessuno. I media non scaricati sono mostrati da SignSuisse, ma mancano negli export e senza
-connessione. La sincronizzazione gira in background; ogni categoria viene caricata appena pronta. Senza media, qualche
-minuto per categoria; con i media, molto di più. SignSuisse dà solo 100 risultati per ricerca: trovare tutti i segni
-di una categoria richiede centinaia di ricerche, distanziate per non sovraccaricare il sito. La pagina ne mostra il
-numero; nessun segno viene estratto prima della fine di questa fase.
+connessione. La sincronizzazione gira in background; ogni categoria viene caricata appena pronta.
+
+Signaire risparmia SignSuisse: le richieste sono distanziate di almeno mezzo secondo, e i segni già estratti vengono
+ripresi dai pacchetti esistenti invece di essere riletti; seleziona **Rileggere i segni già estratti** per ottenere le
+correzioni fatte nel frattempo su SignSuisse. I segni trovati vengono letti, e i loro media scaricati, mentre la
+ricerca continua. La pagina mostra a che punto è la categoria in corso (ricerche, segni, media: fatti, rimanenti, in
+errore), cosa si sta facendo, una stima del tempo rimanente e le categorie rimanenti. Senza media, una categoria
+richiede da qualche minuto a mezz'ora; con i media, molto di più. Un media in errore resta mostrato da SignSuisse; la
+sincronizzazione successiva lo riprova.
 
 ## Contatto per SignSuisse
 
