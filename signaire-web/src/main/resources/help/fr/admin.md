@@ -23,9 +23,15 @@ ou réindexe tout (après une mise à jour de Signaire qui change l'index).
 Choisissez des catégories et des langues des signes (aucune cochée : toutes), et les médias à télécharger : vidéos et
 images, vidéos seulement, images seulement, ou aucun. Les médias non téléchargés sont montrés depuis SignSuisse, mais
 manquent aux exports et sans connexion. La synchronisation tourne en arrière-plan ; chaque catégorie est chargée dès
-qu'elle est prête. Sans médias, comptez quelques minutes par catégorie ; avec les médias, bien plus. SignSuisse ne
-donne que 100 résultats par recherche : trouver tous les signes d'une catégorie demande des centaines de recherches,
-espacées pour ménager le site. La page en montre le nombre ; aucun signe n'est extrait avant la fin de cette étape.
+qu'elle est prête.
+
+Signaire ménage SignSuisse : les requêtes sont espacées d'au moins une demi-seconde, et les signes déjà extraits sont
+repris des bundles existants plutôt que relus ; cochez **Lire à nouveau les signes déjà extraits** pour obtenir les
+corrections faites depuis sur SignSuisse. Les signes trouvés sont lus, et leurs médias téléchargés, pendant que la
+recherche continue. La page montre où en est la catégorie en cours (recherches, signes, médias : faits, restants, en
+échec), ce qui se fait en ce moment, une estimation du temps restant et les catégories restantes. Sans médias, une
+catégorie prend de quelques minutes à une demi-heure ; avec les médias, bien plus. Un média qui échoue reste montré
+depuis SignSuisse ; la synchronisation suivante le retente.
 
 ## Contact pour SignSuisse
 

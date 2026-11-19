@@ -13,23 +13,48 @@
              th:hx-get="${progress.running()} ? @{/admin/sync/status}"
              th:hx-trigger="${progress.running()} ? 'every 2s'" hx-swap="outerHTML">
         <p><strong th:text="#{'admin.sync.state.' + ${progress.state().name()}(${progress.error()})}">Done</strong></p>
-        <p th:if="${progress.category() != null and progress.listing()}"
-           th:text="#{admin.sync.listing(#{'category.' + ${progress.category().name()}},
-                    ${progress.language().code()}, ${progress.searches()}, ${progress.plannedSearches()},
-                    ${progress.found()})}">City (fr): searching,
-            40 searches, 12 signs found so far</p>
-        <p th:if="${progress.category() != null and !progress.listing()}"
-           th:text="#{admin.sync.current(#{'category.' + ${progress.category().name()}},
-                    ${progress.language().code()}, ${progress.found()})}">City (fr): 12 signs found</p>
-        <p th:if="${progress.state().name() != 'IDLE'}"
-           th:text="#{admin.sync.counts(${progress.extracted()}, ${progress.failed()})}">10 extracted, 0 failed</p>
-        <p th:if="${progress.mediaQueued() > 0}"
-           th:text="#{admin.sync.media(${progress.mediaDownloaded()}, ${progress.mediaQueued()})}">Media downloaded:
-            12 of 40.</p>
+        <th:block th:if="${progress.current() != null}" th:with="status=${progress.current()}">
+            <p th:if="${status.language() != null}"
+               th:text="#{'admin.sync.stage.' + ${status.stage().name()}(#{'category.' + ${status.category().name()}},
+                        #{'signLanguage.short.' + ${status.language().name()}})}">City: searching for signs in LSF.</p>
+            <p th:if="${status.language() == null}"
+               th:text="#{'admin.sync.stage.' + ${status.stage().name()}(#{'category.' + ${status.category().name()}},
+                        '')}">City: reading signs and downloading media.</p>
+            <ul class="sync-counts">
+                <li th:text="#{admin.sync.searches(${status.searches().sent()}, ${status.searches().pending()},
+                             ${status.searches().failed()})}">Searches: 35 done, 4 known to be left, 0 failed.</li>
+                <li th:text="#{admin.sync.signs(${status.signs().found()}, ${status.signs().read()},
+                             ${status.signs().reused()}, ${status.signs().failed()}, ${status.signs().pending()})}">
+                    Signs: 120 found, 80 read, 30 reused, 0 failed, 10 waiting.</li>
+                <li th:if="${status.media().queued() > 0}"
+                    th:text="#{admin.sync.media(${status.media().downloaded()}, ${status.media().queued()},
+                             ${status.media().bytes() / 1000000}, ${status.media().failed()})}">Media to download:
+                    12 of 40 (30 MB), 0 failed.</li>
+                <li th:text="#{admin.sync.requests(${status.requestsDone()}, ${status.requestsLeft()})}">Requests to
+                    SignSuisse: 200 done, 40 known to be left.</li>
+            </ul>
+            <p th:if="${status.searches().current() != null or status.signs().current() != null
+                        or status.media().current() != null}">
+                <span th:text="#{admin.sync.now}">Now:</span>
+                <span th:if="${status.searches().current() != null}"
+                      th:text="#{admin.sync.now.search(${status.searches().current()})}">search “sch”</span>
+                <span th:if="${status.signs().current() != null}"
+                      th:text="#{admin.sync.now.sign(${status.signs().current()})}">sign LAUSANNE</span>
+                <span th:if="${status.media().current() != null}"
+                      th:text="#{admin.sync.now.media(${status.media().current()})}">media lausanne.mp4</span>
+            </p>
+            <p th:if="${status.remaining() != null}"
+               th:text="${status.stage().name() == 'SEARCHING'}
+                        ? #{admin.sync.remaining.searching(${status.remaining().toMinutes()})}
+                        : #{admin.sync.remaining(${status.remaining().toMinutes()})}">Estimated time left: 3 minutes.</p>
+        </th:block>
+        <p th:unless="${progress.left().isEmpty()}"
+           th:text="#{admin.sync.left(${#strings.listJoin(progress.left().![#messages.msg('category.' + name())], ', ')})}">
+            Categories left: City, Nature</p>
         <ul th:unless="${progress.done().isEmpty()}">
             <li th:each="result : ${progress.done()}">
-                <span th:text="#{admin.sync.category(#{'category.' + ${result.category().name()}}, ${result.signs()})}">
-                    City: 2 signs</span>
+                <span th:text="#{admin.sync.category(#{'category.' + ${result.category().name()}}, ${result.signs()},
+                              ${result.requests()})}">City: 2 signs, 40 requests</span>
                 <span th:unless="${result.complete()}" class="note" th:text="#{admin.sync.incomplete}">
                     the search may have missed signs</span>
             </li>
@@ -68,6 +93,10 @@
                 <span th:text="#{'admin.sync.mediaChoice.' + ${choice.name()}}">Videos and images</span>
             </label>
         </fieldset>
+        <label>
+            <input type="checkbox" name="refresh" value="true">
+            <span th:text="#{admin.sync.refresh}">Read the signs already extracted again</span>
+        </label>
         <button type="submit" th:disabled="${progress.running()}" th:text="#{admin.sync.start}">Start</button>
     </form>
 </main>

@@ -31,6 +31,7 @@ import fr.ledcom.signaire.accounts.LocalCredentials;
 import fr.ledcom.signaire.accounts.WordListService;
 import fr.ledcom.signaire.core.search.SearchResults;
 import fr.ledcom.signaire.core.search.SignSearchService;
+import fr.ledcom.signaire.extractor.ExtractionOptions;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -93,7 +94,7 @@ class StandalonePagesTest {
                 .hasStatus(HttpStatus.FOUND).hasRedirectedUrl("/admin/sync");
 
         verify(standalone).completeSetup(true, null);
-        verify(sync).start(List.of(Category.CITY), List.of(Language.FRENCH), MediaChoice.VIDEOS);
+        verify(sync).start(List.of(Category.CITY), List.of(Language.FRENCH), ExtractionOptions.of(MediaChoice.VIDEOS));
     }
 
     @Test

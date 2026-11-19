@@ -13,9 +13,10 @@ import fr.ledcom.signaire.model.Category;
  * @param signCount number of signs in the bundle
  * @param failures signs found by the search but that could not be extracted
  * @param enumerationComplete false when the search may have missed signs
+ * @param status the counts of the extraction once done
  */
-public record ExtractionReport(
-        Category category, Path bundle, int signCount, List<SearchHit> failures, boolean enumerationComplete) {
+public record ExtractionReport(Category category, Path bundle, int signCount, List<SearchHit> failures,
+        boolean enumerationComplete, ExtractionStatus status) {
 
     public ExtractionReport {
         failures = List.copyOf(failures);

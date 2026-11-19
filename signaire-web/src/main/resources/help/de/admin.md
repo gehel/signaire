@@ -23,9 +23,16 @@ neu (nach einem Signaire-Update, das den Index ändert).
 Wählen Sie Kategorien und Gebärdensprachen (keine gewählt: alle) und die herunterzuladenden Medien: Videos und Bilder,
 nur Videos, nur Bilder oder keine. Nicht heruntergeladene Medien werden von SignSuisse angezeigt, fehlen aber in den
 Exporten und ohne Verbindung. Die Synchronisation läuft im Hintergrund; jede Kategorie wird geladen, sobald sie bereit
-ist. Ohne Medien dauert es einige Minuten pro Kategorie, mit Medien viel länger. SignSuisse liefert nur 100 Ergebnisse
-pro Suche: alle Gebärden einer Kategorie zu finden braucht Hunderte von Suchen, mit Pausen, um die Website zu schonen.
-Die Seite zeigt ihre Anzahl; vor dem Ende dieses Schritts wird keine Gebärde extrahiert.
+ist.
+
+Signaire schont SignSuisse: Zwischen den Anfragen liegt mindestens eine halbe Sekunde, und bereits extrahierte
+Gebärden werden aus den bestehenden Bündeln übernommen statt neu gelesen; wählen Sie **Bereits extrahierte Gebärden
+erneut lesen**, um seither auf SignSuisse gemachte Korrekturen zu erhalten. Gefundene Gebärden werden gelesen und ihre
+Medien heruntergeladen, während die Suche weiterläuft. Die Seite zeigt den Stand der laufenden Kategorie (Suchen,
+Gebärden, Medien: erledigt, ausstehend, fehlgeschlagen), was gerade geschieht, eine Schätzung der Restzeit und die
+verbleibenden Kategorien. Ohne Medien dauert eine Kategorie einige Minuten bis eine halbe Stunde, mit Medien viel
+länger. Ein fehlgeschlagenes Medium wird weiter von SignSuisse angezeigt; die nächste Synchronisation versucht es
+erneut.
 
 ## Kontakt für SignSuisse
 

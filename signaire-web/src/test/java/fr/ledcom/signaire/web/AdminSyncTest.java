@@ -4,6 +4,7 @@ import static fr.ledcom.signaire.web.TestUsers.ADMIN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
+import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
+import fr.ledcom.signaire.web.SignSuisseSync.CategoryResult;
 import fr.ledcom.signaire.web.SignSuisseSync.Progress;
 import fr.ledcom.signaire.web.SignSuisseSync.State;
 
@@ -37,33 +40,36 @@ class AdminSyncTest {
     }
 
     @Test
-    void showsTheSearchesWhileFindingTheSigns() {
-        when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, true, 40, 75,
-                12, 0, 0, 0, 0, List.of(), null));
+    void showsWhatIsDoneAndLeftWhileSearching() {
+        ExtractionStatus status = new ExtractionStatus(Category.CITY, ExtractionStatus.Stage.SEARCHING,
+                Language.FRENCH, new ExtractionStatus.Searches(40, 12, 1, true, "sch"),
+                new ExtractionStatus.Signs(120, 80, 30, 2, "LAUSANNE"),
+                new ExtractionStatus.Media(60, 40, 1, 12_500_000, "lausanne.mp4"), 160, 50, Duration.ofMinutes(5),
+                Duration.ofMinutes(3));
+        when(sync.progress()).thenReturn(new Progress(State.RUNNING, status, List.of(), List.of(Category.NATURE),
+                null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
-                .contains("Ville (fr) : recherche des signes dans SignSuisse, 40 recherches faites, 75 prévues pour "
-                        + "l&#39;instant, 12 signes trouvés.", "every 2s");
+                .contains("Ville : recherche des signes en LSF",
+                        "Recherches : 40 faites, 12 restantes connues, 1 en échec.",
+                        "Signes : 120 trouvés, 80 lus sur SignSuisse, 30 repris du bundle existant, 2 en échec, "
+                                + "8 en attente.",
+                        "Médias à télécharger : 40 sur 60 (12 Mo), 1 en échec.",
+                        "Requêtes à SignSuisse : 160 faites, 50 restantes connues.",
+                        "recherche « sch »", "signe LAUSANNE", "média lausanne.mp4",
+                        "Temps restant estimé : au moins 3 minutes",
+                        "Catégories restantes : Nature", "every 2s");
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).header(HttpHeaders.ACCEPT_LANGUAGE, "de")
-                .exchange()).bodyText().contains("40 Suchen gemacht, 75 bisher geplant, 12 Gebärden gefunden");
+                .exchange()).bodyText().contains("Suchen: 40 gemacht, 12 bekannt ausstehend");
     }
 
     @Test
-    void showsTheSignsFoundOnceTheyAreAllFound() {
-        when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, false, 40, 0, 12,
-                3, 1, 0, 0, List.of(), null));
+    void showsTheCategoriesDone() {
+        when(sync.progress()).thenReturn(new Progress(State.DONE, null,
+                List.of(new CategoryResult(Category.CITY, 12, 0, true, 48)), List.of(), null));
 
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
-                .contains("Ville (fr) : 12 signes trouvés", "Signes extraits : 3, en échec : 1.")
-                .doesNotContain("recherches", "Médias");
-    }
-
-    @Test
-    void showsTheMediaDownloaded() {
-        when(sync.progress()).thenReturn(new Progress(State.RUNNING, Category.CITY, Language.FRENCH, false, 40, 0, 12,
-                3, 0, 9, 7, List.of(), null));
-
-        assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
-                .contains("Médias téléchargés : 7 sur 9.");
+                .contains("Synchronisation terminée.", "Ville : 12 signes, 48 requêtes")
+                .doesNotContain("every 2s", "Recherches");
     }
 }

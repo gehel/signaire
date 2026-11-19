@@ -21,7 +21,8 @@ import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.extractor.ExtractionException;
-import fr.ledcom.signaire.extractor.MediaChoice;
+import fr.ledcom.signaire.extractor.ExtractionOptions;
+import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.SignSource;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -42,6 +43,7 @@ public class SignSuisseSync {
     private final Path mediaCache;
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.IDLE);
     private final AtomicBoolean cancelled = new AtomicBoolean();
+    private final AtomicReference<SyncExtraction> extraction = new AtomicReference<>();
     private Thread worker;
 
     public SignSuisseSync(SignSource source, BundleLoader loader, BundleLoading loading,
@@ -62,36 +64,31 @@ public class SignSuisseSync {
      * The outcome of a category.
      *
      * @param complete false when the search may have missed signs
+     * @param requests requests sent to SignSuisse
      */
-    public record CategoryResult(Category category, int signs, int failures, boolean complete) {
+    public record CategoryResult(Category category, int signs, int failures, boolean complete, int requests) {
     }
 
     /**
      * Where the synchronization is.
      *
-     * @param category the category being extracted, or null
-     * @param language the language being extracted, or null
-     * @param listing whether the signs of the category and language are still being searched
-     * @param searches the searches sent for the current category and language
-     * @param plannedSearches the searches planned so far, whose number grows while listing
-     * @param found signs found in the current category and language (so far, while listing)
-     * @param extracted signs extracted so far, with their media when they are downloaded
-     * @param failed signs that could not be extracted so far
-     * @param mediaQueued media of the signs read so far that were not downloaded yet
-     * @param mediaDownloaded media downloaded so far
+     * @param current where the category being extracted is, or null
      * @param done the categories done
+     * @param left the categories not started yet
      * @param error why the synchronization failed, or null
      */
-    public record Progress(State state, Category category, Language language, boolean listing, int searches,
-            int plannedSearches, int found, int extracted, int failed, int mediaQueued, int mediaDownloaded, List<CategoryResult> done,
+    public record Progress(State state, ExtractionStatus current, List<CategoryResult> done, List<Category> left,
             String error) {
 
-        static final Progress IDLE = new Progress(State.IDLE, null, null, false, 0, 0, 0, 0, 0, 0, 0, List.of(),
-                null);
-        static final Progress STARTED = IDLE.with(State.RUNNING, null);
+        static final Progress IDLE = new Progress(State.IDLE, null, List.of(), List.of(), null);
 
         public Progress {
             done = List.copyOf(done);
+            left = List.copyOf(left);
+        }
+
+        static Progress started(Collection<Category> categories) {
+            return new Progress(State.RUNNING, null, List.of(), List.copyOf(categories), null);
         }
 
         public boolean running() {
@@ -99,45 +96,29 @@ public class SignSuisseSync {
         }
 
         Progress with(State newState, String newError) {
-            return new Progress(newState, null, null, false, 0, 0, found, extracted, failed, mediaQueued,
-                    mediaDownloaded, done, newError);
+            return new Progress(newState, null, done, left, newError);
         }
 
-        Progress listing(Category newCategory, Language newLanguage, int newSearches, int planned, int newFound) {
-            return new Progress(state, newCategory, newLanguage, true, newSearches, planned, newFound, extracted,
-                    failed, mediaQueued, mediaDownloaded, done, error);
+        Progress withCurrent(ExtractionStatus status) {
+            List<Category> newLeft = left.stream().filter(category -> category != status.category()).toList();
+            return new Progress(state, status, done, newLeft, error);
         }
 
-        Progress listed(int newFound) {
-            return new Progress(state, category, language, false, searches, 0, newFound, extracted, failed,
-                    mediaQueued, mediaDownloaded, done, error);
-        }
-
-        Progress plusExtracted() {
-            return new Progress(state, category, language, false, searches, 0, found, extracted + 1, failed,
-                    mediaQueued, mediaDownloaded, done, error);
-        }
-
-        Progress plusFailed() {
-            return new Progress(state, category, language, false, searches, 0, found, extracted, failed + 1,
-                    mediaQueued, mediaDownloaded, done, error);
-        }
-
-        Progress plusMedia(int queued, int downloaded) {
-            return new Progress(state, category, language, listing, searches, plannedSearches, found, extracted,
-                    failed, mediaQueued + queued, mediaDownloaded + downloaded, done, error);
-        }
-
-        Progress plusDone(CategoryResult result) {
+        Progress categoryDone(CategoryResult result) {
             List<CategoryResult> newDone = new ArrayList<>(done);
             newDone.add(result);
-            return new Progress(state, null, null, false, 0, 0, 0, extracted, failed, mediaQueued, mediaDownloaded,
-                    newDone, error);
+            List<Category> newLeft = left.stream().filter(category -> category != result.category()).toList();
+            return new Progress(state, null, newDone, newLeft, error);
         }
     }
 
     public Progress progress() {
-        return progress.get();
+        Progress current = progress.get();
+        SyncExtraction running = extraction.get();
+        if (current.running() && running != null) {
+            return running.status().map(current::withCurrent).orElse(current);
+        }
+        return current;
     }
 
     /**
@@ -146,7 +127,7 @@ public class SignSuisseSync {
      * @return false when a synchronization is already running
      */
     public synchronized boolean start(Collection<Category> categories, Collection<Language> languages,
-            MediaChoice media) {
+            ExtractionOptions options) {
         if (progress.get().running()) {
             return false;
         }
@@ -155,15 +136,21 @@ public class SignSuisseSync {
         Set<Language> selectedLanguages = languages.isEmpty() ? EnumSet.allOf(Language.class)
                 : EnumSet.copyOf(languages);
         cancelled.set(false);
-        progress.set(Progress.STARTED);
+        progress.set(Progress.started(selectedCategories));
+        SyncExtraction started = new SyncExtraction(source, loader, bundles, mediaCache, progress);
+        extraction.set(started);
         worker = Thread.ofVirtual().name("signsuisse-sync")
-                .start(() -> run(selectedCategories, selectedLanguages, media));
+                .start(() -> run(started, selectedCategories, selectedLanguages, options));
         return true;
     }
 
-    /** Stops the synchronization after the current search or sign; the categories done stay loaded. */
+    /** Stops the synchronization; the categories done stay loaded. */
     public void cancel() {
         cancelled.set(true);
+        SyncExtraction running = extraction.get();
+        if (running != null) {
+            running.cancel();
+        }
     }
 
     /** Waits for the end of the synchronization; returns false on timeout. */
@@ -175,11 +162,14 @@ public class SignSuisseSync {
         return running == null || running.join(timeout);
     }
 
-    private void run(Set<Category> categories, Set<Language> languages, MediaChoice chosenMedia) {
-        SyncExtraction extraction = new SyncExtraction(source, loader, bundles, mediaCache, progress, cancelled);
+    private void run(SyncExtraction work, Set<Category> categories, Set<Language> languages,
+            ExtractionOptions options) {
         try {
             for (Category category : categories) {
-                extraction.extract(category, languages, chosenMedia);
+                if (cancelled.get()) {
+                    throw new CancellationException("Synchronization cancelled");
+                }
+                work.extract(category, languages, options);
             }
             progress.updateAndGet(p -> p.with(State.DONE, null));
         } catch (CancellationException _) {

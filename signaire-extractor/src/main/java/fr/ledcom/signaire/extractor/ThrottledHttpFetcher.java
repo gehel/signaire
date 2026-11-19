@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -25,6 +26,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class ThrottledHttpFetcher implements HttpFetcher {
 
     private static final Duration TIMEOUT = Duration.ofMinutes(2);
+    /** A long download doesn't hold the other requests back, and the server never gets more than this at once. */
+    private static final int MAX_IN_FLIGHT = 2;
 
     private final HttpClient client;
     private final Duration minInterval;
@@ -32,6 +35,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
     private final UserAgent userAgent;
     private final Supplier<Instant> clock;
     private final Sleeper sleeper;
+    private final Semaphore inFlight = new Semaphore(MAX_IN_FLIGHT, true);
     private Instant lastRequest;
 
     /** Waits, interruptibly. */
@@ -78,7 +82,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
         }
     }
 
-    private synchronized <T> HttpResponse<T> send(URI uri, BodyHandler<T> bodyHandler) {
+    private <T> HttpResponse<T> send(URI uri, BodyHandler<T> bodyHandler) {
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .header("User-Agent", userAgent.value())
                 .timeout(TIMEOUT)
@@ -89,8 +93,14 @@ public class ThrottledHttpFetcher implements HttpFetcher {
             if (attempt > 1) {
                 pause(minInterval.multipliedBy(1L << attempt));
             }
-            throttle();
             try {
+                inFlight.acquire();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new ExtractionException("Interrupted while fetching " + uri, e);
+            }
+            try {
+                throttle();
                 HttpResponse<T> response = client.send(request, bodyHandler);
                 int status = response.statusCode();
                 if (status >= 200 && status < 300) {
@@ -105,12 +115,15 @@ public class ThrottledHttpFetcher implements HttpFetcher {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new ExtractionException("Interrupted while fetching " + uri, e);
+            } finally {
+                inFlight.release();
             }
         }
         throw new ExtractionException("Cannot fetch " + uri + ": " + lastFailure);
     }
 
-    private void throttle() {
+    /** Spaces out the starts of the requests, whatever the number of threads sending them. */
+    private synchronized void throttle() {
         Instant now = clock.get();
         if (lastRequest != null) {
             Duration elapsed = Duration.between(lastRequest, now);

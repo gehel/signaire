@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import fr.ledcom.signaire.extractor.ExtractionOptions;
 import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.UserAgent;
 import fr.ledcom.signaire.model.Category;
@@ -51,10 +52,11 @@ public class AdminSyncController {
     @PostMapping("/admin/sync")
     public String start(@RequestParam(name = "categories", required = false) List<Category> categories,
             @RequestParam(name = "languages", required = false) List<Language> languages,
-            @RequestParam(name = "media", defaultValue = "NONE") MediaChoice media, Locale locale,
+            @RequestParam(name = "media", defaultValue = "NONE") MediaChoice media,
+            @RequestParam(name = "refresh", defaultValue = "false") boolean refresh, Locale locale,
             RedirectAttributes redirect) {
         if (!sync.start(categories == null ? List.of() : categories, languages == null ? List.of() : languages,
-                media)) {
+                new ExtractionOptions(media, refresh))) {
             redirect.addFlashAttribute("status", messages.getMessage("admin.sync.alreadyRunning", null, locale));
         }
         return "redirect:/admin/sync";

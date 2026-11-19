@@ -15,11 +15,17 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -141,15 +147,53 @@ class ThrottledHttpFetcherTest {
     }
 
     /** Time that only advances when sleeping. */
+    @Test
+    @Timeout(20)
+    void keepsAtMostTwoRequestsInFlightWithTheirStartsSpacedOut() throws Exception {
+        AtomicInteger inFlight = new AtomicInteger();
+        AtomicInteger maxInFlight = new AtomicInteger();
+        HttpServer slow = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        slow.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        // a response that takes 300 ms
+        CountDownLatch never = new CountDownLatch(1);
+        slow.createContext("/slow", exchange -> {
+            maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
+            try {
+                never.await(300, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+            }
+            inFlight.decrementAndGet();
+            respond(exchange, 200, "slow");
+        });
+        slow.start();
+        try (ExecutorService clients = Executors.newVirtualThreadPerTaskExecutor()) {
+            URI uri = URI.create("http://localhost:" + slow.getAddress().getPort() + "/slow");
+            List<Future<String>> pages = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                pages.add(clients.submit(() -> fetcher.fetchText(uri)));
+            }
+            for (Future<String> page : pages) {
+                assertThat(page.get()).isEqualTo("slow");
+            }
+        } finally {
+            slow.stop(0);
+        }
+
+        assertThat(maxInFlight).hasValue(2);
+        // the starts of the 5 requests are spaced out
+        assertThat(time.slept).isGreaterThanOrEqualTo(INTERVAL.multipliedBy(4));
+    }
+
     private static final class FakeTime {
         private Instant now = Instant.parse("2026-11-17T20:00:00Z");
         private Duration slept = Duration.ZERO;
 
-        Instant now() {
+        synchronized Instant now() {
             return now;
         }
 
-        void sleep(Duration duration) {
+        synchronized void sleep(Duration duration) {
             now = now.plus(duration);
             slept = slept.plus(duration);
         }

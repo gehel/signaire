@@ -14,10 +14,10 @@ them. An extraction takes minutes to hours, so it must run in the background, sh
 - `SyncExtraction` extracts each category into the bundle directory (media in the shared media cache), and loads each
   bundle as soon as it is written: signs appear category by category. At the end (done, failed or cancelled),
   `BundleLoading.loaded()` refreshes the media and reapplies the changes of administrators.
-- `SyncListener` turns the extractor's events into a `Progress` record (state, category and language being listed,
-  searches done and planned, signs found, extracted and failed, media queued and downloaded, categories done) and
-  checks for cancellation between steps; it logs at INFO every 25 signs.
-- `/admin/sync`: the form (categories, languages, media: none, videos, images, all), and the progress refreshed by
+- The progress shown is the `ExtractionStatus` of the category being extracted (see [Extraction](extraction.md#observability)),
+  with the categories done (signs, failures, complete or not) and those left; it's logged at INFO every 30 s.
+- `/admin/sync`: the form (categories, languages, media: none, videos, images, all; refresh the signs already
+  extracted), and the progress refreshed by
   htmx polling (`/admin/sync/status`); `/admin/sync/cancel`. The page shows the user agent sent to SignSuisse, and the
   help explains the contact address and its privacy implications.
 - The standalone setup (`/setup`) starts a synchronization of the chosen categories.
@@ -29,8 +29,8 @@ them. An extraction takes minutes to hours, so it must run in the background, sh
 - **One at a time**: two extractions would double the load on SignSuisse and write the same bundles.
 - **Load each bundle as soon as it's written**: the first categories are searchable while the others are extracted.
 - **Progress as an immutable record in an `AtomicReference`**: the page reads a consistent snapshot without locks.
-- **The listing step is visible** (searches done / planned): enumerating a large category takes many queries before
-  the first sign; without it the synchronization looked stuck.
+- **Everything visible**: searches, signs and media, done and left, with an estimate of the time left; before, the
+  listing step showed nothing and the synchronization looked stuck.
 - **Media off by default**: videos are large; administrators opt in.
 
 ## Open questions
