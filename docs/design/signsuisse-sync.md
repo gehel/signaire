@@ -11,9 +11,11 @@ them. An extraction takes minutes to hours, so it must run in the background, sh
 - `SignSuisseSync` (web) runs the [extractor](extraction.md) against the `SignSource` bean
   (`ExtractionConfiguration`: the real SignSuisse, with the configured user agent; web tests use `FakeSignSuisse`)
   in a virtual thread. One synchronization at a time; `start(categories, languages, media)` refuses a second one.
-- `SyncExtraction` extracts each category into the bundle directory (media in the shared media cache), and loads each
-  bundle as soon as it is written: signs appear category by category. At the end (done, failed or cancelled),
-  `BundleLoading.loaded()` refreshes the media and reapplies the changes of administrators.
+- `SyncExtraction` extracts each category into the bundle directory (media in the shared media cache). Each sign
+  complete is indexed right away, in batches (every 25 signs or 2 seconds, through `BundleLoading.indexExtracted`):
+  signs become searchable one by one, their media linked to SignSuisse. Each bundle is loaded as soon as it is written
+  (`BundleLoading.load`), which brings the downloaded media and reapplies the changes of administrators. At the end
+  (done, failed or cancelled), `BundleLoading.loaded()` does it once more.
 - The progress shown is the `ExtractionStatus` of the category being extracted (see [Extraction](extraction.md#observability)),
   with the categories done (signs, failures, complete or not) and those left; it's logged at INFO every 30 s.
 - `/admin/sync`: the form (categories, languages, media: none, videos, images, all; refresh the signs already
@@ -27,7 +29,8 @@ them. An extraction takes minutes to hours, so it must run in the background, sh
 - **In process, in a virtual thread**: no job queue or worker to deploy; a synchronization is rare, and losing one
   to a restart only costs restarting it (downloaded media are cached).
 - **One at a time**: two extractions would double the load on SignSuisse and write the same bundles.
-- **Load each bundle as soon as it's written**: the first categories are searchable while the others are extracted.
+- **Index each sign as soon as it's complete**, in batches: a sign is searchable seconds after it is read, rather than
+  at the end of its category; batches keep the index from committing once per sign.
 - **Progress as an immutable record in an `AtomicReference`**: the page reads a consistent snapshot without locks.
 - **Everything visible**: searches, signs and media, done and left, with an estimate of the time left; before, the
   listing step showed nothing and the synchronization looked stuck.

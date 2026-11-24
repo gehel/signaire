@@ -21,6 +21,10 @@ import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.Example;
+import fr.ledcom.signaire.model.Language;
+import fr.ledcom.signaire.model.Media;
+import fr.ledcom.signaire.model.Sign;
 
 class BundleLoadingTest {
 
@@ -105,5 +109,24 @@ class BundleLoadingTest {
         verify(media).refresh();
         verify(editor).reapply();
         verify(loader, never()).loadDirectory(bundles);
+    }
+
+    @Test
+    void indexesSignsBeingExtractedWithTheirMediaOnSignSuisse() {
+        Sign downloaded = Sign.builder("1", Language.FRENCH, "LAUSANNE")
+                .videos(List.of(new Media("https://example.org/lausanne.mp4", "media/lausanne.mp4")))
+                .examples(List.of(new Example("Exemple", new Media("https://example.org/ex.mp4", "media/ex.mp4"))))
+                .images(List.of(new Media("https://example.org/lausanne.jpg", "media/lausanne.jpg")))
+                .build();
+
+        loading.indexExtracted(List.of(downloaded));
+
+        Sign linked = downloaded.toBuilder()
+                .videos(List.of(new Media("https://example.org/lausanne.mp4", null)))
+                .examples(List.of(new Example("Exemple", new Media("https://example.org/ex.mp4", null))))
+                .images(List.of(new Media("https://example.org/lausanne.jpg", null)))
+                .build();
+        verify(editor).indexWithChanges(List.of(linked));
+        verify(media, never()).refresh();
     }
 }
