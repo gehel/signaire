@@ -14,17 +14,20 @@ Lighthouse, and the budget of sitespeed.io.
 ## Design
 
 - **Pico CSS** (`org.webjars.npm:picocss__pico`, served like htmx from its webjar) styles the semantic HTML that the
-  templates already have: typography, forms, buttons, tables, `details`, in a light and a dark theme that follow the
-  system (`prefers-color-scheme`). The page loads its red theme (`pico.red.min.css`), then `signaire.css`.
+  templates already have: typography, forms, buttons, tables, `details`, in a light and a dark theme. The page loads
+  its red theme (`pico.red.min.css`), then `signaire.css`.
+- **Theme**: the system's (`prefers-color-scheme`), unless the user chooses one in the header (Auto, Light, Dark).
+  Like the language, the choice is a parameter (`?theme=dark`) remembered in a cookie (`ThemeAdvice`); the server
+  writes it on the page, `<html data-theme="dark">`, which Pico follows. Auto forgets the choice.
 - **`signaire.css`** gives the identity through Pico's custom properties (the brand red `#b5121b` of the favicon,
   radius, spacing), and lays out our pages. Its own colors are custom properties too, with values for the dark theme.
   Styles hang on the semantic markup and the classes the templates already have; templates change where a layout
   needs a container (the two columns of a sign page) or a class says what something is (a secondary button, the
   language of a sign).
 - **Page frame**: header, main and footer span the window and center their content with padding (at most 72rem
-  wide), so no wrapper element is needed. The header has two rows: the tagline and the languages of the interface,
-  then the brand and the links. On phones: the brand, the help and the languages (their codes, FR DE IT EN, read by
-  screen readers as their names), then the links.
+  wide), so no wrapper element is needed. The header has two rows: the tagline, the theme and the languages of the
+  interface, then the brand and the links. On phones: the brand, the help and the languages (their codes, FR DE IT
+  EN, read by screen readers as their names), then the links and the theme (◐ ☀ ☾, read as their names).
 - **Search**: a panel with a large search field and its button side by side, the sign languages as chips (labels
   of checkboxes), and the category. Results are a grid of cards: the name of the sign (its link covers the card),
   the badge of its sign language, its categories, the link to SignSuisse; the checkbox to pick it for a list.
@@ -39,13 +42,15 @@ Lighthouse, and the budget of sitespeed.io.
 - **What Pico does that we undo**: it sets `--pico-color` on links and buttons (`--ink` is the color of text in the
   header), makes submit buttons as wide as their form, every `dialog` a modal that covers the window (the guided
   tour's dialog is a card), and shows focus with shadows that cards hide (an outline instead). Its light theme's
-  selector also matches when the system is dark: our colors are set again in the dark block.
+  selector also matches when the system is dark: our colors are set again in the dark blocks, one for a dark system
+  and one for the dark theme chosen.
 - **Compression**: Spring Boot compresses text responses (`server.compression.enabled`): Pico weighs 83 KB, 12 KB
   compressed. On the server Caddy compressed already, but the standalone application and the measures of CI did not.
 - **Checked in a browser** (`BrowserIT`, in `signaire-it`): the web jar on invented signs, Chromium in a container
   driven by Selenium, both themes, a computer and a phone. It checks what the stylesheets must get right (they load
   from the jar, no page is wider than a phone, cards side by side then stacked, a card opens its sign, the tour is a
-  card next to what it presents and closes) and writes screenshots of every page, kept by CI, for people to look at.
+  card next to what it presents and closes, a theme chosen looks like the system's and is remembered) and writes
+  screenshots of every page, kept by CI, for people to look at.
 
 ## Decisions
 
@@ -63,9 +68,15 @@ Lighthouse, and the budget of sitespeed.io.
   - The full version rather than the classless one: its secondary and outline buttons tell secondary actions apart,
     for 1 KB more.
 - **System fonts**, no web font: nothing to download, nothing from a third party, and a native look everywhere.
-- **No icon set**: a few characters (←, →, ↗, ✓) added by CSS with an empty alternative text, so that screen readers
-  skip them. An icon font or a sprite would weigh more than the few icons are worth now.
-- **No theme switch**: the theme follows the system; a switch would need script and a cookie.
+- **No icon set**: a few characters (←, →, ↗, ✓, ◐ ☀ ☾) added by CSS with an empty alternative text, so that screen
+  readers skip them. An icon font or a sprite would weigh more than the few icons are worth now.
+- **The theme follows the system until the user chooses one**: most users never need the switch, and Auto keeps
+  following the system when it changes with the time of day.
+- **The server writes the chosen theme**, as it does for the language: no script, and no flash of the other theme.
+  A script would have to run before the page is painted, and the pages work without script.
+- **Our dark colors are written twice**, for a dark system and for the dark theme chosen, as Pico does; BrowserIT
+  checks that both look the same. `light-dark()` would write each color once, but browsers older than 2024 (Safari
+  17.5) don't know it, and would lose the colors of buttons.
 - **Language codes on phones only**: the names of the four languages don't fit beside the brand on a phone; elsewhere
   each language is named in itself.
 - **CSS grows** from 6 KB (2 KB compressed) to 18 KB compressed: the comparison of sitespeed.io with main flags it
