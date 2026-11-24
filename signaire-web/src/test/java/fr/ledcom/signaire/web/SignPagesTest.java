@@ -111,6 +111,15 @@ class SignPagesTest {
     }
 
     @Test
+    void textsOfASignAreInItsLanguageAndItsExamplesQuoted() {
+        MvcTestResult result = mvc.get().uri("/signs/10").exchange();
+
+        assertThat(result).bodyText()
+                .containsPattern("<dd\\s+lang=\"de\">Grosses Raubtier</dd>")
+                .containsPattern("<q\\s+lang=\"de\">Der Bär schläft.</q>");
+    }
+
+    @Test
     void unknownSignsAreNotFound() {
         MvcTestResult result = mvc.get().uri("/signs/999").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 

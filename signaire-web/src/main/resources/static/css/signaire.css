@@ -352,8 +352,6 @@ a {
 main > form.stacked,
 main > details,
 details.export,
-.sign-main dl,
-.sign-main :is(.examples, .variants) li,
 section.sign-lists,
 .admin-actions,
 section.sync-status,
@@ -955,35 +953,44 @@ main.sign p.language .sign-language {
     padding: 0.2rem 0.75rem;
 }
 
+/* The video first, at the width of the column; images beside it, or in its place */
 .sign-main .media {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+    margin-bottom: 2rem;
 }
 
 .sign-main .media video {
     background: #000;
     border-radius: var(--radius-large);
-    flex: 2 1 22rem;
+    grid-column: 1 / -1;
+    width: 100%;
 }
 
 .sign-main .media img {
     background: var(--surface);
-    border: 1px solid var(--pico-muted-border-color);
+    border: 1px solid var(--rule);
     border-radius: var(--radius-large);
-    flex: 1 1 12rem;
-    max-height: 22rem;
-    max-width: 24rem;
+    max-height: 14rem;
     object-fit: contain;
+    width: 100%;
 }
 
+.sign-main .media img:only-child {
+    grid-column: 1 / -1;
+    justify-self: start;
+    max-height: 26rem;
+    width: auto;
+}
+
+/* The periphrase, the definition: text, labels in the margin on wide screens */
 .sign-main dl {
     display: grid;
-    gap: 0.75rem 1.5rem;
+    gap: 0.6rem 1.5rem;
     grid-template-columns: max-content minmax(0, 1fr);
-    margin-bottom: 1.5rem;
-    padding: 1.1rem 1.4rem;
+    margin-bottom: 2rem;
+    max-width: 52rem;
 }
 
 .sign-main dt {
@@ -992,58 +999,44 @@ main.sign p.language .sign-language {
 }
 
 .sign-main dd {
+    font-size: 1.1rem;
     margin: 0;
+    max-width: 70ch;
 }
 
 @media (width < 40rem) {
     .sign-main dl {
-        gap: 0.2rem;
+        gap: 0.1rem;
         grid-template-columns: minmax(0, 1fr);
     }
 
     .sign-main dd + dt {
-        margin-top: 0.6rem;
+        margin-top: 0.75rem;
     }
 }
 
-dd.categories {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-
-dd.categories a {
-    background: var(--tint);
-    border: 1px solid var(--tint-border);
-    border-radius: 2rem;
-    font-size: 0.85rem;
-    padding: 0.1rem 0.75rem;
-    text-decoration: none;
-}
-
-dd.categories a:hover {
-    border-color: var(--pico-primary-border);
-}
-
+/* Examples and regional variants: quotations or dialects, each with its video, rules between them */
 .sign-main :is(.examples, .variants) h2 {
-    font-size: 1.25rem;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
 }
 
 .sign-main :is(.examples, .variants) ul {
+    column-gap: 2rem;
     display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    margin-bottom: 2rem;
     padding: 0;
 }
 
 .sign-main :is(.examples, .variants) li {
+    border-top: 1px solid var(--rule);
     list-style: none;
     margin: 0;
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0;
 }
 
 .sign-main :is(.examples, .variants) li p {
+    font-size: 1.1rem;
     margin-bottom: 0.6rem;
 }
 
@@ -1051,6 +1044,15 @@ dd.categories a:hover {
     background: #000;
     border-radius: var(--pico-border-radius);
     width: 100%;
+}
+
+/* Quotations as Switzerland writes them: « … » in French, «…» in German and Italian */
+.sign-main q {
+    quotes: "«\202F" "\202F»";
+}
+
+.sign-main q:is(:lang(de), :lang(it)) {
+    quotes: "«" "»";
 }
 
 .sign-side {
