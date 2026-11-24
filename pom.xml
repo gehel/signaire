@@ -45,7 +45,7 @@
           Test JVMs are short lived: the quick compiler and the serial collector start them faster.
         -->
         <argLine>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
-        <commonmark.version>0.32.0</commonmark.version>
+        <commonmark.version>0.33.0</commonmark.version>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
         <htmx.version>4.0.1</htmx.version>
