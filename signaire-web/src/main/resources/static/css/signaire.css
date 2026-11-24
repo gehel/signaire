@@ -349,11 +349,6 @@ a {
 }
 
 /* Cards: the tools on a page, a light fill without shadow */
-form.search,
-ul.signs > li,
-main > ul.lists > li,
-ul.admin-menu > li,
-ul.help-topics > li,
 main > form.stacked,
 main > details,
 details.export,
@@ -587,23 +582,26 @@ img {
 }
 
 /* ---------------------------------------------------------------------------------------------------------------
- * Search
+ * Search: the field first, then the results as entries of a lexicon
  * ------------------------------------------------------------------------------------------------------------ */
 
+/* One line of welcome for new visitors, with the tour */
 section.welcome {
-    background: var(--tint);
-    border: 1px solid var(--tint-border);
-    border-radius: var(--radius-large);
     margin-bottom: 1.5rem;
-    padding: 1.25rem 1.5rem;
+    max-width: 70ch;
 }
 
 section.welcome h2 {
-    font-size: 1.35rem;
-    margin-bottom: 0.5rem;
+    --pico-font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+section.welcome p {
+    margin-bottom: 0.75rem;
 }
 
 .tour-links {
+    align-items: center;
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
@@ -611,12 +609,11 @@ section.welcome h2 {
 }
 
 form.search {
-    align-items: end;
+    align-items: center;
     display: grid;
-    gap: 1rem 2rem;
+    gap: 0.75rem 2rem;
     grid-template-columns: minmax(0, 1fr) auto;
-    margin-bottom: 1.5rem;
-    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
 }
 
 form.search .words {
@@ -624,39 +621,44 @@ form.search .words {
     margin: 0;
 }
 
+/* The label is the title of the page */
 form.search .words label {
     display: inline;
-    font-size: 1.1rem;
+    font-size: 1.563rem;
     font-weight: 700;
 }
 
 form.search .field {
     display: flex;
-    margin-top: 0.5rem;
+    margin-top: 0.6rem;
 }
 
 form.search .field input {
     border-radius: 5rem 0 0 5rem;
-    font-size: 1.15rem;
-    height: 3.25rem;
+    font-size: 1.25rem;
+    height: 3.5rem;
     margin: 0;
 }
 
 form.search .field button {
     border-radius: 0 5rem 5rem 0;
+    font-size: 1.1rem;
     margin: 0;
     padding-inline: 1.5rem 1.75rem;
 }
 
-/* Legends and labels of the filters, alike */
+/* The chips and the first option say what the filters are: their labels are for screen readers */
 form.search :is(legend, .category label) {
-    color: var(--pico-muted-color);
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
 }
 
-/* The sign languages as chips */
+/* The sign languages as chips; red when chosen */
 fieldset.languages {
     display: flex;
     flex-wrap: wrap;
@@ -666,12 +668,12 @@ fieldset.languages {
 
 fieldset.languages label {
     align-items: center;
-    background: var(--pico-form-element-background-color);
     border: 1px solid var(--pico-form-element-border-color);
     border-radius: 2rem;
     display: inline-flex;
+    font-size: 0.95rem;
     margin: 0;
-    padding: 0.3rem 0.9rem 0.3rem 0.6rem;
+    padding: 0.25rem 0.85rem 0.25rem 0.55rem;
     transition: background-color var(--pico-transition), border-color var(--pico-transition);
 }
 
@@ -696,7 +698,6 @@ form.search .category select {
 @media (width < 40rem) {
     form.search {
         grid-template-columns: minmax(0, 1fr);
-        padding: 1rem;
     }
 
     form.search .field button {
@@ -709,45 +710,61 @@ form.search .category select {
 }
 
 #results > .count {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
-/* Signs as cards, in search results and lists: the link of the name covers the card */
+/* The initial of the signs listed by name below it */
+h2.initial {
+    --pico-font-size: 1.563rem;
+    break-after: avoid;
+    font-weight: 800;
+    margin: 1.5rem 0 0.25rem;
+}
+
+.entries > h2.initial:first-child {
+    margin-top: 0;
+}
+
+/* Entries of a lexicon, in results and lists, flowing down two columns on wide screens as in a dictionary, initials
+   included; rules between them, the link of the gloss covers the entry */
+:is(.entries, main > ul.signs) {
+    column-gap: 2.5rem;
+    columns: 2 22rem;
+    margin-bottom: 1.5rem;
+}
+
 ul.signs {
-    display: grid;
-    gap: 0.75rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
-    margin: 0 0 1.5rem;
+    margin: 0;
     padding: 0;
 }
 
 ul.signs > li {
-    align-items: center;
-    column-gap: 0.6rem;
+    border-top: 1px solid var(--rule);
+    break-inside: avoid;
+    column-gap: 0.75rem;
     display: grid;
     grid-template-areas:
         "pick name language"
-        "pick categories categories"
-        "pick links links";
+        "pick definition definition"
+        "pick categories links";
     grid-template-columns: auto minmax(0, 1fr) auto;
     list-style: none;
     margin: 0;
-    padding: 0.85rem 1rem;
+    padding: 0.8rem 0 0.9rem;
     position: relative;
-    row-gap: 0.2rem;
-    transition: border-color var(--pico-transition);
+    row-gap: 0.15rem;
 }
 
 ul.signs > li:not(:has(> [type="checkbox"])) {
     grid-template-areas:
         "name language"
-        "categories categories"
-        "links links";
+        "definition definition"
+        "categories links";
     grid-template-columns: minmax(0, 1fr) auto;
 }
 
-ul.signs > li:hover {
-    border-color: var(--pico-form-element-border-color);
+ul.signs > li:hover a.name {
+    color: var(--pico-primary);
 }
 
 ul.signs > li:has(> a.name:focus-visible) {
@@ -758,17 +775,17 @@ ul.signs > li:has(> a.name:focus-visible) {
 ul.signs > li > [type="checkbox"] {
     align-self: start;
     grid-area: pick;
-    margin: 0.2rem 0 0;
+    margin: 0.25rem 0 0;
 }
 
 ul.signs a.name {
     color: var(--pico-h2-color);
+    font-size: 1.1rem;
     grid-area: name;
     text-decoration: none;
 }
 
 ul.signs a.name::after {
-    border-radius: var(--radius-large);
     content: "";
     inset: 0;
     position: absolute;
@@ -779,7 +796,21 @@ ul.signs a.name:focus-visible {
 }
 
 ul.signs .sign-language {
+    align-self: start;
     grid-area: language;
+    justify-self: end;
+    margin-top: 0.2rem;
+}
+
+/* At most two lines of definition */
+ul.signs .definition {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    grid-area: definition;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    margin: 0;
+    overflow: hidden;
 }
 
 ul.signs .categories {
@@ -788,16 +819,12 @@ ul.signs .categories {
 }
 
 ul.signs > li > :is(.source, form) {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     grid-area: links;
-    justify-self: start;
-}
-
-ul.signs > li > form {
     justify-self: end;
 }
 
-/* Above the link of the name, to stay clickable */
+/* Above the link of the gloss, to stay clickable */
 ul.signs > li > :is([type="checkbox"], .source, form) {
     position: relative;
     z-index: 1;
@@ -814,7 +841,7 @@ ul.signs .source {
 form.add-to-list {
     align-items: center;
     background: var(--surface);
-    border: 1px solid var(--pico-muted-border-color);
+    border: 1px solid var(--rule);
     border-radius: var(--radius-large);
     display: flex;
     flex-wrap: wrap;
@@ -842,21 +869,9 @@ form.add-to-list input {
 
 nav.pages {
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
     justify-content: center;
     margin-top: 1.5rem;
-}
-
-nav.pages a {
-    background: var(--surface);
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: 2rem;
-    padding: 0.35rem 1rem;
-    text-decoration: none;
-}
-
-nav.pages a:hover {
-    border-color: var(--pico-primary-border);
 }
 
 nav.pages span {
@@ -1118,39 +1133,39 @@ main.sign p.source {
  * Lists, requests, accounts, administration
  * ------------------------------------------------------------------------------------------------------------ */
 
-/* Lists of the user, menus: grids of cards whose link covers the card */
+/* Lists of the user, menus: entries separated by rules, whose link covers the entry */
 main > ul.lists,
 ul.admin-menu,
 ul.help-topics {
+    column-gap: 2.5rem;
     display: grid;
-    gap: 0.75rem;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
     margin-bottom: 2rem;
     padding: 0;
 }
 
 :is(main > ul.lists, ul.admin-menu, ul.help-topics) > li {
+    border-top: 1px solid var(--rule);
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.1rem;
     list-style: none;
     margin: 0;
-    padding: 1rem 1.25rem;
+    padding: 0.75rem 0;
     position: relative;
-    transition: border-color var(--pico-transition);
-}
-
-:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li:hover {
-    border-color: var(--pico-form-element-border-color);
 }
 
 :is(main > ul.lists, ul.admin-menu, ul.help-topics) > li > a {
+    font-size: 1.1rem;
     font-weight: 600;
     text-decoration: none;
 }
 
+:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li:hover > a {
+    color: var(--pico-primary);
+}
+
 :is(main > ul.lists, ul.admin-menu, ul.help-topics) > li > a::after {
-    border-radius: var(--radius-large);
     content: "";
     inset: 0;
     position: absolute;
