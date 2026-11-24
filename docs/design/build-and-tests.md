@@ -18,7 +18,8 @@ accessibility).
   - accounts services on H2;
   - web controllers in `@WebMvcTest` slices (`@WebLayerTest`) with mocked account services and a real Lucene index;
   - `signaire-it`: the CLI and web jars as processes, PostgreSQL in a container, a fake SignSuisse served locally;
-    user journeys, and the check that signs are transient. Only this module needs Docker.
+    user journeys, and the check that signs are transient; the pages in Chromium in a container (`BrowserIT`,
+    Selenium), with screenshots. Only this module needs Docker.
 - **No network in tests**: the root POM sends HTTP(S) to a closed port (localhost allowed), `NoNetworkTest` checks it.
 - **Speed**: the Maven build cache extension restores unchanged modules (tests included) locally; builds stopping
   before `package` aren't cached. Test JVMs use the quick compiler and the serial collector. CI builds everything,
@@ -26,7 +27,7 @@ accessibility).
 - **Measures** (`quality.yml`): Lighthouse CI (accessibility at 1), sitespeed.io (budget, and comparison with the
   last build of main: no timing, size or request count up by more than 10% and a slack), SonarCloud (quality gate:
   80% coverage of new code by unit tests).
-- **CI artifacts**: the CLI jar, the standalone images for Linux, Windows and macOS.
+- **CI artifacts**: the CLI jar, the standalone images for Linux, Windows and macOS, the screenshots of the pages.
 
 ## Decisions
 
