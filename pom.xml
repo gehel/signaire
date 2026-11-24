@@ -48,7 +48,7 @@
         <commonmark.version>0.32.0</commonmark.version>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
-        <htmx.version>4.0.1</htmx.version>
+        <htmx.version>4.0.2</htmx.version>
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
         <jsoup.version>1.24.1</jsoup.version>
         <lombok.version>1.18.48</lombok.version>
