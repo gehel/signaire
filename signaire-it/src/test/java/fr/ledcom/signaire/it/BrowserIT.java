@@ -270,9 +270,13 @@ class BrowserIT {
 
             assertThat(script("return matchMedia('(prefers-color-scheme: dark)').matches"))
                     .as("dark theme").isEqualTo(theme == Theme.DARK);
-            // Pico, from its webjar, and our stylesheet, with the brand
+            // Pico, from its webjar, and our stylesheet, with the brand and the font
             assertThat(script("return getComputedStyle(document.documentElement).fontFamily"))
-                    .as("font of %s", where).asString().startsWith("system-ui");
+                    .as("font of %s", where).asString().startsWith("\"Atkinson Hyperlegible Next\"");
+            assertThat(script("""
+                    return document.fonts.ready.then(() => [...document.fonts]
+                        .some(font => font.family.includes('Atkinson') && font.status === 'loaded'))"""))
+                    .as("font loaded on %s", where).isEqualTo(true);
             assertThat(script("return getComputedStyle(document.querySelector('header.site')).borderTopColor"))
                     .as("brand of %s", where).isEqualTo(theme.brand);
             assertThat(script("return innerWidth")).as("width of the window").isEqualTo((long) device.width);

@@ -1,20 +1,35 @@
 /*
- * The look of Signaire, on top of Pico CSS (loaded first): the brand through Pico's custom properties, then the
- * layout of the pages. Our own colors are custom properties too, with values for the dark theme.
- * See docs/design/visual-design.md.
+ * The look of Signaire, on top of Pico CSS (loaded first): a lexicon of sign languages, whose glosses (sign names in
+ * capitals) are the voice. The brand through Pico's custom properties, then the layout of the pages. Our own colors
+ * are custom properties too, with values for the dark theme. See docs/design/visual-design.md.
  */
 
 /* ---------------------------------------------------------------------------------------------------------------
  * Identity
  * ------------------------------------------------------------------------------------------------------------ */
 
+/* Drawn for legibility by the Braille Institute; served by the application with its license (fonts/OFL.txt) */
+@font-face {
+    font-display: swap;
+    font-family: "Atkinson Hyperlegible Next";
+    font-style: normal;
+    font-weight: 200 800;
+    src: url("../fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
+    --pico-font-family-sans-serif: "Atkinson Hyperlegible Next", system-ui, "Segoe UI", roboto, sans-serif,
+        var(--pico-font-family-emoji);
     --pico-border-radius: 0.5rem;
     /* Pico grows the text up to 131% on wide screens: too big for lists of signs */
     --pico-font-size: 100%;
     --gutter: 1rem;
     --page-width: 72rem;
     --radius-large: 0.75rem;
+    /* glosses: capitals, spaced */
+    --gloss-tracking: 0.06em;
 }
 
 @media (width >= 64rem) {
@@ -37,14 +52,14 @@
     --pico-primary-focus: rgb(181 18 27 / 30%);
     --pico-text-selection-color: rgb(181 18 27 / 20%);
     --ink: #373c44;
-    --page: #f4f5f7;
-    --surface: #fff;
+    --page: #fff;
+    --surface: #f5f6f8;
+    --rule: #dfe2e6;
+    --link-underline: rgb(55 60 68 / 35%);
     --tint: #fcf1ef;
     --tint-border: #f0cfc9;
     --success: #1e7b34;
     --error: #b5121b;
-    --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
-    --shadow-raised: 0 6px 16px rgb(16 24 40 / 12%);
     /* sign languages: LSF (French), DSGS (German), LIS (Italian) */
     --fr: #1a4d99;
     --fr-background: #e0ecff;
@@ -64,14 +79,14 @@
         --pico-primary-focus: rgb(241 121 97 / 37.5%);
         --pico-text-selection-color: rgb(241 121 97 / 19%);
         --ink: #c2c7d0;
-        --page: #13161e;
-        --surface: #1b202a;
+        --page: #15171b;
+        --surface: #1e2127;
+        --rule: #2e333c;
+        --link-underline: rgb(194 199 208 / 35%);
         --tint: #2b1b1d;
         --tint-border: #57302b;
         --success: #75d08f;
         --error: #f17961;
-        --shadow: 0 1px 2px rgb(0 0 0 / 40%);
-        --shadow-raised: 0 6px 16px rgb(0 0 0 / 50%);
         --fr: #a9c8ff;
         --fr-background: #1c2b45;
         --de: #ffd48a;
@@ -90,14 +105,14 @@
     --pico-primary-focus: rgb(241 121 97 / 37.5%);
     --pico-text-selection-color: rgb(241 121 97 / 19%);
     --ink: #c2c7d0;
-    --page: #13161e;
-    --surface: #1b202a;
+    --page: #15171b;
+    --surface: #1e2127;
+    --rule: #2e333c;
+    --link-underline: rgb(194 199 208 / 35%);
     --tint: #2b1b1d;
     --tint-border: #57302b;
     --success: #75d08f;
     --error: #f17961;
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
-    --shadow-raised: 0 6px 16px rgb(0 0 0 / 50%);
     --fr: #a9c8ff;
     --fr-background: #1c2b45;
     --de: #ffd48a;
@@ -132,10 +147,9 @@ body > main {
    buttons: --ink is the color of text) */
 header.site {
     align-items: center;
-    background: var(--surface);
-    border-bottom: 1px solid var(--pico-muted-border-color);
+    background: var(--page);
+    border-bottom: 1px solid var(--rule);
     border-top: 4px solid var(--pico-primary-background);
-    box-shadow: var(--shadow);
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
@@ -191,8 +205,7 @@ nav.account {
 }
 
 :is(nav.account a, nav.account button.link, header.site a.help):hover {
-    background: var(--tint);
-    color: var(--pico-primary);
+    background: var(--surface);
 }
 
 nav.account .user {
@@ -310,11 +323,32 @@ footer.site p {
  * Common pieces
  * ------------------------------------------------------------------------------------------------------------ */
 
+/* A scale of ratio 1.25 */
 h1 {
-    letter-spacing: -0.01em;
+    --pico-font-size: 1.953rem;
 }
 
-/* Cards: whatever stands out of the page */
+h2 {
+    --pico-font-size: 1.563rem;
+}
+
+h3 {
+    --pico-font-size: 1.25rem;
+}
+
+/* Glosses: sign names, in capitals as SignSuisse writes them; the one bold thing of the pages */
+:is(ul.signs a.name, main.sign h1) {
+    font-weight: 800;
+    letter-spacing: var(--gloss-tracking);
+}
+
+/* Links are ink, underlined; Pico makes them red on hover and when current */
+a {
+    --pico-color: var(--ink);
+    --pico-underline: var(--link-underline);
+}
+
+/* Cards: the tools on a page, a light fill without shadow */
 form.search,
 ul.signs > li,
 main > ul.lists > li,
@@ -330,9 +364,8 @@ section.sign-lists,
 section.sync-status,
 main.help article {
     background: var(--surface);
-    border: 1px solid var(--pico-muted-border-color);
+    border: 1px solid var(--rule);
     border-radius: var(--radius-large);
-    box-shadow: var(--shadow);
 }
 
 /* Pico makes every submit button as wide as its form */
@@ -359,12 +392,13 @@ a.button:hover {
 
 a.button.outline {
     background: transparent;
-    color: var(--pico-primary);
+    border-color: var(--pico-form-element-border-color);
+    color: var(--ink);
 }
 
 a.button.outline:hover {
-    background: var(--tint);
-    color: var(--pico-primary-hover);
+    background: var(--surface);
+    border-color: var(--ink);
 }
 
 button.small {
@@ -397,16 +431,8 @@ p.back {
     margin-bottom: 0.75rem;
 }
 
-p.back a {
-    text-decoration: none;
-}
-
 p.back + h1 {
     margin-top: 0;
-}
-
-p.back a::before {
-    content: "← " / "";
 }
 
 /* \FE0E: the arrow as text, not as an emoji */
@@ -709,7 +735,7 @@ ul.signs > li {
     padding: 0.85rem 1rem;
     position: relative;
     row-gap: 0.2rem;
-    transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+    transition: border-color var(--pico-transition);
 }
 
 ul.signs > li:not(:has(> [type="checkbox"])) {
@@ -721,8 +747,7 @@ ul.signs > li:not(:has(> [type="checkbox"])) {
 }
 
 ul.signs > li:hover {
-    border-color: var(--pico-primary-border);
-    box-shadow: var(--shadow-raised);
+    border-color: var(--pico-form-element-border-color);
 }
 
 ul.signs > li:has(> a.name:focus-visible) {
@@ -738,9 +763,7 @@ ul.signs > li > [type="checkbox"] {
 
 ul.signs a.name {
     color: var(--pico-h2-color);
-    font-weight: 700;
     grid-area: name;
-    letter-spacing: 0.02em;
     text-decoration: none;
 }
 
@@ -836,14 +859,6 @@ nav.pages a:hover {
     border-color: var(--pico-primary-border);
 }
 
-nav.pages a[rel="prev"]::before {
-    content: "← " / "";
-}
-
-nav.pages a[rel="next"]::after {
-    content: " →" / "";
-}
-
 nav.pages span {
     color: var(--pico-muted-color);
     font-size: 0.9rem;
@@ -912,8 +927,7 @@ main.sign > :not(.sign-main, .sign-side) {
 }
 
 main.sign h1 {
-    font-size: 2.25rem;
-    letter-spacing: 0.02em;
+    --pico-font-size: clamp(2.441rem, 6vw, 3.815rem);
     margin-bottom: 0.5rem;
 }
 
@@ -936,7 +950,6 @@ main.sign p.language .sign-language {
 .sign-main .media video {
     background: #000;
     border-radius: var(--radius-large);
-    box-shadow: var(--shadow-raised);
     flex: 2 1 22rem;
 }
 
@@ -960,11 +973,7 @@ main.sign p.language .sign-language {
 
 .sign-main dt {
     color: var(--pico-muted-color);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding-top: 0.2rem;
-    text-transform: uppercase;
+    font-weight: 600;
 }
 
 .sign-main dd {
@@ -1091,7 +1100,7 @@ section.sign-lists > p:last-child {
 }
 
 .admin-actions {
-    border-color: var(--pico-primary-border);
+    border-color: var(--pico-form-element-border-color);
     border-style: dashed;
     padding: 0.85rem 1.25rem;
 }
@@ -1128,12 +1137,11 @@ ul.help-topics {
     margin: 0;
     padding: 1rem 1.25rem;
     position: relative;
-    transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+    transition: border-color var(--pico-transition);
 }
 
 :is(main > ul.lists, ul.admin-menu, ul.help-topics) > li:hover {
-    border-color: var(--pico-primary-border);
-    box-shadow: var(--shadow-raised);
+    border-color: var(--pico-form-element-border-color);
 }
 
 :is(main > ul.lists, ul.admin-menu, ul.help-topics) > li > a {
@@ -1229,6 +1237,11 @@ main.help article {
     padding: 1.5rem 2rem;
 }
 
+/* lines of at most about 70 characters */
+main.help article > div > :is(p, ul, ol, h2, h3) {
+    max-width: 70ch;
+}
+
 main.help article table {
     border-collapse: collapse;
 }
@@ -1268,11 +1281,11 @@ nav.help-topics li a {
 }
 
 nav.help-topics li a:hover {
-    background: var(--tint);
+    background: var(--surface);
 }
 
 nav.help-topics li a[aria-current="page"] {
-    background: var(--tint);
+    background: var(--surface);
     color: var(--pico-primary);
     font-weight: 600;
 }
