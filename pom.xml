@@ -61,7 +61,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the version from the parent POM cannot read Java 27 class files -->
         <spotbugs.version>4.10.5</spotbugs.version>
-        <spring-boot.version>4.1.2</spring-boot.version>
+        <spring-boot.version>4.2.0</spring-boot.version>
         <zxing.version>3.5.4</zxing.version>
     </properties>
 
