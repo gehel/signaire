@@ -1389,9 +1389,10 @@ nav.tour-steps .skip-tour {
     margin-left: auto;
 }
 
+/* a margin of paper around the element, then the red ring: the search has no frame of its own */
 .tour-target {
     border-radius: var(--radius-large);
-    box-shadow: 0 0 0 4px var(--pico-primary), 0 0 0 9999px rgb(0 0 0 / 55%);
+    box-shadow: 0 0 0 0.6rem var(--page), 0 0 0 calc(0.6rem + 3px) var(--pico-primary), 0 0 0 9999px rgb(0 0 0 / 55%);
     position: relative;
     z-index: 20;
 }
