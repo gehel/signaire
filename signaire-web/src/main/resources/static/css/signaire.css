@@ -1,226 +1,527 @@
+/*
+ * The look of Signaire, on top of Pico CSS (loaded first): the brand through Pico's custom properties, then the
+ * layout of the pages. Our own colors are custom properties too, with values for the dark theme.
+ * See docs/design/visual-design.md.
+ */
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Identity
+ * ------------------------------------------------------------------------------------------------------------ */
+
 :root {
-    --accent: #b5121b;
-    --muted: #5f6368;
-    font-family: system-ui, sans-serif;
-    line-height: 1.5;
+    --pico-border-radius: 0.5rem;
+    /* Pico grows the text up to 131% on wide screens: too big for lists of signs */
+    --pico-font-size: 100%;
+    --gutter: 1rem;
+    --page-width: 72rem;
+    --radius-large: 0.75rem;
 }
+
+@media (width >= 64rem) {
+    :root {
+        --pico-font-size: 106.25%;
+        --gutter: 2rem;
+    }
+}
+
+/*
+ * The selectors of Pico's themes, to override them. Light also applies when the system is dark; dark comes from the
+ * system (auto) or from the user (data-theme, ThemeAdvice): keep the two dark blocks the same, BrowserIT checks it.
+ */
+:root:not([data-theme=dark]) {
+    --pico-primary: #b5121b;
+    --pico-primary-background: #b5121b;
+    --pico-primary-underline: rgb(181 18 27 / 45%);
+    --pico-primary-hover: #8c0d14;
+    --pico-primary-hover-background: #96111a;
+    --pico-primary-focus: rgb(181 18 27 / 30%);
+    --pico-text-selection-color: rgb(181 18 27 / 20%);
+    --ink: #373c44;
+    --page: #f4f5f7;
+    --surface: #fff;
+    --tint: #fcf1ef;
+    --tint-border: #f0cfc9;
+    --success: #1e7b34;
+    --error: #b5121b;
+    --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+    --shadow-raised: 0 6px 16px rgb(16 24 40 / 12%);
+    /* sign languages: LSF (French), DSGS (German), LIS (Italian) */
+    --fr: #1a4d99;
+    --fr-background: #e0ecff;
+    --de: #7a4a00;
+    --de-background: #fff1d6;
+    --it: #1d6b3a;
+    --it-background: #ddf3e4;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --pico-primary: #f17961;
+        --pico-primary-background: #c52f21;
+        --pico-primary-underline: rgb(241 121 97 / 50%);
+        --pico-primary-hover: #f5a390;
+        --pico-primary-hover-background: #d93526;
+        --pico-primary-focus: rgb(241 121 97 / 37.5%);
+        --pico-text-selection-color: rgb(241 121 97 / 19%);
+        --ink: #c2c7d0;
+        --page: #13161e;
+        --surface: #1b202a;
+        --tint: #2b1b1d;
+        --tint-border: #57302b;
+        --success: #75d08f;
+        --error: #f17961;
+        --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+        --shadow-raised: 0 6px 16px rgb(0 0 0 / 50%);
+        --fr: #a9c8ff;
+        --fr-background: #1c2b45;
+        --de: #ffd48a;
+        --de-background: #3a2a0c;
+        --it: #9be0b4;
+        --it-background: #163322;
+    }
+}
+
+:root[data-theme=dark] {
+    --pico-primary: #f17961;
+    --pico-primary-background: #c52f21;
+    --pico-primary-underline: rgb(241 121 97 / 50%);
+    --pico-primary-hover: #f5a390;
+    --pico-primary-hover-background: #d93526;
+    --pico-primary-focus: rgb(241 121 97 / 37.5%);
+    --pico-text-selection-color: rgb(241 121 97 / 19%);
+    --ink: #c2c7d0;
+    --page: #13161e;
+    --surface: #1b202a;
+    --tint: #2b1b1d;
+    --tint-border: #57302b;
+    --success: #75d08f;
+    --error: #f17961;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-raised: 0 6px 16px rgb(0 0 0 / 50%);
+    --fr: #a9c8ff;
+    --fr-background: #1c2b45;
+    --de: #ffd48a;
+    --de-background: #3a2a0c;
+    --it: #9be0b4;
+    --it-background: #163322;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Page frame: header, main and footer span the window, their content centered by padding
+ * ------------------------------------------------------------------------------------------------------------ */
 
 body {
-    margin: 0 auto;
-    max-width: 60rem;
-    padding: 0 1rem;
+    background: var(--page);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
+body > header,
+body > main,
+body > footer {
+    padding-inline: max(var(--gutter), (100% - var(--page-width)) / 2);
+}
+
+body > main {
+    flex: 1;
+    padding-block: 1.5rem 3rem;
+}
+
+/* Two rows: the tagline and the languages, then the brand and the links (Pico redefines the color of links and
+   buttons: --ink is the color of text) */
 header.site {
-    align-items: baseline;
-    border-bottom: 2px solid var(--accent);
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    border-top: 4px solid var(--pico-primary-background);
+    box-shadow: var(--shadow);
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    padding: 0.75rem 0;
+    gap: 0.25rem 1rem;
+    padding-block: 0.4rem 0.6rem;
 }
 
-header.site .brand {
-    color: var(--accent);
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-decoration: none;
+/* the end of the first row */
+header.site::after {
+    content: "";
+    flex-basis: 100%;
+    order: -1;
 }
 
 header.site .tagline {
-    color: var(--muted);
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    order: -2;
+}
+
+header.site .brand {
+    align-items: center;
+    color: var(--pico-h1-color);
+    display: inline-flex;
+    font-size: 1.4rem;
+    font-weight: 800;
+    gap: 0.5rem;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+}
+
+/* favicon.svg, inline: one request fewer */
+header.site .brand::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b5121b'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='20' font-weight='bold' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E") center / contain no-repeat;
+    content: "";
+    height: 2rem;
+    width: 2rem;
 }
 
 nav.account {
-    align-items: baseline;
-    display: flex;
-    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    justify-content: flex-start;
     margin-left: auto;
 }
 
-nav.languages {
-    display: flex;
-    gap: 0.75rem;
+:is(nav.account a, nav.account button.link, header.site a.help) {
+    border-radius: var(--pico-border-radius);
+    color: var(--ink);
+    font-size: 0.95rem;
+    padding: 0.3rem 0.6rem;
+    text-decoration: none;
+}
+
+:is(nav.account a, nav.account button.link, header.site a.help):hover {
+    background: var(--tint);
+    color: var(--pico-primary);
+}
+
+nav.account .user {
+    color: var(--pico-muted-color);
+    font-size: 0.875rem;
+    padding-inline: 0.6rem;
+}
+
+/* The themes and the languages of the interface, as segmented controls */
+:is(nav.themes, nav.languages) {
+    background: var(--page);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 2rem;
+    gap: 0;
+    order: -1;
+    padding: 0.1rem;
+}
+
+nav.themes {
+    margin-left: auto;
+}
+
+:is(nav.themes, nav.languages) a {
+    border-radius: 2rem;
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+    padding: 0.1rem 0.6rem;
+    text-decoration: none;
+}
+
+:is(nav.themes, nav.languages) a:hover {
+    color: var(--pico-primary);
+}
+
+:is(nav.themes, nav.languages) a[aria-current="true"] {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    font-weight: 600;
+}
+
+header.site dialog.tour {
+    order: 1;
+}
+
+/* Phones: the brand, the help and the languages (their codes), then the links and the themes (symbols) */
+@media (width < 48rem) {
+    header.site .tagline,
+    nav.account .user {
+        display: none;
+    }
+
+    header.site .brand {
+        order: -2;
+    }
+
+    header.site a.help {
+        margin-left: auto;
+        order: -1;
+    }
+
+    nav.themes {
+        order: 0;
+    }
+
+    nav.account {
+        margin-left: -0.5rem;
+    }
+
+    :is(nav.account a, nav.account button.link, header.site a.help) {
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    :is(nav.themes, nav.languages) a {
+        font-size: 0;
+    }
+
+    nav.languages a::before {
+        content: attr(data-code) / "";
+        font-size: 0.8rem;
+    }
+
+    nav.themes a::before {
+        font-size: 0.9rem;
+    }
+
+    nav.themes a[data-choice="auto"]::before {
+        content: "\25D0" / "";
+    }
+
+    /* \FE0E: the sun as text, not as an emoji */
+    nav.themes a[data-choice="light"]::before {
+        content: "\2600\FE0E" / "";
+    }
+
+    nav.themes a[data-choice="dark"]::before {
+        content: "\263E" / "";
+    }
+}
+
+footer.site {
+    background: var(--surface);
+    border-top: 1px solid var(--pico-muted-border-color);
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    padding-block: 1.25rem;
+    text-align: center;
+}
+
+footer.site p {
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Common pieces
+ * ------------------------------------------------------------------------------------------------------------ */
+
+h1 {
+    letter-spacing: -0.01em;
+}
+
+/* Cards: whatever stands out of the page */
+form.search,
+ul.signs > li,
+main > ul.lists > li,
+ul.admin-menu > li,
+ul.help-topics > li,
+main > form.stacked,
+main > details,
+details.export,
+.sign-main dl,
+.sign-main :is(.examples, .variants) li,
+section.sign-lists,
+.admin-actions,
+section.sync-status,
+main.help article {
+    background: var(--surface);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow);
+}
+
+/* Pico makes every submit button as wide as its form */
+button[type="submit"] {
+    width: auto;
+}
+
+/* A link shown as a button: Pico styles only those that claim to be buttons (role) */
+a.button {
+    background: var(--pico-primary-background);
+    border: var(--pico-border-width) solid var(--pico-primary-border);
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-primary-inverse);
+    display: inline-block;
+    padding: 0.5rem 1.1rem;
+    text-decoration: none;
+    transition: background-color var(--pico-transition), color var(--pico-transition);
+}
+
+a.button:hover {
+    background: var(--pico-primary-hover-background);
+    border-color: var(--pico-primary-hover-background);
+}
+
+a.button.outline {
+    background: transparent;
+    color: var(--pico-primary);
+}
+
+a.button.outline:hover {
+    background: var(--tint);
+    color: var(--pico-primary-hover);
+}
+
+button.small {
+    font-size: 0.85rem;
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+}
+
+/* A button that looks like a link: actions of little weight, in text */
+button.link {
+    background: none;
+    border: none;
+    color: var(--pico-primary);
+    cursor: pointer;
+    font: inherit;
+    margin: 0;
+    padding: 0;
+    text-decoration: underline;
+    text-decoration-color: var(--pico-primary-underline);
+    width: auto;
 }
 
 form.inline {
     display: inline;
 }
 
-button.link {
-    background: none;
-    border: none;
-    color: LinkText;
-    cursor: pointer;
-    font: inherit;
-    padding: 0;
-    text-decoration: underline;
+/* Back to the page above, at the top of a page */
+p.back {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
 }
 
-form.stacked {
-    display: grid;
-    gap: 0.4rem;
-    max-width: 24rem;
+p.back a {
+    text-decoration: none;
 }
 
-form.stacked small {
-    color: var(--muted);
+p.back + h1 {
+    margin-top: 0;
+}
+
+p.back a::before {
+    content: "← " / "";
+}
+
+/* \FE0E: the arrow as text, not as an emoji */
+a[rel="external"]::after {
+    content: " \2197\FE0E" / "";
 }
 
 .error {
-    color: var(--accent);
+    color: var(--error);
 }
 
 .success {
-    color: #1e7b34;
+    color: var(--success);
 }
 
-nav.languages a[aria-current="true"] {
-    font-weight: bold;
+p:is(.error, .success):not(:empty),
+ul.error {
+    background: var(--surface);
+    border: 1px solid currentColor;
+    border-left-width: 4px;
+    border-radius: var(--pico-border-radius);
+    padding: 0.6rem 1rem;
 }
 
-form.search {
-    display: grid;
-    gap: 0.5rem;
-    margin: 1rem 0;
+ul.error {
+    padding-left: 2rem;
 }
 
-form.search input[type="search"] {
-    font-size: 1.1rem;
-    padding: 0.3rem;
-    width: min(30rem, 100%);
+.count,
+.note,
+.uid {
+    color: var(--pico-muted-color);
 }
 
-fieldset.languages {
-    border: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 0;
-}
-
-ul.signs {
-    list-style: none;
-    padding: 0;
-}
-
-ul.signs li {
-    border-bottom: 1px solid #ddd;
-    padding: 0.4rem 0;
-}
-
-ul.signs a {
-    font-weight: bold;
-}
-
-.sign-language, .categories, .count {
-    color: var(--muted);
-}
-
-nav.pages {
-    display: flex;
-    gap: 1rem;
-}
-
-video, img {
-    max-width: 100%;
-}
-
-footer.site {
-    border-top: 1px solid #ddd;
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-top: 2rem;
-}
-
-dd.categories {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-main.sign .media {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-main.sign video {
-    max-width: min(100%, 32rem);
-}
-
-main.sign dt {
-    font-weight: bold;
-}
-
-ul.lists {
-    padding-left: 1.2rem;
-}
-
-ul.lists .count, .in-list, .note {
-    color: var(--muted);
-}
-
-section.sign-lists {
-    border-top: 1px solid #ddd;
-    margin-top: 1.5rem;
-}
-
-form.add-to-list {
-    align-items: baseline;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-}
-
-details.export {
-    margin: 1rem 0;
-}
-
-details.export fieldset {
-    border: 1px solid #ddd;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-}
-
-table.admin {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-table.admin th, table.admin td {
-    border-bottom: 1px solid #ddd;
-    padding: 0.3rem;
-    text-align: left;
+.count {
+    font-size: 0.9rem;
 }
 
 .uid {
-    color: var(--muted);
     font-size: 0.8rem;
 }
 
-.admin-actions {
-    border: 1px dashed var(--accent);
-    margin: 1rem 0;
-    padding: 0.5rem;
+/* The badge of a sign language: its color helps, its abbreviation says it */
+.sign-language {
+    background: var(--language-background, var(--page));
+    border-radius: 2rem;
+    color: var(--language, var(--ink));
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.55rem;
+    white-space: nowrap;
 }
 
-form.sign-form {
-    max-width: 40rem;
+abbr.sign-language[title] {
+    border-bottom: none;
 }
 
-form.sync fieldset {
-    border: 1px solid #ddd;
+[data-language="fr"] {
+    --language: var(--fr);
+    --language-background: var(--fr-background);
+}
+
+[data-language="de"] {
+    --language: var(--de);
+    --language-background: var(--de-background);
+}
+
+[data-language="it"] {
+    --language: var(--it);
+    --language-background: var(--it-background);
+}
+
+a.help-link {
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    height: 1.3rem;
+    line-height: 1.2rem;
+    margin-left: 0.25rem;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    width: 1.3rem;
+}
+
+/* Forms of one column, as cards when they stand alone on a page */
+main > form.stacked {
+    max-width: 34rem;
+    padding: 1.25rem 1.5rem;
+}
+
+form.stacked small {
+    color: var(--pico-muted-color);
+}
+
+/* Checkboxes of many choices (categories, languages) in columns */
+form.stacked fieldset:has(> label > [type="checkbox"]) {
+    display: grid;
+    gap: 0.25rem 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+}
+
+form.stacked fieldset > label,
+form.stacked > label:has(> [type="checkbox"]) {
+    align-items: baseline;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 1rem;
+    margin: 0;
 }
 
-section.sync-status {
-    background: #f6f6f6;
-    padding: 0.5rem 1rem;
+form.stacked label > :is([type="checkbox"], [type="radio"]) {
+    flex: none;
+    transform: translateY(0.15em);
 }
 
 /* Accessibility: the link to skip to the content shows when focused with the keyboard */
@@ -230,97 +531,17 @@ a.skip {
 }
 
 a.skip:focus {
-    background: white;
+    background: var(--surface);
     left: 1rem;
     padding: 0.5rem;
     top: 0.5rem;
     z-index: 10;
 }
 
-:focus-visible {
-    outline: 3px solid var(--accent);
+/* Pico shows the focus of links and buttons with a shadow, which the cards' shadows hide: an outline instead */
+:is(a, button, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--pico-primary);
     outline-offset: 2px;
-}
-
-a.source {
-    font-size: 0.85rem;
-}
-
-/* Exports: only the help and options of the chosen format */
-details.export form:not(:has(input[name="format"][value="PDF"]:checked)) :is(.pdf-options, .pdf-help),
-details.export form:not(:has(input[name="format"][value="ANKI"]:checked)) .anki-help,
-details.export form:not(:has(input[name="format"][value="EPUB"]:checked)) :is(.epub-options, .epub-help) {
-    display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        scroll-behavior: auto !important;
-        transition: none !important;
-    }
-}
-
-a.help-link {
-    border: 1px solid currentColor;
-    border-radius: 50%;
-    display: inline-block;
-    font-size: 0.8rem;
-    height: 1.2rem;
-    line-height: 1.2rem;
-    text-align: center;
-    text-decoration: none;
-    width: 1.2rem;
-}
-
-main.help {
-    display: grid;
-    gap: 2rem;
-    grid-template-columns: minmax(0, 1fr) 14rem;
-}
-
-main.help > p:first-child {
-    grid-column: 1 / -1;
-}
-
-main.help table {
-    border-collapse: collapse;
-}
-
-main.help th, main.help td {
-    border: 1px solid #ddd;
-    padding: 0.2rem 0.4rem;
-}
-
-main.help code, main.help pre {
-    background: #f4f4f4;
-}
-
-main.help pre {
-    overflow-x: auto;
-    padding: 0.5rem;
-}
-
-@media (max-width: 50rem) {
-    main.help {
-        grid-template-columns: 1fr;
-    }
-}
-
-section.welcome, dialog.tour {
-    background: #fff8f0;
-    border-left: 4px solid var(--accent);
-    margin: 1rem 0;
-    padding: 0.5rem 1rem;
-}
-
-.tour-links, nav.tour-steps {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-nav.tour-steps .skip-tour {
-    margin-left: auto;
 }
 
 /* Read by screen readers only */
@@ -334,19 +555,777 @@ nav.tour-steps .skip-tour {
     width: 1px;
 }
 
-/* The guided tour: without script, the dialog is a card under the header; tour.js places it next to the element it
-   presents, the rest of the page dimmed by the shadow of that element. */
+video,
+img {
+    max-width: 100%;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Search
+ * ------------------------------------------------------------------------------------------------------------ */
+
+section.welcome {
+    background: var(--tint);
+    border: 1px solid var(--tint-border);
+    border-radius: var(--radius-large);
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+}
+
+section.welcome h2 {
+    font-size: 1.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.tour-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+form.search {
+    align-items: end;
+    display: grid;
+    gap: 1rem 2rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+}
+
+form.search .words {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+form.search .words label {
+    display: inline;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+form.search .field {
+    display: flex;
+    margin-top: 0.5rem;
+}
+
+form.search .field input {
+    border-radius: 5rem 0 0 5rem;
+    font-size: 1.15rem;
+    height: 3.25rem;
+    margin: 0;
+}
+
+form.search .field button {
+    border-radius: 0 5rem 5rem 0;
+    margin: 0;
+    padding-inline: 1.5rem 1.75rem;
+}
+
+/* Legends and labels of the filters, alike */
+form.search :is(legend, .category label) {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+/* The sign languages as chips */
+fieldset.languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+fieldset.languages label {
+    align-items: center;
+    background: var(--pico-form-element-background-color);
+    border: 1px solid var(--pico-form-element-border-color);
+    border-radius: 2rem;
+    display: inline-flex;
+    margin: 0;
+    padding: 0.3rem 0.9rem 0.3rem 0.6rem;
+    transition: background-color var(--pico-transition), border-color var(--pico-transition);
+}
+
+fieldset.languages label:has(:checked) {
+    background: var(--tint);
+    border-color: var(--pico-primary-border);
+}
+
+fieldset.languages input {
+    margin: 0 0.45rem 0 0;
+}
+
+form.search .category {
+    margin: 0;
+}
+
+form.search .category select {
+    margin: 0;
+    min-width: 14rem;
+}
+
+@media (width < 40rem) {
+    form.search {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 1rem;
+    }
+
+    form.search .field button {
+        padding-inline: 1rem 1.25rem;
+    }
+
+    form.search .category select {
+        width: 100%;
+    }
+}
+
+#results > .count {
+    margin-bottom: 0.75rem;
+}
+
+/* Signs as cards, in search results and lists: the link of the name covers the card */
+ul.signs {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    margin: 0 0 1.5rem;
+    padding: 0;
+}
+
+ul.signs > li {
+    align-items: center;
+    column-gap: 0.6rem;
+    display: grid;
+    grid-template-areas:
+        "pick name language"
+        "pick categories categories"
+        "pick links links";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    list-style: none;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    position: relative;
+    row-gap: 0.2rem;
+    transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+}
+
+ul.signs > li:not(:has(> [type="checkbox"])) {
+    grid-template-areas:
+        "name language"
+        "categories categories"
+        "links links";
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+ul.signs > li:hover {
+    border-color: var(--pico-primary-border);
+    box-shadow: var(--shadow-raised);
+}
+
+ul.signs > li:has(> a.name:focus-visible) {
+    outline: 3px solid var(--pico-primary);
+    outline-offset: 2px;
+}
+
+ul.signs > li > [type="checkbox"] {
+    align-self: start;
+    grid-area: pick;
+    margin: 0.2rem 0 0;
+}
+
+ul.signs a.name {
+    color: var(--pico-h2-color);
+    font-weight: 700;
+    grid-area: name;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+}
+
+ul.signs a.name::after {
+    border-radius: var(--radius-large);
+    content: "";
+    inset: 0;
+    position: absolute;
+}
+
+ul.signs a.name:focus-visible {
+    outline: none;
+}
+
+ul.signs .sign-language {
+    grid-area: language;
+}
+
+ul.signs .categories {
+    font-size: 0.85rem;
+    grid-area: categories;
+}
+
+ul.signs > li > :is(.source, form) {
+    font-size: 0.8rem;
+    grid-area: links;
+    justify-self: start;
+}
+
+ul.signs > li > form {
+    justify-self: end;
+}
+
+/* Above the link of the name, to stay clickable */
+ul.signs > li > :is([type="checkbox"], .source, form) {
+    position: relative;
+    z-index: 1;
+}
+
+ul.signs .source {
+    color: var(--pico-muted-color);
+}
+
+.categories {
+    color: var(--pico-muted-color);
+}
+
+form.add-to-list {
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--radius-large);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+}
+
+form.add-to-list label {
+    font-weight: 600;
+    margin: 0;
+}
+
+form.add-to-list :is(select, input, button) {
+    font-size: 0.9rem;
+    height: auto;
+    margin: 0;
+    padding-block: 0.45rem;
+    width: auto;
+}
+
+form.add-to-list input {
+    flex: 1 1 10rem;
+}
+
+nav.pages {
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+nav.pages a {
+    background: var(--surface);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 2rem;
+    padding: 0.35rem 1rem;
+    text-decoration: none;
+}
+
+nav.pages a:hover {
+    border-color: var(--pico-primary-border);
+}
+
+nav.pages a[rel="prev"]::before {
+    content: "← " / "";
+}
+
+nav.pages a[rel="next"]::after {
+    content: " →" / "";
+}
+
+nav.pages span {
+    color: var(--pico-muted-color);
+    font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Exports: only the help and options of the chosen format
+ * ------------------------------------------------------------------------------------------------------------ */
+
+main > details,
+details.export {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+}
+
+details.export > summary {
+    font-weight: 600;
+}
+
+details.export[open] > summary {
+    margin-bottom: 1rem;
+}
+
+details.export fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+}
+
+details.export fieldset.pdf-options {
+    display: grid;
+    gap: 0 1rem;
+    grid-auto-columns: minmax(0, 12rem);
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+}
+
+details.export label {
+    margin: 0;
+}
+
+details.export form:not(:has(input[name="format"][value="PDF"]:checked)) :is(.pdf-options, .pdf-help),
+details.export form:not(:has(input[name="format"][value="ANKI"]:checked)) .anki-help,
+details.export form:not(:has(input[name="format"][value="EPUB"]:checked)) :is(.epub-options, .epub-help) {
+    display: none;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Sign page: media and details, and on wide screens a side column for the lists
+ * ------------------------------------------------------------------------------------------------------------ */
+
+main.sign {
+    column-gap: 2.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+main.sign > :not(.sign-main, .sign-side) {
+    grid-column: 1 / -1;
+}
+
+@media (width >= 64rem) {
+    main.sign {
+        grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+}
+
+main.sign h1 {
+    font-size: 2.25rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+}
+
+main.sign p.language {
+    margin-bottom: 1.5rem;
+}
+
+main.sign p.language .sign-language {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.75rem;
+}
+
+.sign-main .media {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sign-main .media video {
+    background: #000;
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-raised);
+    flex: 2 1 22rem;
+}
+
+.sign-main .media img {
+    background: var(--surface);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--radius-large);
+    flex: 1 1 12rem;
+    max-height: 22rem;
+    max-width: 24rem;
+    object-fit: contain;
+}
+
+.sign-main dl {
+    display: grid;
+    gap: 0.75rem 1.5rem;
+    grid-template-columns: max-content minmax(0, 1fr);
+    margin-bottom: 1.5rem;
+    padding: 1.1rem 1.4rem;
+}
+
+.sign-main dt {
+    color: var(--pico-muted-color);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding-top: 0.2rem;
+    text-transform: uppercase;
+}
+
+.sign-main dd {
+    margin: 0;
+}
+
+@media (width < 40rem) {
+    .sign-main dl {
+        gap: 0.2rem;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sign-main dd + dt {
+        margin-top: 0.6rem;
+    }
+}
+
+dd.categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+dd.categories a {
+    background: var(--tint);
+    border: 1px solid var(--tint-border);
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    padding: 0.1rem 0.75rem;
+    text-decoration: none;
+}
+
+dd.categories a:hover {
+    border-color: var(--pico-primary-border);
+}
+
+.sign-main :is(.examples, .variants) h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem;
+}
+
+.sign-main :is(.examples, .variants) ul {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    padding: 0;
+}
+
+.sign-main :is(.examples, .variants) li {
+    list-style: none;
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+.sign-main :is(.examples, .variants) li p {
+    margin-bottom: 0.6rem;
+}
+
+.sign-main :is(.examples, .variants) video {
+    background: #000;
+    border-radius: var(--pico-border-radius);
+    width: 100%;
+}
+
+.sign-side {
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+section.sign-lists {
+    margin: 0;
+    padding: 1rem 1.25rem;
+}
+
+section.sign-lists h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+section.sign-lists ul.lists {
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+section.sign-lists ul.lists li {
+    align-items: center;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    list-style: none;
+    margin: 0;
+    padding: 0.45rem 0;
+}
+
+section.sign-lists form.inline {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.in-list {
+    color: var(--success);
+    font-size: 0.85rem;
+}
+
+.in-list::before {
+    content: "✓ " / "";
+}
+
+section.sign-lists form.new-list label {
+    font-size: 0.9rem;
+}
+
+section.sign-lists form.new-list input {
+    margin-bottom: 0.5rem;
+}
+
+section.sign-lists > p:last-child {
+    margin: 0;
+}
+
+.admin-actions {
+    border-color: var(--pico-primary-border);
+    border-style: dashed;
+    padding: 0.85rem 1.25rem;
+}
+
+.admin-actions details {
+    margin: 0.75rem 0 0;
+}
+
+main.sign p.source {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Lists, requests, accounts, administration
+ * ------------------------------------------------------------------------------------------------------------ */
+
+/* Lists of the user, menus: grids of cards whose link covers the card */
+main > ul.lists,
+ul.admin-menu,
+ul.help-topics {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    margin-bottom: 2rem;
+    padding: 0;
+}
+
+:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    list-style: none;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    position: relative;
+    transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+}
+
+:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li:hover {
+    border-color: var(--pico-primary-border);
+    box-shadow: var(--shadow-raised);
+}
+
+:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li > a {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+:is(main > ul.lists, ul.admin-menu, ul.help-topics) > li > a::after {
+    border-radius: var(--radius-large);
+    content: "";
+    inset: 0;
+    position: absolute;
+}
+
+/* Account forms: a narrow column, the form as a card */
+main.account {
+    --page-width: 30rem;
+}
+
+main.account.setup {
+    --page-width: 48rem;
+}
+
+main.account > form.stacked {
+    max-width: none;
+}
+
+main.account > form.stacked > button[type="submit"] {
+    width: 100%;
+}
+
+main.account ul.oidc {
+    padding: 0;
+}
+
+main.account ul.oidc li {
+    list-style: none;
+    margin-top: 0.75rem;
+}
+
+main.account ul.oidc a {
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    display: block;
+    padding: 0.6rem 1rem;
+    text-align: center;
+    text-decoration: none;
+}
+
+main.setup fieldset {
+    margin-bottom: 1.5rem;
+}
+
+main.setup legend {
+    font-weight: 600;
+}
+
+form.sign-form {
+    max-width: 44rem;
+}
+
+@media (width < 40rem) {
+    table.admin {
+        font-size: 0.85rem;
+    }
+
+    table.admin :is(th, td) {
+        padding: 0.4rem 0.3rem;
+    }
+}
+
+section.sync-status {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Help: the page, and the menu of its topics beside it
+ * ------------------------------------------------------------------------------------------------------------ */
+
+main.help:has(> article) {
+    column-gap: 2rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+}
+
+main.help > p.back {
+    grid-column: 1 / -1;
+}
+
+main.help article {
+    margin: 0;
+    padding: 1.5rem 2rem;
+}
+
+main.help article table {
+    border-collapse: collapse;
+}
+
+main.help article :is(th, td) {
+    border: 1px solid var(--pico-muted-border-color);
+    padding: 0.3rem 0.6rem;
+}
+
+main.help pre {
+    overflow-x: auto;
+    padding: 0.75rem;
+}
+
+nav.help-topics {
+    align-self: start;
+    display: block;
+    position: sticky;
+    top: 1rem;
+}
+
+nav.help-topics ul {
+    display: block;
+    margin: 0;
+}
+
+nav.help-topics li {
+    display: block;
+    padding: 0;
+}
+
+nav.help-topics li a {
+    color: var(--ink);
+    display: block;
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+}
+
+nav.help-topics li a:hover {
+    background: var(--tint);
+}
+
+nav.help-topics li a[aria-current="page"] {
+    background: var(--tint);
+    color: var(--pico-primary);
+    font-weight: 600;
+}
+
+@media (width < 50rem) {
+    main.help:has(> article) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    nav.help-topics {
+        margin-top: 2rem;
+        position: static;
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * The guided tour: without script, the dialog is a card under the header; tour.js places it next to the element it
+ * presents, the rest of the page dimmed by the shadow of that element.
+ * ------------------------------------------------------------------------------------------------------------ */
+
+/* Pico makes every dialog a modal that covers the window */
 dialog.tour {
-    border: none;
-    border-left: 4px solid var(--accent);
+    backdrop-filter: none;
+    background: var(--surface);
+    border: 1px solid var(--tint-border);
+    border-left: 4px solid var(--pico-primary-background);
+    border-radius: var(--radius-large);
     color: inherit;
+    display: block;
     flex-basis: 100%;
+    height: auto;
+    inset: auto;
+    margin: 0.5rem 0;
     max-width: 40rem;
+    min-height: 0;
+    min-width: 0;
+    padding: 1rem 1.25rem;
     position: static;
+    width: auto;
+    z-index: auto;
+}
+
+dialog.tour:not([open]) {
+    display: none;
 }
 
 dialog.tour h2 {
-    margin-top: 0;
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+}
+
+dialog.tour .count {
+    margin-bottom: 0.25rem;
 }
 
 /* focused by tour.js so that screen readers read it; its links show the focus */
@@ -369,11 +1348,29 @@ dialog.tour.centered {
     transform: translate(-50%, -50%);
 }
 
+nav.tour-steps {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-start;
+}
+
+nav.tour-steps .skip-tour {
+    margin-left: auto;
+}
+
 .tour-target {
-    border-radius: 0.25rem;
-    box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgb(0 0 0 / 55%);
+    border-radius: var(--radius-large);
+    box-shadow: 0 0 0 4px var(--pico-primary), 0 0 0 9999px rgb(0 0 0 / 55%);
     position: relative;
     z-index: 20;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {

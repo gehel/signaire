@@ -22,7 +22,7 @@ import fr.ledcom.signaire.model.Sign;
 
 /**
  * Bundles of invented signs, with images, for the measures of the web application in CI (Lighthouse,
- * sitespeed.io): never SignSuisse data. Run with
+ * sitespeed.io) and its pages in a browser ({@link BrowserIT}): never SignSuisse data. Run with
  * {@code ./mvnw -pl signaire-it exec:java -Dexec.classpathScope=test
  * -Dexec.mainClass=fr.ledcom.signaire.it.DemoBundles -Dexec.args=<directory>}.
  */
@@ -37,7 +37,11 @@ public final class DemoBundles {
     }
 
     public static void main(String... args) throws IOException {
-        Path directory = Path.of(args.length > 0 ? args[0] : "target/demo-bundles");
+        write(Path.of(args.length > 0 ? args[0] : "target/demo-bundles"));
+    }
+
+    /** Writes the bundles of the demonstration (nature, city and traffic) into a directory. */
+    static void write(Path directory) throws IOException {
         Path media = Files.createDirectories(directory.resolve(".media/media"));
         BundleWriter writer = new BundleWriter(Clock.systemUTC());
         for (int position = 0; position < CATEGORIES.length; position++) {

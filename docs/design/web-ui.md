@@ -17,6 +17,8 @@ technical. The interface must be fast, accessible, usable without JavaScript, an
   POST and redirect), htmx improves them.
 - **Media** (`/media/{*path}`): served from the bundles by `MediaLibrary` (core), with range requests (video seeking)
   and a week of caching; missing media link to SignSuisse.
+- **Look**: Pico CSS styles the semantic HTML, `signaire.css` gives the identity and lays out the pages; see
+  [Visual design](visual-design.md).
 - **Help** (`/help/{topic}`): Markdown pages per topic and language (`help/<lang>/`, CommonMark), linked from the
   features they describe.
 - **Guided tour** (`?tour=N`): each step a `<dialog>` in the header pointing at an element marked `data-tour`;
@@ -30,7 +32,8 @@ technical. The interface must be fast, accessible, usable without JavaScript, an
 - **Server-rendered HTML with htmx, no SPA**: one codebase, no build of JavaScript, fast first paint on phones, works
   without script; htmx covers what needs to feel immediate (search as you type, adding to lists, progress).
 - **Thymeleaf**: natural templates readable as HTML, Spring integration (messages, security, CSRF).
-- **No CDN**: htmx comes from a webjar; the standalone application works offline and no third party sees users.
+- **No CDN**: htmx and Pico CSS come from webjars; the standalone application works offline and no third party sees
+  users.
 - **Accessibility as a gate**: a learning tool for a community that cares about accessibility; Lighthouse at 1 in CI.
 - **Help in Markdown in the repository**: updated with the features in the same pull request, translated like the
   messages.

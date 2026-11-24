@@ -37,6 +37,14 @@ jobs:
           name: signaire-standalone-jar
           path: signaire-web/target/signaire-web-*-standalone.jar
           if-no-files-found: error
+      - name: Upload the screenshots of the pages
+        # taken by BrowserIT: the look of every page, to review changes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: signaire-it/target/screenshots/
+          if-no-files-found: ignore
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7

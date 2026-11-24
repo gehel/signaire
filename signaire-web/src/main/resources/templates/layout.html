@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title == null} ? #{app.name} : ${title} + ' – ' + #{app.name}">Signaire</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/webjars/picocss__pico/css/pico.red.min.css}">
     <link rel="stylesheet" th:href="@{/css/signaire.css}">
     <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
     <script th:if="${tour != null}" th:src="@{/js/tour.js}" defer></script>
@@ -34,6 +35,7 @@
         <a sec:authorize="!isAuthenticated()" th:href="@{/login}" th:text="#{login.title}">Log in</a>
     </nav>
     <a class="help" th:href="@{/help}" th:text="#{help.title}" data-tour="help">Help</a>
+    <nav th:replace="~{layout :: themes(false)}"></nav>
     <nav th:replace="~{layout :: languages(false)}"></nav>
     <!--/* A step of the guided tour (TourController); tour.js shows it next to the element it presents */-->
     <dialog th:if="${tour != null}" id="tour" class="tour" open tabindex="-1" aria-labelledby="tour-title"
@@ -43,10 +45,12 @@
         <p th:text="#{'tour.' + ${tour.step().topic()} + '.text'}">Type a word…</p>
         <nav class="tour-steps" th:aria-label="#{tour.title}">
             <a th:href="@{/help/{topic}(topic=${tour.step().topic()})}" th:text="#{tour.readMore}">Read more</a>
-            <a th:if="${tour.previous() != null}" rel="prev" th:href="${tour.previous()}" th:text="#{tour.previous}">
+            <a th:if="${tour.previous() != null}" rel="prev" class="button outline" th:href="${tour.previous()}"
+               th:text="#{tour.previous}">
                 Previous</a>
-            <a th:if="${tour.next() != null}" rel="next" th:href="${tour.next()}" th:text="#{tour.next}">Next</a>
-            <a th:if="${tour.next() == null}" th:href="@{/tour/done}" th:text="#{tour.finish}">Finish</a>
+            <a th:if="${tour.next() != null}" rel="next" class="button" th:href="${tour.next()}" th:text="#{tour.next}">
+                Next</a>
+            <a th:if="${tour.next() == null}" class="button" th:href="@{/tour/done}" th:text="#{tour.finish}">Finish</a>
             <a th:if="${tour.next() != null}" class="skip-tour" th:href="@{/tour/done}" th:text="#{tour.skip}">
                 Skip</a>
         </nav>
@@ -54,16 +58,28 @@
 </header>
 
 <!--/*
-  The UI languages, each named in itself; out of band, it is refreshed along with htmx responses. Spring Boot's
-  error pages have no links model attribute.
+  The UI languages, each named in itself (phones show their code); out of band, it is refreshed along with htmx
+  responses. Spring Boot's error pages have no links model attribute.
 */-->
 <nav th:fragment="languages(oob)" id="languages" class="languages" th:aria-label="#{language.label}"
      th:attr="hx-swap-oob=${oob} ? 'true' : null">
     <a th:each="language : ${ {'fr', 'de', 'it', 'en'} }"
        th:href="${links != null} ? ${links.withLanguage(language)} : @{/(lang=${language})}"
-       th:hreflang="${language}" th:lang="${language}"
+       th:hreflang="${language}" th:lang="${language}" th:data-code="${#strings.toUpperCase(language)}"
        th:text="#{'language.' + ${language}}"
        th:attr="aria-current=${language == #locale.language} ? 'true' : null">Français</a>
+</nav>
+
+<!--/*
+  The themes: the system's (auto), or one chosen (ThemeAdvice); phones show symbols. Out of band, refreshed along with
+  htmx responses, like the languages.
+*/-->
+<nav th:fragment="themes(oob)" id="themes" class="themes" th:aria-label="#{theme.label}"
+     th:attr="hx-swap-oob=${oob} ? 'true' : null">
+    <a th:each="choice : ${ {'auto', 'light', 'dark'} }"
+       th:href="${links != null} ? ${links.withTheme(choice)} : @{/(theme=${choice})}"
+       th:data-choice="${choice}" th:text="#{'theme.' + ${choice}}"
+       th:attr="aria-current=${choice == (theme ?: 'auto')} ? 'true' : null">Auto</a>
 </nav>
 
 <footer th:fragment="footer" class="site">

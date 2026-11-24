@@ -28,13 +28,20 @@ public class Links {
 
     /** The current page in another UI language. */
     public String withLanguage(String language) {
-        return current().replaceQueryParam(LocaleConfiguration.PARAMETER, language).build().toUriString();
+        return current().replaceQueryParam(ThemeAdvice.PARAMETER)
+                .replaceQueryParam(LocaleConfiguration.PARAMETER, language).build().toUriString();
+    }
+
+    /** The current page in another theme: {@code auto}, {@code light} or {@code dark}. */
+    public String withTheme(String theme) {
+        return current().replaceQueryParam(LocaleConfiguration.PARAMETER)
+                .replaceQueryParam(ThemeAdvice.PARAMETER, theme).build().toUriString();
     }
 
     /** Another page of the current search. */
     public String withPage(int page) {
-        return current().replaceQueryParam(LocaleConfiguration.PARAMETER).replaceQueryParam("page", page).build()
-                .toUriString();
+        return current().replaceQueryParam(LocaleConfiguration.PARAMETER).replaceQueryParam(ThemeAdvice.PARAMETER)
+                .replaceQueryParam("page", page).build().toUriString();
     }
 
     /**

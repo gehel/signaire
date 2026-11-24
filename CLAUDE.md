@@ -194,9 +194,9 @@ Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a cl
 localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
 tests, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
 
-Only `signaire-it` needs Docker (PostgreSQL in a container, Testcontainers); the other modules have unit tests
-only. A test above the database mocks the services below it rather than using a database: the accounts tests use
-H2, the web tests mock the account services (`@WebLayerTest`). The search needs no container: core tests open a
+Only `signaire-it` needs Docker (PostgreSQL and Chromium in containers, Testcontainers); the other modules have unit
+tests only. A test above the database mocks the services below it rather than using a database: the accounts tests
+use H2, the web tests mock the account services (`@WebLayerTest`). The search needs no container: core tests open a
 `SignIndex` on a `@TempDir`, Spring tests use `target/test-index`. `TestSigns` lives in core's test-jar, shared with
 the CLI and web tests.
 
@@ -205,6 +205,12 @@ the CLI and web tests.
 (`signaire.signsuisse.url`): extraction → bundles → web app → HTTP user journeys. Logs of the processes are in
 `signaire-it/target/it/*.log`. Run it alone with `./mvnw -pl signaire-it -am verify -Dtest=NONE
 -Dsurefire.failIfNoSpecifiedTests=false`, and one of its tests with `-Dit.test=FullStackIT`.
+
+`BrowserIT` opens the pages in Chromium (Selenium, `selenium/standalone-chromium` container reaching the web jar
+through `Testcontainers.exposeHostPorts`), light and dark themes, computer and phone widths: it checks what the CSS
+must get right (no page wider than a phone, cards, the tour) and writes screenshots of every page to
+`signaire-it/target/screenshots/` (a CI artifact). Look at them after changing the look; use it, not a local
+browser, to see pages. Its image tag follows the Selenium version of the Spring Boot BOM.
 
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
@@ -263,6 +269,13 @@ Help: the manual is Markdown, one page per topic and language in `signaire-web/s
 topic with `~{fragments/help :: link('topic')}`. Update the manual with the feature it describes.
 
 Web UI gotchas:
+- The look is Pico CSS (webjar, red theme) then `static/css/signaire.css` (`docs/design/visual-design.md`). Pico sets
+  `--pico-color` on links and buttons (use `--ink` for the color of text there), makes submit buttons as wide as
+  their form and every `dialog` a full-screen modal (the tour overrides it); its light theme selector also matches in
+  dark mode, so colors of ours have values in both blocks.
+- The theme follows the system unless the user chose one (`?theme=dark`, cookie, `ThemeAdvice`): every page writes it
+  as `<html th:lang="${#locale.language}" th:data-theme="${theme}">`. Our dark colors are in two blocks (dark system,
+  dark chosen) that must stay the same: `BrowserIT` compares them.
 - Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)
   requests get fragments only (`Htmx.isPartialRequest`), except history restoration; the language links
   are refreshed out of band (`hx-swap-oob`).

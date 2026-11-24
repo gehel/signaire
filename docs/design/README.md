@@ -42,7 +42,7 @@ People and their signs:
 - [Exports](exports.md), [Anki export](anki-export.md)
 
 Applications:
-- [Web interface](web-ui.md)
+- [Web interface](web-ui.md), [its visual design](visual-design.md)
 - [Command line](cli.md)
 - [Standalone application](standalone.md)
 - [Languages of the interface](i18n.md)

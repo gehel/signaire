@@ -1,22 +1,23 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${list.name()})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <p><a th:href="@{/lists}" th:text="#{lists.title}">My lists</a></p>
+    <p class="back"><a th:href="@{/lists}" th:text="#{lists.title}">My lists</a></p>
     <h1 th:text="${list.name()}">Family</h1>
     <p class="count" th:text="#{lists.size(${list.size()})}">2 signs</p>
     <p th:if="${missing > 0}" class="note" th:text="#{lists.missing(${missing})}">Missing signs: 1.</p>
     <p th:if="${list.size() == 0}" th:text="#{lists.empty}">This list is empty.</p>
     <ul class="signs">
         <li th:each="sign : ${signs}">
-            <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
-            <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
+            <a class="name" th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
+            <abbr class="sign-language" th:data-language="${sign.language().code()}"
+                  th:title="#{'signLanguage.' + ${sign.language().name()}}"
                   th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
             <form th:action="@{/lists/{id}/signs/{uid}/remove(id=${list.id()},uid=${sign.uid()})}" method="post"
                   class="inline">
-                <button type="submit" class="link" th:text="#{lists.remove}">Remove</button>
+                <button type="submit" class="small secondary outline" th:text="#{lists.remove}">Remove</button>
             </form>
         </li>
     </ul>

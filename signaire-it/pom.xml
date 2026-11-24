@@ -53,8 +53,24 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-chrome-driver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-remote-driver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- a browser in a container: no browser or driver to install, nothing downloaded by the tests -->
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-selenium</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
