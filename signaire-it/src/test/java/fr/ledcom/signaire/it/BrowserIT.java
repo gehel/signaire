@@ -188,6 +188,60 @@ class BrowserIT {
         assertThat(dialog.isDisplayed()).isFalse();
     }
 
+    @Test
+    void aChosenThemeLooksLikeTheSystemsAndIsRemembered() {
+        driver = open(Theme.LIGHT);
+        resize(Device.COMPUTER);
+        driver.get(base + "/");
+        Map<String, Object> light = colors();
+
+        choose("dark");
+        assertThat(script("return document.documentElement.dataset.theme")).isEqualTo("dark");
+        Map<String, Object> dark = colors();
+        assertThat(dark).isNotEqualTo(light);
+        driver.get(base + "/help");
+        assertThat(colors()).as("remembered").isEqualTo(dark);
+
+        choose("auto");
+        assertThat(script("return document.documentElement.dataset.theme")).isNull();
+        assertThat(colors()).isEqualTo(light);
+        driver.quit();
+
+        // the dark theme of the system is the one chosen, and light can be chosen over it
+        driver = open(Theme.DARK);
+        resize(Device.COMPUTER);
+        driver.get(base + "/");
+        assertThat(colors()).isEqualTo(dark);
+        choose("light");
+        assertThat(colors()).isEqualTo(light);
+    }
+
+    private void choose(String theme) {
+        driver.findElement(By.cssSelector("nav.themes a[data-choice=" + theme + "]")).click();
+        await("theme " + theme).atMost(Duration.ofSeconds(10))
+                .until(() -> driver.getCurrentUrl().contains("theme=" + theme));
+    }
+
+    /** The colors of a page: ours, Pico's, and some of their uses. */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> colors() {
+        return (Map<String, Object>) script("""
+                const root = getComputedStyle(document.documentElement);
+                const colors = {};
+                for (const name of ['--page', '--surface', '--tint', '--tint-border', '--ink', '--success', '--error',
+                        '--shadow', '--shadow-raised', '--fr', '--fr-background', '--de', '--de-background', '--it',
+                        '--it-background', '--pico-primary', '--pico-primary-background', '--pico-primary-hover',
+                        '--pico-primary-hover-background', '--pico-primary-focus', '--pico-primary-underline',
+                        '--pico-text-selection-color', '--pico-background-color', '--pico-color',
+                        '--pico-muted-color']) {
+                    colors[name] = root.getPropertyValue(name).trim();
+                }
+                colors.body = getComputedStyle(document.body).backgroundColor;
+                colors.header = getComputedStyle(document.querySelector('header.site')).borderTopColor;
+                colors.scheme = root.colorScheme;
+                return colors;""");
+    }
+
     private RemoteWebDriver open(Theme theme) {
         ChromeOptions options = new ChromeOptions()
                 .addArguments("--headless=new", "--hide-scrollbars", "--force-device-scale-factor=1")

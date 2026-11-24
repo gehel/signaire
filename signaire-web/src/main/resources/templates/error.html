@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <!--/* Spring Boot's error page, for the errors that the controllers don't handle themselves */-->
 <head th:replace="~{layout :: head(#{error.generic.title})}"></head>
 <body>

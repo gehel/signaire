@@ -35,6 +35,7 @@
         <a sec:authorize="!isAuthenticated()" th:href="@{/login}" th:text="#{login.title}">Log in</a>
     </nav>
     <a class="help" th:href="@{/help}" th:text="#{help.title}" data-tour="help">Help</a>
+    <nav th:replace="~{layout :: themes(false)}"></nav>
     <nav th:replace="~{layout :: languages(false)}"></nav>
     <!--/* A step of the guided tour (TourController); tour.js shows it next to the element it presents */-->
     <dialog th:if="${tour != null}" id="tour" class="tour" open tabindex="-1" aria-labelledby="tour-title"
@@ -67,6 +68,18 @@
        th:hreflang="${language}" th:lang="${language}" th:data-code="${#strings.toUpperCase(language)}"
        th:text="#{'language.' + ${language}}"
        th:attr="aria-current=${language == #locale.language} ? 'true' : null">Français</a>
+</nav>
+
+<!--/*
+  The themes: the system's (auto), or one chosen (ThemeAdvice); phones show symbols. Out of band, refreshed along with
+  htmx responses, like the languages.
+*/-->
+<nav th:fragment="themes(oob)" id="themes" class="themes" th:aria-label="#{theme.label}"
+     th:attr="hx-swap-oob=${oob} ? 'true' : null">
+    <a th:each="choice : ${ {'auto', 'light', 'dark'} }"
+       th:href="${links != null} ? ${links.withTheme(choice)} : @{/(theme=${choice})}"
+       th:data-choice="${choice}" th:text="#{'theme.' + ${choice}}"
+       th:attr="aria-current=${choice == (theme ?: 'auto')} ? 'true' : null">Auto</a>
 </nav>
 
 <footer th:fragment="footer" class="site">

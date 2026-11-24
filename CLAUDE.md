@@ -273,6 +273,9 @@ Web UI gotchas:
   `--pico-color` on links and buttons (use `--ink` for the color of text there), makes submit buttons as wide as
   their form and every `dialog` a full-screen modal (the tour overrides it); its light theme selector also matches in
   dark mode, so colors of ours have values in both blocks.
+- The theme follows the system unless the user chose one (`?theme=dark`, cookie, `ThemeAdvice`): every page writes it
+  as `<html th:lang="${#locale.language}" th:data-theme="${theme}">`. Our dark colors are in two blocks (dark system,
+  dark chosen) that must stay the same: `BrowserIT` compares them.
 - Pages are Thymeleaf templates sharing `layout.html` fragments. htmx (webjar, version-agnostic path)
   requests get fragments only (`Htmx.isPartialRequest`), except history restoration; the language links
   are refreshed out of band (`hx-swap-oob`).
