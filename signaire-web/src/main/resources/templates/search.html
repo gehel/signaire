@@ -9,8 +9,8 @@
         <h2 id="welcome-title" th:text="#{tour.welcome.title}">Welcome to Signaire</h2>
         <p th:text="#{tour.welcome.text}">Signaire helps you learn Swiss sign languages.</p>
         <p class="tour-links">
-            <a th:href="@{/tour/1}" th:text="#{tour.start}">Take the tour</a>
-            <a th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
+            <a class="button" th:href="@{/tour/1}" th:text="#{tour.start}">Take the tour</a>
+            <a class="button outline" th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
         </p>
     </section>
     <form class="search" data-tour="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
@@ -18,8 +18,11 @@
         <p class="words">
             <label for="q" th:text="#{search.label}">Search a sign</label>
             <a th:replace="~{fragments/help :: link('search')}"></a>
-            <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}" autofocus>
-            <button type="submit" th:text="#{search.submit}">Search</button>
+            <span class="field">
+                <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}"
+                       autofocus>
+                <button type="submit" th:text="#{search.submit}">Search</button>
+            </span>
         </p>
         <fieldset class="languages">
             <legend th:text="#{search.languages}">Sign languages</legend>
@@ -54,8 +57,9 @@
                 <li th:each="sign : ${results.signs()}">
                     <input th:if="${userLists != null}" type="checkbox" name="uid" th:value="${sign.uid()}"
                            form="add-to-list" th:aria-label="#{search.addTo.select(${sign.name()})}">
-                    <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
-                    <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
+                    <a class="name" th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
+                    <abbr class="sign-language" th:data-language="${sign.language().code()}"
+                          th:title="#{'signLanguage.' + ${sign.language().name()}}"
                           th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
                     <a th:if="${sign.sourceUrl() != null}" class="source" th:href="${sign.sourceUrl()}"
                        rel="external" th:aria-label="#{search.signSuisse(${sign.name()})}">SignSuisse</a>

@@ -5,113 +5,120 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main" class="sign">
-    <p><a th:href="@{/}" th:text="#{sign.newSearch}">New search</a></p>
+    <p class="back"><a th:href="@{/}" th:text="#{sign.newSearch}">New search</a></p>
     <h1 th:text="${sign.name()}">LAUSANNE</h1>
-    <p class="sign-language">
-        <span th:text="#{'signLanguage.' + ${sign.language().name()}}">LSF</span>
+    <p class="language">
+        <span class="sign-language" th:data-language="${sign.language().code()}"
+              th:text="#{'signLanguage.' + ${sign.language().name()}}">LSF</span>
         <a th:replace="~{fragments/help :: link('signs')}"></a>
     </p>
 
-    <div class="media">
-        <video th:each="video : ${sign.videos()}" controls preload="metadata" th:src="${links.media(video)}"
-               th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
-        <img th:each="image : ${sign.images()}" th:src="${links.media(image)}" th:alt="${sign.name()}">
-    </div>
+    <div class="sign-main">
+        <div class="media">
+            <video th:each="video : ${sign.videos()}" controls preload="metadata" th:src="${links.media(video)}"
+                   th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
+            <img th:each="image : ${sign.images()}" th:src="${links.media(image)}" th:alt="${sign.name()}">
+        </div>
 
-    <dl>
-        <th:block th:if="${sign.periphrase() != null}">
-            <dt th:text="#{sign.periphrase}">Periphrase</dt>
-            <dd th:text="${sign.periphrase()}">Town on the lake</dd>
-        </th:block>
-        <th:block th:if="${sign.definition() != null}">
-            <dt th:text="#{sign.definition}">Definition</dt>
-            <dd th:text="${sign.definition()}">Capital of the canton of Vaud</dd>
-        </th:block>
-        <th:block th:unless="${sign.categories().isEmpty()}">
-            <dt th:text="#{sign.categories}">Categories</dt>
-            <dd class="categories">
-                <th:block th:each="category, it : ${sign.categories()}">
-                    <a th:href="@{/(category=${category.name()})}" th:text="#{'category.' + ${category.name()}}">City</a>
-                </th:block>
-            </dd>
-        </th:block>
-        <th:block th:unless="${sign.dialects().isEmpty()}">
-            <dt th:text="#{sign.dialects}">Dialects</dt>
-            <dd th:text="${#strings.listJoin(sign.dialects(), ', ')}">BE, ZH</dd>
-        </th:block>
-    </dl>
+        <dl>
+            <th:block th:if="${sign.periphrase() != null}">
+                <dt th:text="#{sign.periphrase}">Periphrase</dt>
+                <dd th:text="${sign.periphrase()}">Town on the lake</dd>
+            </th:block>
+            <th:block th:if="${sign.definition() != null}">
+                <dt th:text="#{sign.definition}">Definition</dt>
+                <dd th:text="${sign.definition()}">Capital of the canton of Vaud</dd>
+            </th:block>
+            <th:block th:unless="${sign.categories().isEmpty()}">
+                <dt th:text="#{sign.categories}">Categories</dt>
+                <dd class="categories">
+                    <th:block th:each="category, it : ${sign.categories()}">
+                        <a th:href="@{/(category=${category.name()})}"
+                           th:text="#{'category.' + ${category.name()}}">City</a>
+                    </th:block>
+                </dd>
+            </th:block>
+            <th:block th:unless="${sign.dialects().isEmpty()}">
+                <dt th:text="#{sign.dialects}">Dialects</dt>
+                <dd th:text="${#strings.listJoin(sign.dialects(), ', ')}">BE, ZH</dd>
+            </th:block>
+        </dl>
 
-    <section th:unless="${sign.examples().isEmpty()}" class="examples">
-        <h2 th:text="#{sign.examples}">Examples</h2>
-        <ul>
-            <li th:each="example : ${sign.examples()}">
-                <p th:text="${example.text()}">I work in Lausanne.</p>
-                <video th:if="${example.video() != null}" controls preload="none"
-                       th:src="${links.media(example.video())}" th:text="#{sign.videoUnsupported}"></video>
-            </li>
-        </ul>
-    </section>
-
-    <section th:unless="${sign.dialectVariants().isEmpty()}" class="variants">
-        <h2 th:text="#{sign.dialectVariants}">Regional variants</h2>
-        <ul>
-            <li th:each="variant : ${sign.dialectVariants()}">
-                <p th:text="${#strings.listJoin(variant.dialects(), ', ')}">ZH, SG</p>
-                <video th:if="${variant.video() != null}" controls preload="none"
-                       th:src="${links.media(variant.video())}" th:text="#{sign.videoUnsupported}"></video>
-            </li>
-        </ul>
-    </section>
-
-    <!--/* Replaced by the htmx responses to the forms it contains */-->
-    <section id="sign-lists" class="sign-lists" th:fragment="lists">
-        <h2 th:text="#{lists.title}">My lists</h2>
-        <p sec:authorize="!isAuthenticated()">
-            <a th:href="@{/login}" th:text="#{sign.loginToAdd}">Log in to add this sign to your lists.</a>
-        </p>
-        <th:block sec:authorize="isAuthenticated()">
-            <p th:if="${listError}" class="error" role="alert" th:text="#{${listError}(${maxNameLength})}">Error</p>
-            <ul class="lists">
-                <li th:each="list : ${lists}" th:with="inList=${listsWithSign.contains(list.id())}">
-                    <a th:href="@{/lists/{id}(id=${list.id()})}" th:text="${list.name()}">Family</a>
-                    <form th:if="${inList}" method="post" class="inline" hx-target="#sign-lists" hx-swap="outerHTML"
-                          th:action="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}"
-                          th:hx-post="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}">
-                        <span class="in-list" th:text="#{sign.inList}">In the list</span>
-                        <button type="submit" class="link" th:text="#{lists.remove}">Remove</button>
-                    </form>
-                    <form th:unless="${inList}" method="post" class="inline" hx-target="#sign-lists"
-                          hx-swap="outerHTML"
-                          th:action="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}"
-                          th:hx-post="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}">
-                        <button type="submit" class="link" th:text="#{sign.addToList}">Add</button>
-                    </form>
+        <section th:unless="${sign.examples().isEmpty()}" class="examples">
+            <h2 th:text="#{sign.examples}">Examples</h2>
+            <ul>
+                <li th:each="example : ${sign.examples()}">
+                    <p th:text="${example.text()}">I work in Lausanne.</p>
+                    <video th:if="${example.video() != null}" controls preload="none"
+                           th:src="${links.media(example.video())}" th:text="#{sign.videoUnsupported}"></video>
                 </li>
             </ul>
-            <form method="post" hx-target="#sign-lists" hx-swap="outerHTML" class="new-list"
-                  th:action="@{/signs/{uid}/lists(uid=${sign.uid()})}"
-                  th:hx-post="@{/signs/{uid}/lists(uid=${sign.uid()})}">
-                <label for="new-list" th:text="#{sign.newList}">New list with this sign</label>
-                <input type="text" id="new-list" name="name" required th:maxlength="${maxNameLength}">
-                <button type="submit" th:text="#{lists.create}">Create</button>
-            </form>
-        </th:block>
-    </section>
+        </section>
 
-    <div sec:authorize="hasRole('ADMIN')" class="admin-actions">
-        <a th:href="@{/admin/signs/{uid}/edit(uid=${sign.uid()})}" th:text="#{admin.sign.edit}">Edit</a>
-        <details>
-            <summary th:text="#{admin.sign.delete}">Delete the sign</summary>
-            <form th:action="@{/admin/signs/{uid}/delete(uid=${sign.uid()})}" method="post">
-                <p th:text="#{admin.sign.deleteConfirm}">The sign will be hidden, even after reloading.</p>
-                <button type="submit" th:text="#{admin.sign.delete}">Delete the sign</button>
-            </form>
-        </details>
+        <section th:unless="${sign.dialectVariants().isEmpty()}" class="variants">
+            <h2 th:text="#{sign.dialectVariants}">Regional variants</h2>
+            <ul>
+                <li th:each="variant : ${sign.dialectVariants()}">
+                    <p th:text="${#strings.listJoin(variant.dialects(), ', ')}">ZH, SG</p>
+                    <video th:if="${variant.video() != null}" controls preload="none"
+                           th:src="${links.media(variant.video())}" th:text="#{sign.videoUnsupported}"></video>
+                </li>
+            </ul>
+        </section>
     </div>
 
-    <p th:if="${sign.sourceUrl() != null}" class="source">
-        <a th:href="${sign.sourceUrl()}" rel="external" th:text="#{sign.source}">See on SignSuisse</a>
-    </p>
+    <aside class="sign-side">
+        <!--/* Replaced by the htmx responses to the forms it contains */-->
+        <section id="sign-lists" class="sign-lists" th:fragment="lists">
+            <h2 th:text="#{lists.title}">My lists</h2>
+            <p sec:authorize="!isAuthenticated()">
+                <a th:href="@{/login}" th:text="#{sign.loginToAdd}">Log in to add this sign to your lists.</a>
+            </p>
+            <th:block sec:authorize="isAuthenticated()">
+                <p th:if="${listError}" class="error" role="alert" th:text="#{${listError}(${maxNameLength})}">Error</p>
+                <ul class="lists">
+                    <li th:each="list : ${lists}" th:with="inList=${listsWithSign.contains(list.id())}">
+                        <a th:href="@{/lists/{id}(id=${list.id()})}" th:text="${list.name()}">Family</a>
+                        <form th:if="${inList}" method="post" class="inline" hx-target="#sign-lists" hx-swap="outerHTML"
+                              th:action="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}"
+                              th:hx-post="@{/signs/{uid}/lists/{id}/remove(uid=${sign.uid()},id=${list.id()})}">
+                            <span class="in-list" th:text="#{sign.inList}">In the list</span>
+                            <button type="submit" class="small secondary outline" th:text="#{lists.remove}">
+                                Remove</button>
+                        </form>
+                        <form th:unless="${inList}" method="post" class="inline" hx-target="#sign-lists"
+                              hx-swap="outerHTML"
+                              th:action="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}"
+                              th:hx-post="@{/signs/{uid}/lists/{id}(uid=${sign.uid()},id=${list.id()})}">
+                            <button type="submit" class="small outline" th:text="#{sign.addToList}">Add</button>
+                        </form>
+                    </li>
+                </ul>
+                <form method="post" hx-target="#sign-lists" hx-swap="outerHTML" class="new-list"
+                      th:action="@{/signs/{uid}/lists(uid=${sign.uid()})}"
+                      th:hx-post="@{/signs/{uid}/lists(uid=${sign.uid()})}">
+                    <label for="new-list" th:text="#{sign.newList}">New list with this sign</label>
+                    <input type="text" id="new-list" name="name" required th:maxlength="${maxNameLength}">
+                    <button type="submit" th:text="#{lists.create}">Create</button>
+                </form>
+            </th:block>
+        </section>
+
+        <div sec:authorize="hasRole('ADMIN')" class="admin-actions">
+            <a th:href="@{/admin/signs/{uid}/edit(uid=${sign.uid()})}" th:text="#{admin.sign.edit}">Edit</a>
+            <details>
+                <summary th:text="#{admin.sign.delete}">Delete the sign</summary>
+                <form th:action="@{/admin/signs/{uid}/delete(uid=${sign.uid()})}" method="post">
+                    <p th:text="#{admin.sign.deleteConfirm}">The sign will be hidden, even after reloading.</p>
+                    <button type="submit" th:text="#{admin.sign.delete}">Delete the sign</button>
+                </form>
+            </details>
+        </div>
+
+        <p th:if="${sign.sourceUrl() != null}" class="source">
+            <a th:href="${sign.sourceUrl()}" rel="external" th:text="#{sign.source}">See on SignSuisse</a>
+        </p>
+    </aside>
 </main>
 <footer th:replace="~{layout :: footer}"></footer>
 </body>

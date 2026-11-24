@@ -8,7 +8,7 @@
     <p th:if="${lists.isEmpty()}" th:text="#{lists.none}">You have no list yet.</p>
     <ul class="lists" th:unless="${lists.isEmpty()}">
         <li th:each="list : ${lists}">
-            <a th:href="@{/lists/{id}(id=${list.id()})}" th:text="${list.name()}">Family</a>
+            <a class="name" th:href="@{/lists/{id}(id=${list.id()})}" th:text="${list.name()}">Family</a>
             <span class="count" th:text="#{lists.size(${list.size()})}">2 signs</span>
         </li>
     </ul>

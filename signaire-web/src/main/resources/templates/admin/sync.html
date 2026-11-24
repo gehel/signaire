@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <p class="back"><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.sync.title}">Synchronization with SignSuisse</h1>
     <p th:if="${status}" class="error" role="status" th:text="${status}">Already running.</p>
 

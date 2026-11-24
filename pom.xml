@@ -57,6 +57,7 @@
         <maven.compiler.source>27</maven.compiler.source>
         <maven.compiler.target>27</maven.compiler.target>
         <pdfbox.version>3.0.8</pdfbox.version>
+        <pico.version>2.1.1</pico.version>
         <picocli.version>4.7.7</picocli.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the version from the parent POM cannot read Java 27 class files -->
@@ -175,6 +176,11 @@
                 <groupId>org.webjars.npm</groupId>
                 <artifactId>htmx.org</artifactId>
                 <version>${htmx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.npm</groupId>
+                <artifactId>picocss__pico</artifactId>
+                <version>${pico.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

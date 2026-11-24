@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <p class="back"><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.bundles.title}">Bundles</h1>
     <p th:if="${status}" class="success" role="status" th:text="${status}">Bundles loaded: 2.</p>
     <p class="note" th:text="#{admin.bundles.directory(${directory})}">Directory: bundles</p>

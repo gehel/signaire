@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <p class="back"><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.signs.title}">Changed signs</h1>
     <p th:text="#{admin.signs.explanation}">These changes are applied again after each load of the bundles.</p>
     <p><a th:href="@{/admin/signs/new}" th:text="#{admin.signs.new}">New sign</a></p>
