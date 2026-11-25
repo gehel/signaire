@@ -35,9 +35,9 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `android/` (later) | Java Android app, Gradle build, offline-capable | — |
 
 Key decisions:
-- `signaire-model` and `signaire-bundle` must stay **Android-compatible**: no Spring, Java release 17
-  (set per module), small dependency footprint. The Android app reuses them to read the same bundles
-  offline.
+- `signaire-model`, `signaire-bundle` and `signaire-extractor` must stay **Android-compatible**: no Spring, Java
+  release 17 (set per module; the extractor's tests are on 27), small dependency footprint, nothing Android lacks
+  (`java.net.http`, AWT, virtual threads). The Android app reads the same bundles, and extracts with the extractor.
 - **Bundles**: one zip per SignSuisse category (`city.zip`…), containing `manifest.json` (format version,
   category, sign count, SHA-256 of every entry), `signs.json`, and `media/` (videos, photos, illustrations).
   A `Media` keeps the SignSuisse URL and, when downloaded, its path in the bundle. Bundles are produced by
@@ -306,7 +306,7 @@ Web UI gotchas:
   (signs are transient, user journeys) is tested in `signaire-it`.
 
 Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
-model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
+model, bundle and extractor stay Android compatible, extractor and export stay free of Spring, the packages of core don't
 depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
 the CLI and web never reach Lucene or JPA directly. Change the rules there when the architecture changes. Its
 `PackageCyclesTest` forbids cycles between packages, test classes included.

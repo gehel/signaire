@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.extractor;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -9,7 +10,6 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,8 +60,21 @@ class ThrottledHttpFetcherTest {
                 respond(exchange, 200, "finally");
             }
         });
+        server.createContext("/moved", exchange -> {
+            exchange.getResponseHeaders().add("Location", "/page");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        server.createContext("/latin", exchange -> {
+            byte[] bytes = "héllo".getBytes(ISO_8859_1);
+            exchange.getResponseHeaders().add("Content-Type", "text/html; charset=ISO-8859-1");
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream out = exchange.getResponseBody()) {
+                out.write(bytes);
+            }
+        });
         server.start();
-        fetcher = new ThrottledHttpFetcher(HttpClient.newHttpClient(), INTERVAL, 3, AGENT, time::now, time::sleep);
+        fetcher = new ThrottledHttpFetcher(INTERVAL, 3, AGENT, time::now, time::sleep);
     }
 
     @AfterEach
@@ -120,6 +134,54 @@ class ThrottledHttpFetcherTest {
     }
 
     @Test
+    void followsRedirects() {
+        assertThat(fetcher.fetchText(uri("/moved"))).isEqualTo("héllo");
+    }
+
+    @Test
+    void readsTextInTheCharsetOfTheResponse() {
+        assertThat(fetcher.fetchText(uri("/latin"))).isEqualTo("héllo");
+    }
+
+    /** A cancelled extraction interrupts its downloads, which stop at once. */
+    @Test
+    @Timeout(10)
+    void interruptedDownloadsStopAndLeaveNoFile() throws Exception {
+        CountDownLatch started = new CountDownLatch(1);
+        server.createContext("/endless", exchange -> {
+            exchange.sendResponseHeaders(200, 0);
+            try (OutputStream out = exchange.getResponseBody()) {
+                for (int i = 0; i < 1000; i++) {
+                    out.write(new byte[1024]);
+                    out.flush();
+                    started.countDown();
+                    Thread.sleep(10);
+                }
+            } catch (IOException | InterruptedException ignored) {
+                // the client went away
+            }
+        });
+        Path target = tmp.resolve("endless.mp4");
+        AtomicReference<ExtractionException> failure = new AtomicReference<>();
+        Thread download = new Thread(() -> {
+            try {
+                fetcher.download(uri("/endless"), target);
+            } catch (ExtractionException e) {
+                failure.set(e);
+            }
+        });
+        download.start();
+        started.await();
+        download.interrupt();
+        download.join(Duration.ofSeconds(3));
+
+        assertThat(download.isAlive()).isFalse();
+        assertThat(failure.get()).isNotNull();
+        assertThat(target).doesNotExist();
+        assertThat(tmp).isEmptyDirectory();
+    }
+
+    @Test
     void failedDownloadsLeaveNoFile() {
         Path target = tmp.resolve("file.mp4");
         URI missing = uri("/missing");
@@ -160,7 +222,7 @@ class ThrottledHttpFetcherTest {
             maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
             try {
                 never.await(300, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException _) {
+            } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
             inFlight.decrementAndGet();

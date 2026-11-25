@@ -164,7 +164,7 @@ public class SignEnumerator {
                 }
             }
             if (results.size() >= maxResults && onlyPrefixed) {
-                follow(prefix, normalize(results.getLast().name()));
+                follow(prefix, normalize(results.get(results.size() - 1).name()));
             }
             observer.searched(prefix, queries, pending.size(), hits.size());
         }

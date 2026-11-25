@@ -12,6 +12,15 @@
 
     <description>Extraction of sign data and media from the SignSuisse lexicon into bundles.</description>
 
+    <properties>
+        <!-- Android compatible: the app extracts signs with this module (docs/design/android.md); its tests run on the
+             JVM only, but SonarCloud reads them as Java 17 too: no unnamed variables there -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.testRelease>27</maven.compiler.testRelease>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>fr.ledcom</groupId>

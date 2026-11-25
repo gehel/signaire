@@ -25,6 +25,12 @@ final class ArchitectureTest {
     static final ArchRule NO_SPRING = noClasses().should().dependOnClassesThat()
             .resideInAnyPackage("org.springframework..");
 
+    /** The Android app extracts signs with this module: what Java 17 has that Android hasn't is out. */
+    @ArchTest
+    static final ArchRule ANDROID_COMPATIBLE = noClasses().should().dependOnClassesThat()
+            .resideInAnyPackage("java.net.http..", "java.awt..", "javax.swing..", "java.sql..",
+                    "java.lang.management..", "javax.management..");
+
     @ArchTest
     static final ArchRule NO_APPLICATION_MODULE = noClasses().should().dependOnClassesThat()
             .resideInAnyPackage("fr.ledcom.signaire.core..", "fr.ledcom.signaire.accounts..",

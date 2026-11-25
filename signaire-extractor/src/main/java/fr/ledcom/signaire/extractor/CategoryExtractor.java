@@ -64,6 +64,8 @@ public class CategoryExtractor {
     private static final Duration DEFAULT_PROGRESS_INTERVAL = Duration.ofSeconds(5);
     private static final long POLL_MILLIS = 100;
     private static final long STOP_SECONDS = 10;
+    /** Search, reading, download. */
+    private static final int STAGES = 3;
     private static final String EXTRACTION_OF = "Extraction of ";
 
     private final SignSource source;
@@ -194,7 +196,9 @@ public class CategoryExtractor {
         }
 
         void execute() {
-            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+            // a thread per stage: Android has no virtual threads
+            ExecutorService executor = Executors.newFixedThreadPool(STAGES,
+                    new NamedThreads("extraction-" + category.name().toLowerCase(Locale.ROOT).replace('_', '-')));
             try {
                 stages.set(List.of(
                         executor.submit(() -> stage(this::search, found)),
@@ -216,7 +220,7 @@ public class CategoryExtractor {
                 if (!executor.awaitTermination(STOP_SECONDS, TimeUnit.SECONDS)) {
                     LOG.log(Level.WARNING, "The extraction of {0} did not stop within {1} s", category, STOP_SECONDS);
                 }
-            } catch (InterruptedException _) {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -260,7 +264,7 @@ public class CategoryExtractor {
             try {
                 stage.get(POLL_MILLIS, TimeUnit.MILLISECONDS);
                 return true;
-            } catch (TimeoutException _) {
+            } catch (TimeoutException e) {
                 return false;
             } catch (ExecutionException e) {
                 throw stop(e.getCause() instanceof RuntimeException cause ? cause
@@ -374,9 +378,11 @@ public class CategoryExtractor {
         private <T> Optional<T> take(BlockingQueue<Optional<T>> queue) {
             try {
                 return queue.take();
-            } catch (InterruptedException _) {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new CancellationException(EXTRACTION_OF + category + " interrupted");
+                CancellationException cancellation = new CancellationException(EXTRACTION_OF + category + " interrupted");
+                cancellation.initCause(e);
+                throw cancellation;
             }
         }
 
@@ -414,7 +420,7 @@ public class CategoryExtractor {
     private static long size(Path file) {
         try {
             return Files.size(file);
-        } catch (IOException _) {
+        } catch (IOException e) {
             return 0;
         }
     }

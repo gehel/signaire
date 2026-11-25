@@ -11,7 +11,8 @@ where it is and what is left).
 
 ## Design
 
-`signaire-extractor` (plain Java, no Spring) produces one bundle per category (see [Bundles](bundles.md)).
+`signaire-extractor` (plain Java, no Spring, Android compatible: the [Android app](android.md) extracts with it)
+produces one bundle per category (see [Bundles](bundles.md)).
 
 ### Sources
 
@@ -19,7 +20,8 @@ where it is and what is left).
   `download(uri, target)`. `SignSuisseSource` implements it over `ThrottledHttpFetcher`; tests use fakes.
 - `SignPageParser` reads the static detail pages (jsoup). Labels are in the sign's language, so sections are
   recognized by the start of their FR/DE/IT label; German pages also have dialects and dialect variant videos.
-- `ThrottledHttpFetcher`: plain `java.net.http`. Request **starts** are at least 500 ms apart, whatever the number of
+- `ThrottledHttpFetcher`: `HttpURLConnection` (Android has no `java.net.http`; bodies are copied by chunks, so that an
+  interrupted thread stops its download). Request **starts** are at least 500 ms apart, whatever the number of
   threads; at most 2 requests are in flight (a long video download doesn't hold the searches and pages back); retries
   with exponential backoff on server errors (not on 4xx); downloads go through a temporary file.
 - `UserAgent`: `Signaire (+https://github.com/gehel/signaire)`, with the user's contact when configured
@@ -55,7 +57,8 @@ samples of substring searches (`ung`, `sch`, `ä`, `ß`, `-`…) found no sign m
 
 ### Pipeline
 
-`CategoryExtractor` runs three stages at the same time, in virtual threads, connected by queues:
+`CategoryExtractor` runs three stages at the same time, a thread each (Android has no virtual threads), connected by
+queues:
 
 1. **search**: the enumeration, language after language;
 2. **signs**: each sign found is read from its detail page, or **reused** from the existing bundle of the category
