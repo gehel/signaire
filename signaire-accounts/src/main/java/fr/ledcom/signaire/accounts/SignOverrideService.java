@@ -6,6 +6,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,10 +67,12 @@ public class SignOverrideService {
         return LOCAL_UID_PREFIX + HexFormat.of().formatHex(bytes);
     }
 
-    private void update(String uid, String json, long adminId) {
-        SignOverrideEntity override = overrides.findById(uid).orElseGet(() -> new SignOverrideEntity(uid));
-        override.update(json, accounts.findById(adminId).orElse(null), Instant.now());
-        overrides.save(override);
+    private void update(String uid, @Nullable String json, long adminId) {
+        AccountEntity admin = accounts.findById(adminId).orElse(null);
+        Instant now = Instant.now();
+        Optional<SignOverrideEntity> existing = overrides.findById(uid);
+        existing.ifPresent(override -> override.update(json, admin, now));
+        overrides.save(existing.orElseGet(() -> new SignOverrideEntity(uid, json, admin, now)));
     }
 
     private static SignOverride toOverride(SignOverrideEntity entity) {

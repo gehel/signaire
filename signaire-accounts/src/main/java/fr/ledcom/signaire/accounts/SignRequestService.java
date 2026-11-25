@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +31,7 @@ public class SignRequestService {
      * @param comment may be null or blank
      * @throws IllegalArgumentException if the word is blank or too long
      */
-    public SignRequest request(long requesterId, String word, Language language, String comment) {
+    public SignRequest request(long requesterId, String word, Language language, @Nullable String comment) {
         String cleanWord = word == null ? "" : word.strip();
         if (cleanWord.isEmpty() || cleanWord.length() > MAX_WORD_LENGTH) {
             throw new IllegalArgumentException("Invalid word: " + word);
@@ -83,7 +84,7 @@ public class SignRequestService {
         return Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
-    private void resolve(long id, SignRequest.Status status, String signUid) {
+    private void resolve(long id, SignRequest.Status status, @Nullable String signUid) {
         requests.findById(id).ifPresent(request -> request.resolve(status, signUid, now()));
     }
 }

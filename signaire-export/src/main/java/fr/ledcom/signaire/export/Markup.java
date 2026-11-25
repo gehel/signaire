@@ -1,5 +1,7 @@
 package fr.ledcom.signaire.export;
 
+import org.jspecify.annotations.Nullable;
+
 /** Escaping for the HTML (Anki, EPUB) written by the exporters. */
 final class Markup {
 
@@ -7,7 +9,7 @@ final class Markup {
     }
 
     /** Text for HTML or XHTML content and attribute values. */
-    static String html(String text) {
+    static String html(@Nullable String text) {
         if (text == null) {
             return "";
         }

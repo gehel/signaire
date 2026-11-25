@@ -277,7 +277,7 @@
                         <compilerArgs>
                             <arg>-XDcompilePolicy=simple</arg>
                             <arg>--should-stop=ifError=FLOW</arg>
-                            <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -XepExcludedPaths:.*/src/test/.* -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:ExternalInitAnnotations=jakarta.persistence.Entity -XepOpt:NullAway:ExcludedFieldAnnotations=picocli.CommandLine.Option,picocli.CommandLine.Parameters,picocli.CommandLine.Spec</arg>
+                            <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -XepExcludedPaths:.*/src/test/.* -XepOpt:NullAway:OnlyNullMarked=true -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:ExternalInitAnnotations=jakarta.persistence.Entity -XepOpt:NullAway:ExcludedFieldAnnotations=jakarta.persistence.Id,picocli.CommandLine.Option,picocli.CommandLine.Parameters,picocli.CommandLine.Spec</arg>
                         </compilerArgs>
                         <proc>none</proc>
                     </configuration>

@@ -1,9 +1,12 @@
 package fr.ledcom.signaire.accounts;
 
+import static com.tngtech.archunit.base.DescribedPredicate.describe;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.have;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import org.jspecify.annotations.NullMarked;
 import org.springframework.data.repository.Repository;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -40,4 +43,9 @@ final class ArchitectureTest {
     @ArchTest
     static final ArchRule NO_SEARCH_INDEX = noClasses().should().dependOnClassesThat()
             .resideInAnyPackage("fr.ledcom.signaire.core..", "co.elastic..");
+
+    /** Nothing is null unless written {@code @Nullable}, which NullAway checks (docs/design/nullness.md). */
+    @ArchTest
+    static final ArchRule NULL_MARKED = classes().should(have(describe("a @NullMarked package",
+            (JavaClass type) -> type.getPackage().isAnnotatedWith(NullMarked.class))));
 }

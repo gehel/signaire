@@ -6,9 +6,9 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.StoredFields;
@@ -20,6 +20,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -54,9 +55,9 @@ public class SignIndex implements AutoCloseable {
     /** Lucene allows one writer at a time, in this process too. */
     private final ReentrantLock writing = new ReentrantLock();
     @GuardedBy("this")
-    private Directory directory;
+    private @Nullable Directory directory;
     @GuardedBy("this")
-    private SearcherManager searchers;
+    private @Nullable SearcherManager searchers;
 
     /** A step of a write. */
     @FunctionalInterface

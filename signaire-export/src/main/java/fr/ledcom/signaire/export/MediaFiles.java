@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.export;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import fr.ledcom.signaire.model.Media;
@@ -14,7 +15,7 @@ final class MediaFiles {
 
     /** File name of a media, without directories: from the bundle, else from its URL. */
     static String fileName(Media media) {
-        String path = media.file() != null ? media.file() : media.sourceUrl();
+        String path = Objects.requireNonNullElse(media.file(), media.sourceUrl());
         int query = path.indexOf('?');
         String withoutQuery = query < 0 ? path : path.substring(0, query);
         return withoutQuery.substring(withoutQuery.lastIndexOf('/') + 1);

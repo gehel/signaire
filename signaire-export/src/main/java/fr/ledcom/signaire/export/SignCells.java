@@ -7,10 +7,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.jspecify.annotations.Nullable;
 
 import com.google.zxing.common.BitMatrix;
 
@@ -154,7 +155,7 @@ final class SignCells {
         }
     }
 
-    private void drawParagraph(PDPageContentStream content, PDFont font, float size, String text, Box box)
+    private void drawParagraph(PDPageContentStream content, PDFont font, float size, @Nullable String text, Box box)
             throws IOException {
         if (text == null || text.isBlank() || box.height() < size) {
             return;

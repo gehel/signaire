@@ -24,6 +24,7 @@ there; tests catch the cases they think of. The compiler can check it, if the co
 - **Tests aren't checked**: they pass `null` on purpose to see what the code does with it, and their packages are the
   same as the main code's.
 - Error Prone works inside javac: Maven's JVM opens the internals of the compiler to it (`.mvn/jvm.config`).
+- `@Nullable` is no coupling: checkstyle doesn't count the annotation packages in the fan-out of a class.
 
 ## Decisions
 

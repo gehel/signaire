@@ -11,6 +11,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Example;
@@ -110,7 +111,7 @@ final class SignDocuments {
     }
 
     /** A text field, and its stemmed sub-fields. */
-    private static void addText(Document document, String field, String text) {
+    private static void addText(Document document, String field, @Nullable String text) {
         if (text == null) {
             return;
         }

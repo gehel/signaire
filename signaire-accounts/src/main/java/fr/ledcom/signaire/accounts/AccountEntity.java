@@ -2,6 +2,8 @@ package fr.ledcom.signaire.accounts;
 
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,9 +22,9 @@ class AccountEntity {
     private Long id;
     private String username;
     private String displayName;
-    private String passwordHash;
-    private String oidcIssuer; // NOSONAR read by findByOidcIssuerAndOidcSubject
-    private String oidcSubject; // NOSONAR read by findByOidcIssuerAndOidcSubject
+    private @Nullable String passwordHash;
+    private @Nullable String oidcIssuer; // NOSONAR read by findByOidcIssuerAndOidcSubject
+    private @Nullable String oidcSubject; // NOSONAR read by findByOidcIssuerAndOidcSubject
     private Instant createdAt; // NOSONAR a column, for administrators reading the database
 
     protected AccountEntity() {
@@ -43,7 +45,7 @@ class AccountEntity {
         return username;
     }
 
-    String passwordHash() {
+    @Nullable String passwordHash() {
         return passwordHash;
     }
 

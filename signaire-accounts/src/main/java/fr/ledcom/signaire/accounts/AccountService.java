@@ -55,9 +55,9 @@ public class AccountService {
     @Transactional(readOnly = true)
     public Optional<LocalCredentials> findLocalCredentials(String username) {
         return repository.findByUsername(normalizeUsername(username))
-                .filter(account -> account.passwordHash() != null)
-                .map(account -> new LocalCredentials(account.id(), account.username(),
-                        account.toAccount().displayName(), account.passwordHash()));
+                .flatMap(account -> Optional.ofNullable(account.passwordHash())
+                        .map(hash -> new LocalCredentials(account.id(), account.username(),
+                                account.toAccount().displayName(), hash)));
     }
 
     @Transactional(readOnly = true)

@@ -23,6 +23,7 @@ import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.QueryBuilder;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import fr.ledcom.signaire.model.Sign;
@@ -48,7 +49,7 @@ public class SignSearchService {
         @Override
         protected Query newTermQuery(Term term, float boost) {
             int edits = maxEdits(term.text().codePointCount(0, term.text().length()));
-            return boosted(edits == 0 ? new TermQuery(term) : new FuzzyQuery(term, edits, 1), boost);
+            return withBoost(edits == 0 ? new TermQuery(term) : new FuzzyQuery(term, edits, 1), boost);
         }
     };
 
@@ -165,7 +166,7 @@ public class SignSearchService {
     }
 
     /** All the words in one of the fields; the score is the best of the fields. */
-    private static Query bestField(QueryBuilder builder, String text, Iterable<String> fields,
+    private static @Nullable Query bestField(QueryBuilder builder, String text, Iterable<String> fields,
             Map<String, Float> boosts) {
         List<Query> perField = new ArrayList<>();
         for (String field : fields) {
@@ -182,14 +183,19 @@ public class SignSearchService {
     }
 
     /** Adds a clause, unless the text has no word for it. */
-    private static void should(BooleanQuery.Builder bool, Query query) {
+    private static void should(BooleanQuery.Builder bool, @Nullable Query query) {
         if (query != null) {
             bool.add(query, Occur.SHOULD);
         }
     }
 
-    private static Query boosted(Query query, float boost) {
-        return query == null || boost == 1f ? query : new BoostQuery(query, boost);
+    /** The queries built by Lucene are null when the text has no word. */
+    private static @Nullable Query boosted(@Nullable Query query, float boost) {
+        return query == null ? null : withBoost(query, boost);
+    }
+
+    private static Query withBoost(Query query, float boost) {
+        return boost == 1f ? query : new BoostQuery(query, boost);
     }
 
     private static Query terms(String field, Collection<? extends Enum<?>> values) {
