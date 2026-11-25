@@ -1,8 +1,8 @@
 package fr.ledcom.signaire.extractor;
 
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,26 +11,28 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
 import java.util.EnumSet;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+
+import org.jspecify.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.bundle.Bundle;
@@ -70,8 +72,8 @@ public class CategoryExtractor {
     private final ExtractionListener listener;
     private final Duration progressInterval;
     private final Clock clock;
-    private final AtomicReference<ExtractionTracker> lastTracker = new AtomicReference<>();
-    private final AtomicReference<Run> running = new AtomicReference<>();
+    private final AtomicReference<@Nullable ExtractionTracker> lastTracker = new AtomicReference<>();
+    private final AtomicReference<@Nullable Run> running = new AtomicReference<>();
     private volatile boolean cancelled;
 
     public CategoryExtractor(SignSource source, SignEnumerator enumerator, BundleWriter writer) {
@@ -220,7 +222,7 @@ public class CategoryExtractor {
         }
 
         /** Runs a stage, and tells the next one when it ends, even on failure. */
-        private <T> Void stage(Runnable work, BlockingQueue<Optional<T>> next) {
+        private <T> Void stage(Runnable work, @Nullable BlockingQueue<Optional<T>> next) {
             try {
                 work.run();
             } finally {
