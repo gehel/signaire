@@ -85,6 +85,7 @@
                         <signaire.cli.jar>${project.basedir}/../signaire-cli/target/signaire-cli-${project.version}-jar-with-dependencies.jar</signaire.cli.jar>
                         <signaire.web.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}.jar</signaire.web.jar>
                         <signaire.standalone.jar>${project.basedir}/../signaire-web/target/signaire-web-${project.version}-standalone.jar</signaire.standalone.jar>
+                        <signaire.android.apk>${project.basedir}/../signaire-android/target/android/signaire.apk</signaire.android.apk>
                         <signaire.it.work>${project.build.directory}/it</signaire.it.work>
                     </systemPropertyVariables>
                 </configuration>
@@ -108,4 +109,25 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- where the app is built (ANDROID_HOME): AndroidIT installs it, so it is built first -->
+            <id>android</id>
+            <activation>
+                <property>
+                    <name>env.ANDROID_HOME</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>fr.ledcom</groupId>
+                    <artifactId>signaire-android</artifactId>
+                    <version>${project.version}</version>
+                    <type>apk</type>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

@@ -218,6 +218,12 @@ must get right (no page wider than a phone, cards, the tour) and writes screensh
 `signaire-it/target/screenshots/` (a CI artifact). Look at them after changing the look; use it, not a local
 browser, to see pages. Its image tag follows the Selenium version of the Spring Boot BOM.
 
+`AndroidIT` (in the `android` profile, with `ANDROID_HOME`) installs the APK on the device adb sees, or on an emulator
+it starts (`signaire.android.avd`, created from `system-images;android-34;google_apis;x86_64` when missing), pushes
+the demo bundles into the app (`run-as`), drives it with adb and uiautomator, in French, and writes screenshots to
+`signaire-it/target/screenshots/android/`. It skips without a device or that image. `AndroidApiTest` (signaire-android)
+fails on any use of Java that `android.jar` lacks: Java 17 compiling is not enough (`System.Logger` isn't on Android).
+
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
 scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
@@ -226,7 +232,8 @@ summarizes them (main keeps them as the `sitespeed-baseline` artifact, 90 days) 
 requests of a page grow by more than 10% (and more than 100 ms, 1 KB or 1 request). The comparison is in the summary of
 the job. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
 code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
-integration tests), so code reached only by ITs needs unit tests too. When a SonarCloud suggestion clashes with
+integration tests), so code reached only by ITs needs unit tests too (the Android app's screens excepted: they run on
+Android only, `AndroidIT` tests them). When a SonarCloud suggestion clashes with
 the WMF checkstyle rules, checkstyle wins; a false positive gets a `// NOSONAR` with its reason.
 
 Running the CLI locally:
