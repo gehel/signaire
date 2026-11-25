@@ -13,17 +13,21 @@ import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Follows the extraction of a {@link SignSuisseSync}: indexes the signs extracted, logs the status every 30 s, the
  * searches done and the failures.
  */
+@ThreadSafe
 final class SyncListener implements ExtractionListener {
 
     private static final Logger LOG = System.getLogger(SyncListener.class.getName());
     private static final Duration LOG_INTERVAL = Duration.ofSeconds(30);
 
     private final SyncIndexing indexing;
+    @GuardedBy("this")
     private Instant lastLog = Instant.EPOCH;
 
     SyncListener(SyncIndexing indexing) {

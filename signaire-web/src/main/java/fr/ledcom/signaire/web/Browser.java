@@ -16,11 +16,13 @@ import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Opens the standalone application in the browser of the user once it is started ({@code
  * signaire.standalone.open-browser}). A bean of {@link StandaloneConfiguration}.
  */
+@ThreadSafe
 public class Browser {
 
     private static final Logger LOG = System.getLogger(Browser.class.getName());

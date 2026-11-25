@@ -5,11 +5,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import net.jcip.annotations.Immutable;
+
 /**
  * Where Signaire keeps the files of a user: the XDG base directories
  * (https://specifications.freedesktop.org/basedir/latest/) when their variables are set, else the usual
  * directories of the system (XDG defaults on Linux, Library on macOS, AppData on Windows).
  */
+@Immutable
 public final class UserDirectories {
 
     private static final String NAME = "signaire";

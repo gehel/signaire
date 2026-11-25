@@ -23,12 +23,15 @@ import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleManifest;
 import fr.ledcom.signaire.bundle.BundleReader;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * The media (videos, images) of the bundles of a directory, read in place from the bundles. Bundles added,
  * replaced or removed are noticed on {@link #refresh()}, and when a media is not found.
  */
 @Service
+@ThreadSafe
 public class MediaLibrary implements AutoCloseable {
 
     private static final Logger LOG = System.getLogger(MediaLibrary.class.getName());
@@ -37,8 +40,10 @@ public class MediaLibrary implements AutoCloseable {
     private final Path directory;
     private final BundleReader reader = new BundleReader();
     /** The bundles read so far, by file. */
+    @GuardedBy("this")
     private final Map<Path, OpenBundle> bundles = new HashMap<>();
     /** The bundle holding each media. */
+    @GuardedBy("this")
     private Map<String, OpenBundle> bundleByMedia = Map.of();
 
     public MediaLibrary(@Value("${signaire.bundles.directory:bundles}") Path directory) {

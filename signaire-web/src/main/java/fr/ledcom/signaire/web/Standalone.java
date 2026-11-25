@@ -7,12 +7,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import net.jcip.annotations.ThreadSafe;
+
 /**
  * The standalone application ({@link StandaloneApplication}): one person runs Signaire on their computer. It is set
  * up on its first run, alone (no account at all) or with several accounts; the choices are kept in
  * {@code standalone.properties}, in the configuration directory of the user, read at startup. A bean of
  * {@link SecurityConfiguration}.
  */
+@ThreadSafe
 public class Standalone {
 
     static final String SETTINGS = "standalone.properties";

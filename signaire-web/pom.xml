@@ -75,6 +75,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.github.stephenc.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <!-- the database of the standalone application -->
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>

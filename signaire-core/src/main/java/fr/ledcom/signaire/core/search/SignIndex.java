@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * The Lucene index of Signaire, in a directory: the signs, and the registry of the loaded bundles. It can be
@@ -34,6 +36,7 @@ import fr.ledcom.signaire.model.Sign;
  * one commits, and waits while another process writes. Searches see the commits of all processes.
  */
 @Service
+@ThreadSafe
 public class SignIndex implements AutoCloseable {
 
     /**
@@ -50,7 +53,9 @@ public class SignIndex implements AutoCloseable {
     private final IndexWriters writers;
     /** Lucene allows one writer at a time, in this process too. */
     private final ReentrantLock writing = new ReentrantLock();
+    @GuardedBy("this")
     private Directory directory;
+    @GuardedBy("this")
     private SearcherManager searchers;
 
     /** A step of a write. */

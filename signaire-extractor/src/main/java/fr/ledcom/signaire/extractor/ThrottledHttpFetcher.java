@@ -18,11 +18,14 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Fetches resources politely: requests say who sends them ({@link UserAgent}), are spaced by a minimum interval, and
  * transient failures (network errors, 5xx and 429 responses) are retried with an increasing delay.
  */
+@ThreadSafe
 public class ThrottledHttpFetcher implements HttpFetcher {
 
     private static final Duration TIMEOUT = Duration.ofMinutes(2);
@@ -36,6 +39,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
     private final Supplier<Instant> clock;
     private final Sleeper sleeper;
     private final Semaphore inFlight = new Semaphore(MAX_IN_FLIGHT, true);
+    @GuardedBy("this")
     private Instant lastRequest;
 
     /** Waits, interruptibly. */

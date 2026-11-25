@@ -22,12 +22,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * The standalone application used alone: every request from this computer is the single user, an administrator,
  * without logging in. Their account is an ordinary one, with an identity of Signaire rather than of an OpenID
  * Connect provider. Requests from other computers stay anonymous, whatever the address the server listens to.
  */
+@ThreadSafe
 class SingleUserFilter extends OncePerRequestFilter {
 
     /** The issuer of the identity of the single user. */

@@ -15,6 +15,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.core.bundles.BundleLoader;
 import fr.ledcom.signaire.core.bundles.LoadReport;
 import fr.ledcom.signaire.core.search.SignIndex;
+import net.jcip.annotations.NotThreadSafe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -25,6 +26,7 @@ import picocli.CommandLine.Spec;
 // a new instance per command line: picocli doesn't reset all options (e.g. positional lists) between runs
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Command(name = "charger", resourceBundle = "fr.ledcom.signaire.cli.load")
+@NotThreadSafe
 public class LoadCommand implements Callable<Integer> {
 
     private final BundleLoader loader;

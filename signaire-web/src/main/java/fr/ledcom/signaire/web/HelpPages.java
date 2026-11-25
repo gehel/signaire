@@ -18,11 +18,14 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.stereotype.Component;
 
+import net.jcip.annotations.ThreadSafe;
+
 /**
  * The manual: a Markdown page per topic and language, in {@code help/<language>/<topic>.md}, rendered once.
  * French pages stand in for missing translations.
  */
 @Component
+@ThreadSafe
 public class HelpPages {
 
     /** The topics, in the order of the manual. */

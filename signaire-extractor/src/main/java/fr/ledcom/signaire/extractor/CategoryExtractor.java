@@ -42,6 +42,7 @@ import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Extracts the signs of a category into a bundle, in three stages running at the same time: the search lists the
@@ -52,6 +53,7 @@ import fr.ledcom.signaire.model.Sign;
  * directory by default). Files already in the cache are not downloaded again, so an interrupted extraction can be
  * resumed. See {@code docs/design/extraction.md}.
  */
+@ThreadSafe
 public class CategoryExtractor {
 
     /** Name of the media cache, inside the output directory. */
