@@ -8,7 +8,7 @@
     -->
     <configuration>
         <enabled>true</enabled>
-        <hashAlgorithm>XX</hashAlgorithm>
+        <hashAlgorithm>SHA-256</hashAlgorithm>
         <local>
             <maxBuildsCached>3</maxBuildsCached>
         </local>
