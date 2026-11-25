@@ -29,6 +29,7 @@
         <module>signaire-model</module>
         <module>signaire-bundle</module>
         <module>signaire-extractor</module>
+        <module>signaire-offline</module>
         <module>signaire-core</module>
         <module>signaire-accounts</module>
         <module>signaire-export</module>
@@ -138,6 +139,11 @@
             <dependency>
                 <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-offline</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

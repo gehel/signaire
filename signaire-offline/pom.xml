@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.ledcom</groupId>
+        <artifactId>signaire</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>signaire-offline</artifactId>
+
+    <description>Signs without a server: the bundles of a directory, their search, word lists in a file, downloads
+        from SignSuisse. The Android app is built on it.</description>
+
+    <properties>
+        <!-- Android compatible (docs/design/android.md); its tests run on the JVM only -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.testRelease>27</maven.compiler.testRelease>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-bundle</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-extractor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.stephenc.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
