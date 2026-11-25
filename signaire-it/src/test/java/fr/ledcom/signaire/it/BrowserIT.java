@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
@@ -296,7 +297,7 @@ class BrowserIT {
                     return [...document.querySelectorAll('body *')]
                         .filter(e => e.getBoundingClientRect().right > innerWidth + 1)
                         .map(e => e.tagName.toLowerCase() + (e.className ? '.' + e.className : ''))""")
-            ).as("elements wider than the window: %s scrolls sideways", where).asList().isEmpty();
+            ).as("elements wider than the window: %s scrolls sideways", where).asInstanceOf(LIST).isEmpty();
 
             screenshot(theme, device, number, page);
         }

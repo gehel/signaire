@@ -42,16 +42,16 @@
         <!--
           Tests run in French, the base language, whatever the locale of the machine. They never reach the
           network, SignSuisse least of all: HTTP goes to a closed local port, except for localhost (containers).
-          Test JVMs are short lived: the quick compiler and the serial collector start them faster.
+          Test JVMs are short lived: the quick compiler and the serial collector start them faster. Lucene and SQLite
+          call native code, which the JDK will refuse unless allowed (the jars allow it in their manifest). The modules
+          that use Mockito load its agent at startup: the JDK will refuse agents loaded while running.
         -->
-        <argLine>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
+        <argLine>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1] --enable-native-access=ALL-UNNAMED</argLine>
         <commonmark.version>0.33.0</commonmark.version>
-        <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
+        <forbiddenapis.version>3.11</forbiddenapis.version>
         <htmx.version>4.0.2</htmx.version>
-        <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
         <jsoup.version>1.24.1</jsoup.version>
-        <lombok.version>1.18.48</lombok.version>
         <lucene.version>10.6.0</lucene.version>
         <maven.compiler.release>27</maven.compiler.release>
         <maven.compiler.source>27</maven.compiler.source>
@@ -241,6 +241,40 @@
                             <configuration>
                                 <configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
                             </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <!-- the parent runs Lombok, which we don't use (and which calls sun.misc.Unsafe in javac) -->
+                        <annotationProcessorPaths combine.self="override"/>
+                        <proc>none</proc>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <!-- the paths of the dependencies as properties (${groupId:artifactId:jar}), for agents -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dependency-paths</id>
+                            <goals>
+                                <goal>properties</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <!-- deprecated by its authors, and JDepend reads no class file newer than Java 8:
+                                 PackageCyclesTest (ArchUnit) in each module -->
+                            <id>enforce-no-package-cycles</id>
+                            <phase>none</phase>
                         </execution>
                     </executions>
                 </plugin>
