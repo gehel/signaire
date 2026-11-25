@@ -246,6 +246,18 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <!-- deprecated by its authors, and JDepend reads no class file newer than Java 8:
+                                 PackageCyclesTest (ArchUnit) in each module -->
+                            <id>enforce-no-package-cycles</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <configuration>
                         <!-- Spring Boot repackages the jar: run the tests on the classes instead -->

@@ -140,8 +140,9 @@ Key decisions:
 
 Use the Maven wrapper. The parent POM `org.wikimedia:wmf-jvm-parent-pom` enforces quality gates during
 the build: checkstyle (validate phase), forbiddenapis (compile), spotbugs with findsecbugs and sb-contrib,
-the no-package-cycles enforcer rule, duplicate-finder (verify), and sortpom (POM elements must be in
-sorted order). CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Temurin 27, without the build cache.
+duplicate-finder (verify), and sortpom (POM elements must be in sorted order). Its rule against package cycles is
+turned off (deprecated, and blind to Java 9+ class files): `PackageCyclesTest` (ArchUnit) checks them in each
+module. CI (`.github/workflows/build.yml`) runs `./mvnw -B verify` on Temurin 27, without the build cache.
 
 ```bash
 ./mvnw verify                                   # full build with all quality checks; unchanged modules come from the cache
@@ -171,7 +172,7 @@ Gotchas with Spring Boot and picocli:
   between runs of the same object.
 - Apps get the core services by importing `SignaireCoreConfiguration`, not by scanning `fr.ledcom.signaire`
   (that would pick up test applications from test-jars). It names the packages it scans as strings,
-  because the no-package-cycles rule also covers test classes.
+  because `PackageCyclesTest` also covers test classes.
 
 Gotchas with the WMF ruleset and Java 27:
 - The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
@@ -304,7 +305,8 @@ Web UI gotchas:
 Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
 model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
 depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
-the CLI and web never reach Lucene or JPA directly. Change the rules there when the architecture changes.
+the CLI and web never reach Lucene or JPA directly. Change the rules there when the architecture changes. Its
+`PackageCyclesTest` forbids cycles between packages, test classes included.
 
 ## Conventions
 
