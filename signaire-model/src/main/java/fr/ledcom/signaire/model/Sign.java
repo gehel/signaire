@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A sign of the SignSuisse lexicon. Each sign belongs to a single sign language: the same concept signed in
  * French and German Switzerland gives two signs, with different uids.
@@ -29,10 +31,10 @@ public record Sign(
         String uid,
         Language language,
         String name,
-        String sourceUrl,
-        String periphrase,
-        String definition,
-        String status,
+        @Nullable String sourceUrl,
+        @Nullable String periphrase,
+        @Nullable String definition,
+        @Nullable String status,
         List<Category> categories,
         List<String> dialects,
         List<Media> videos,
@@ -70,7 +72,8 @@ public record Sign(
                 .dialectVariants(dialectVariants);
     }
 
-    private static <T> List<T> immutableCopy(Collection<T> list) {
+    /** Lists missing from a bundle's JSON come as {@code null}. */
+    private static <T> List<T> immutableCopy(@Nullable Collection<T> list) {
         return list == null ? List.of() : List.copyOf(list);
     }
 
@@ -79,16 +82,16 @@ public record Sign(
         private final String uid;
         private final Language language;
         private final String name;
-        private String sourceUrl;
-        private String periphrase;
-        private String definition;
-        private String status;
-        private List<Category> categories;
-        private List<String> dialects;
-        private List<Media> videos;
-        private List<Example> examples;
-        private List<Media> images;
-        private List<DialectVariant> dialectVariants;
+        private @Nullable String sourceUrl;
+        private @Nullable String periphrase;
+        private @Nullable String definition;
+        private @Nullable String status;
+        private List<Category> categories = List.of();
+        private List<String> dialects = List.of();
+        private List<Media> videos = List.of();
+        private List<Example> examples = List.of();
+        private List<Media> images = List.of();
+        private List<DialectVariant> dialectVariants = List.of();
 
         private Builder(String uid, Language language, String name) {
             this.uid = uid;
@@ -96,22 +99,22 @@ public record Sign(
             this.name = name;
         }
 
-        public Builder sourceUrl(String sourceUrl) {
+        public Builder sourceUrl(@Nullable String sourceUrl) {
             this.sourceUrl = sourceUrl;
             return this;
         }
 
-        public Builder periphrase(String periphrase) {
+        public Builder periphrase(@Nullable String periphrase) {
             this.periphrase = periphrase;
             return this;
         }
 
-        public Builder definition(String definition) {
+        public Builder definition(@Nullable String definition) {
             this.definition = definition;
             return this;
         }
 
-        public Builder status(String status) {
+        public Builder status(@Nullable String status) {
             this.status = status;
             return this;
         }
