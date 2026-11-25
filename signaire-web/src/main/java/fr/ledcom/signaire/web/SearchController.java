@@ -46,7 +46,7 @@ public class SearchController {
             @RequestParam(name = "language", required = false) @Nullable Set<Language> languages,
             @RequestParam(name = "category", required = false) @Nullable Set<Category> categories,
             @RequestParam(name = "page", defaultValue = "1") int page,
-            @AuthenticationPrincipal AccountPrincipal user,
+            @AuthenticationPrincipal @Nullable AccountPrincipal user,
             HttpServletRequest request, HttpServletResponse response, Model model) {
         Set<Language> selectedLanguages = withoutBlanks(languages);
         Set<Category> selectedCategories = withoutBlanks(categories);

@@ -40,7 +40,8 @@ class SignRequestEntity {
         // for JPA
     }
 
-    SignRequestEntity(AccountEntity requester, String word, Language language, @Nullable String comment, Instant now) {
+    SignRequestEntity(AccountEntity requester, String word, Language language, // NOSONAR id: set by JPA
+            @Nullable String comment, Instant now) {
         this.requester = requester;
         this.word = word;
         this.language = language;

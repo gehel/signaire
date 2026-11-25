@@ -87,7 +87,8 @@ public class ExtractCommand implements Callable<Integer> {
     /**
      * @param mediaCache where media are downloaded: the cache directory of the user
      */
-    public ExtractCommand(SignSourceFactory sourceFactory, @Value("${signaire.media.cache}") Path mediaCache) {
+    public ExtractCommand(SignSourceFactory sourceFactory, // NOSONAR spec: set by picocli
+            @Value("${signaire.media.cache}") Path mediaCache) {
         this.sourceFactory = sourceFactory;
         this.mediaCache = mediaCache;
     }

@@ -222,7 +222,7 @@ public class CategoryExtractor {
         }
 
         /** Runs a stage, and tells the next one when it ends, even on failure. */
-        private <T> Void stage(Runnable work, @Nullable BlockingQueue<Optional<T>> next) {
+        private <T> @Nullable Void stage(Runnable work, @Nullable BlockingQueue<Optional<T>> next) {
             try {
                 work.run();
             } finally {

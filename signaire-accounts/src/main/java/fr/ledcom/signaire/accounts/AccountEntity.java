@@ -31,7 +31,7 @@ class AccountEntity {
         // for JPA
     }
 
-    AccountEntity(String username, String displayName, Instant createdAt) {
+    AccountEntity(String username, String displayName, Instant createdAt) { // NOSONAR id: set by JPA
         this.username = username;
         this.displayName = displayName;
         this.createdAt = createdAt;

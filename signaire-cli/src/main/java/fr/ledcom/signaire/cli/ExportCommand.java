@@ -91,7 +91,7 @@ public class ExportCommand implements Callable<Integer> {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public ExportCommand(SignSearchService search) {
+    public ExportCommand(SignSearchService search) { // NOSONAR spec: set by picocli
         this.search = search;
     }
 

@@ -59,7 +59,7 @@ public class SearchCommand implements Runnable {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public SearchCommand(SignSearchService search) {
+    public SearchCommand(SignSearchService search) { // NOSONAR spec: set by picocli
         this.search = search;
     }
 

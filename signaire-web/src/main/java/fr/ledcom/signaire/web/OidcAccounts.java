@@ -43,8 +43,9 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
 
     /** The username to give to a new account: the preferred one, else from the email address, else the subject. */
     private static String username(OidcUser user) {
-        if (user.getPreferredUsername() != null) {
-            return user.getPreferredUsername();
+        String preferred = user.getPreferredUsername();
+        if (preferred != null) {
+            return preferred;
         }
         String email = user.getEmail();
         // > 0: an address starting with @ has no name before it

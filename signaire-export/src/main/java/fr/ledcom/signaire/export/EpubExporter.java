@@ -173,8 +173,9 @@ public final class EpubExporter {
             body.append("<h2>").append(Markup.html(labels.get(label))).append("</h2>\n<ul>\n");
             for (Captioned entry : entries) {
                 body.append("<li>").append(Markup.html(entry.text()));
-                if (entry.video() != null) {
-                    body.append(' ').append(video(entry.video()));
+                Media video = entry.video();
+                if (video != null) {
+                    body.append(' ').append(video(video));
                 }
                 body.append("</li>\n");
             }

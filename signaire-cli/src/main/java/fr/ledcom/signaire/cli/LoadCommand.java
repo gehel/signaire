@@ -47,7 +47,7 @@ public class LoadCommand implements Callable<Integer> {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public LoadCommand(BundleLoader loader, SignIndex index) {
+    public LoadCommand(BundleLoader loader, SignIndex index) { // NOSONAR spec: set by picocli
         this.loader = loader;
         this.index = index;
     }

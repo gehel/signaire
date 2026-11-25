@@ -2,6 +2,7 @@ package fr.ledcom.signaire.accounts;
 
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -37,7 +38,7 @@ public class AccountService {
      * @param displayName name shown in the UI, the username when blank
      * @throws AccountException if the username is invalid or taken, or the password too short
      */
-    public Account register(String username, String password, String displayName) {
+    public Account register(@Nullable String username, @Nullable String password, @Nullable String displayName) {
         String normalized = normalizeUsername(username);
         if (!USERNAME.matcher(normalized).matches()) {
             throw new AccountException(AccountException.Reason.INVALID_USERNAME, "Invalid username: " + username);
@@ -49,7 +50,7 @@ public class AccountService {
             throw new AccountException(AccountException.Reason.USERNAME_TAKEN, "Username taken: " + normalized);
         }
         AccountEntity account = new AccountEntity(normalized, displayName(displayName, normalized), Instant.now());
-        account.setPasswordHash(passwordEncoder.encode(password));
+        account.setPasswordHash(Objects.requireNonNull(passwordEncoder.encode(password), "password hash"));
         return repository.save(account).toAccount();
     }
 
@@ -99,11 +100,11 @@ public class AccountService {
         return username;
     }
 
-    private static String normalizeUsername(String username) {
+    private static String normalizeUsername(@Nullable String username) {
         return username == null ? "" : username.strip().toLowerCase(Locale.ROOT);
     }
 
-    private static String displayName(String displayName, String username) {
+    private static String displayName(@Nullable String displayName, String username) {
         if (displayName == null || displayName.isBlank()) {
             return username;
         }

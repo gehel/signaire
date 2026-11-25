@@ -52,7 +52,8 @@ public class SetupController {
      * @param categories the categories to download now; none to download later
      * @param languages the sign languages to download, all when empty
      */
-    public record Setup(Boolean alone, String username, String displayName, String password, String confirmation,
+    public record Setup(Boolean alone, @Nullable String username, @Nullable String displayName,
+            @Nullable String password, @Nullable String confirmation,
             List<Category> categories, List<Language> languages, MediaChoice media) {
 
         /** Unchecked boxes are not sent. */
@@ -104,12 +105,13 @@ public class SetupController {
 
     /** Creates the administrator account; null, with the error in the model, when it can't be. */
     private @Nullable String registerAdmin(Setup setup, Model model) {
-        if (setup.password() == null || !setup.password().equals(setup.confirmation())) {
+        String password = setup.password();
+        if (password == null || !password.equals(setup.confirmation())) {
             model.addAttribute("error", "register.error.passwordMismatch");
             return null;
         }
         try {
-            String admin = accounts.register(setup.username(), setup.password(), setup.displayName()).username();
+            String admin = accounts.register(setup.username(), password, setup.displayName()).username();
             admins.add(admin);
             return admin;
         } catch (AccountException e) {

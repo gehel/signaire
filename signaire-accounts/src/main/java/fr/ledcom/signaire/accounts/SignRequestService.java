@@ -31,7 +31,7 @@ public class SignRequestService {
      * @param comment may be null or blank
      * @throws IllegalArgumentException if the word is blank or too long
      */
-    public SignRequest request(long requesterId, String word, Language language, @Nullable String comment) {
+    public SignRequest request(long requesterId, @Nullable String word, Language language, @Nullable String comment) {
         String cleanWord = word == null ? "" : word.strip();
         if (cleanWord.isEmpty() || cleanWord.length() > MAX_WORD_LENGTH) {
             throw new IllegalArgumentException("Invalid word: " + word);

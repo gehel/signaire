@@ -36,7 +36,8 @@ public class SignController {
     }
 
     @GetMapping("/signs/{uid}")
-    public ModelAndView sign(@PathVariable("uid") String uid, @AuthenticationPrincipal AccountPrincipal user) {
+    public ModelAndView sign(@PathVariable("uid") String uid,
+            @AuthenticationPrincipal @Nullable AccountPrincipal user) {
         return search.findByUid(uid)
                 .map(sign -> signPage("sign", sign, user, null))
                 .orElseGet(SignController::notFound);
@@ -85,7 +86,8 @@ public class SignController {
                 : signPage("sign", sign, user, error);
     }
 
-    private ModelAndView signPage(String view, Sign sign, AccountPrincipal user, @Nullable String listError) {
+    private ModelAndView signPage(String view, Sign sign, @Nullable AccountPrincipal user,
+            @Nullable String listError) {
         ModelAndView page = new ModelAndView(view, "sign", sign);
         if (user != null) {
             List<WordList> userLists = lists.lists(user.accountId());
