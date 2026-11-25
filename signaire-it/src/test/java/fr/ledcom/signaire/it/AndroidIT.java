@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -18,10 +19,16 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import fr.ledcom.signaire.bundle.Bundle;
+import fr.ledcom.signaire.bundle.BundleReader;
+import fr.ledcom.signaire.model.Media;
+import fr.ledcom.signaire.model.Sign;
+
 /**
  * The Android app on a phone (an emulator of Android 14, the oldest it supports), as its users go: signs made on a
- * computer, searched, a sign put in a list, the signs of the phone. In French, the base language. Writes screenshots
- * to {@code target/screenshots/android}. Only where the app is built: the Android SDK ({@code ANDROID_HOME}).
+ * computer, searched, a sign put in a list, the signs of the phone, a category downloaded from SignSuisse. In French,
+ * the base language. Writes screenshots to {@code target/screenshots/android}. Only where the app is built: the
+ * Android SDK ({@code ANDROID_HOME}). Downloads are from a fake SignSuisse, never from the real one.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AndroidIT {
@@ -30,8 +37,14 @@ class AndroidIT {
     private static final String SEARCH = APP + "/fr.ledcom.signaire.android.SearchActivity";
     private static final Path SCREENSHOTS = Path.of(System.getProperty("signaire.it.work"))
             .resolveSibling("screenshots").resolve("android");
+    private static final Path WORK = Path.of(System.getProperty("signaire.it.work")).resolveSibling("it-android");
+    /** About 40 requests, 500 ms apart. */
+    private static final Duration DOWNLOAD = Duration.ofMinutes(2);
 
     private static AndroidDevice device;
+    private static FakeSignSuisse signSuisse;
+    /** The port of the fake SignSuisse, the same on the phone (adb reverse). */
+    private static String port;
     private static int screenshots;
 
     @BeforeAll
@@ -46,21 +59,38 @@ class AndroidIT {
         device.run("shell", "pm", "clear", APP);
         device.run("shell", "cmd", "locale", "set-app-locales", APP, "--locales", "fr");
         // the bundles made on a computer, in the files of the app
-        Path bundles = Path.of(System.getProperty("signaire.it.work")).resolveSibling("it-android/bundles");
+        Path bundles = WORK.resolve("bundles");
         DemoBundles.write(bundles);
         try (Stream<Path> files = Files.list(bundles)) {
             for (Path bundle : files.filter(file -> file.toString().endsWith(".zip")).toList()) {
                 device.pushToApp(bundle, APP, "files/bundles/" + bundle.getFileName());
             }
         }
+        // downloads from a fake SignSuisse, at the same address on the phone as on the computer
+        signSuisse = new FakeSignSuisse();
+        port = "tcp:" + signSuisse.uri().getPort();
+        device.run("reverse", port, port);
+        Path server = Files.writeString(WORK.resolve("signsuisse-server"), signSuisse.uri().toString());
+        device.pushToApp(server, APP, "files/signsuisse-server");
+        // the notification of downloads, without the question
+        device.run("shell", "pm", "grant", APP, "android.permission.POST_NOTIFICATIONS");
         device.run("logcat", "-c");
         device.run("shell", "am", "start", "-W", "-n", SEARCH);
     }
 
     @AfterAll
     static void close() throws IOException, InterruptedException {
+        if (signSuisse != null) {
+            signSuisse.close();
+        }
         if (device != null) {
-            device.close();
+            try {
+                if (port != null) {
+                    device.run("reverse", "--remove", port);
+                }
+            } finally {
+                device.close();
+            }
         }
     }
 
@@ -107,13 +137,20 @@ class AndroidIT {
 
     @Test
     @Order(3)
-    void theListsHaveTheirSigns() throws IOException, InterruptedException {
+    void theListsKeepTheirSignsWhenTheAppRestarts() throws IOException, InterruptedException {
         device.tap("Mes listes");
         device.tap("Nature (1)");
         device.waitFor("FORÊT");
         assertThat(AndroidDevice.texts(device.screen())).contains("Nature", "FORÊT", "LIS");
         screenshot("list");
         device.key("KEYCODE_BACK");
+        device.key("KEYCODE_BACK");
+
+        // the lists are in a file of the app, which a new process reads
+        device.run("shell", "am", "force-stop", APP);
+        device.run("shell", "am", "start", "-W", "-n", SEARCH);
+        device.tap("Mes listes");
+        device.waitFor("Nature (1)");
         device.key("KEYCODE_BACK");
     }
 
@@ -128,6 +165,53 @@ class AndroidIT {
         assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("library");
         device.key("KEYCODE_BACK");
+    }
+
+    @Test
+    @Order(5)
+    void aCategoryIsDownloadedFromSignSuisseWithItsMedia() throws IOException, InterruptedException {
+        device.key("KEYCODE_MENU");
+        device.tap("Signes du téléphone");
+        // the fake SignSuisse, before any request: never the real one
+        device.waitFor("Téléchargements depuis un serveur de test : " + signSuisse.uri());
+        device.tap("Télécharger depuis SignSuisse");
+        device.scrollTo("Ville");
+        device.tap("Ville");
+        device.tap("OK");
+        // the sign language of the phone is chosen
+        device.waitFor("Langues des signes");
+        device.tap("OK");
+        device.tap("Vidéos et images");
+        device.waitFor("Téléchargement terminé : 2 signes", DOWNLOAD);
+        // the bundle of the city replaced, the others kept
+        List<String> texts = AndroidDevice.texts(device.screen());
+        assertThat(texts).filteredOn(text -> text.startsWith("2 signes, extraits le")).hasSize(1);
+        assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(1);
+        screenshot("downloaded");
+        device.key("KEYCODE_BACK");
+
+        Path city = WORK.resolve("downloaded/city.zip");
+        device.pullFromApp(APP, "files/bundles/city.zip", city);
+        try (Bundle bundle = new BundleReader().read(city)) {
+            bundle.verifyMedia();
+            assertThat(bundle.signs()).extracting(Sign::name).containsExactlyInAnyOrder("LAUSANNE", "GENÈVE");
+            assertThat(bundle.signs()).allSatisfy(sign -> {
+                assertThat(sign.videos()).singleElement().extracting(Media::file).isNotNull();
+                assertThat(sign.images()).singleElement().extracting(Media::file).isNotNull();
+            });
+        }
+    }
+
+    @Test
+    @Order(6)
+    void theDownloadedSignsAreFound() throws IOException, InterruptedException {
+        device.tap("search");
+        device.clear();
+        device.type("lausanne");
+        device.waitFor("1 signe");
+        assertThat(AndroidDevice.texts(device.screen())).contains("LAUSANNE", "LSF");
+        device.key("KEYCODE_BACK");
+        screenshot("downloaded-found");
     }
 
     private static void screenshot(String name) throws IOException, InterruptedException {
