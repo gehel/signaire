@@ -39,6 +39,7 @@
     <string name="library_imported">Importiert: %1$s</string>
     <string name="library_import_failed">Diese Datei ist keine gültige Gebärdendatei.</string>
     <string name="library_notice">Die Gebärden stammen aus SignSuisse, dem Lexikon des Schweizerischen Gehörlosenbundes: Sie sind für Ihren persönlichen Gebrauch.</string>
+    <string name="library_server">Downloads von einem Testserver: %1$s</string>
     <string name="download_categories">Herunterzuladende Kategorien</string>
     <string name="download_languages">Gebärdensprachen</string>
     <string name="download_media">Herunterzuladende Medien</string>

@@ -39,6 +39,7 @@
     <string name="library_imported">Importé : %1$s</string>
     <string name="library_import_failed">Ce fichier n\'est pas un fichier de signes valide.</string>
     <string name="library_notice">Les signes viennent de SignSuisse, le lexique de la Fédération Suisse des Sourds : ils sont pour votre usage personnel.</string>
+    <string name="library_server">Téléchargements depuis un serveur de test : %1$s</string>
     <string name="download_categories">Catégories à télécharger</string>
     <string name="download_languages">Langues des signes</string>
     <string name="download_media">Médias à télécharger</string>

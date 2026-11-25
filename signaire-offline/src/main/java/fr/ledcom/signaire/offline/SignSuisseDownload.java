@@ -1,5 +1,11 @@
 package fr.ledcom.signaire.offline;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
@@ -49,12 +55,47 @@ public final class SignSuisseDownload {
         this.cache = cache;
     }
 
-    /** From SignSuisse itself, politely. */
-    public static SignSuisseDownload fromSignSuisse(SignLibrary library, Path cache, UserAgent userAgent,
+    /**
+     * From SignSuisse, politely.
+     *
+     * @param server SignSuisse itself, or the fake one of a test (see {@link #server})
+     */
+    public static SignSuisseDownload fromSignSuisse(URI server, SignLibrary library, Path cache, UserAgent userAgent,
             ExtractionListener listener) {
         SignSource signSuisse = new SignSuisseClient(new ThrottledHttpFetcher(INTERVAL, MAX_ATTEMPTS, userAgent),
-                SignSuisseClient.DEFAULT_BASE_URI);
+                server);
         return new SignSuisseDownload(signSuisse, library, cache, listener);
+    }
+
+    /**
+     * The server to download from: SignSuisse, unless a file names another one, as the tests of the app do to point
+     * it at a fake SignSuisse.
+     *
+     * @throws IllegalArgumentException when the file names no {@code http} or {@code https} server: the download
+     *                                  stops, rather than going to SignSuisse when a test wanted another server
+     * @throws UncheckedIOException when the file can't be read
+     */
+    public static URI server(Path file) {
+        if (!Files.exists(file)) {
+            return SignSuisseClient.DEFAULT_BASE_URI;
+        }
+        String content;
+        try {
+            // not Files.readString: Android lacks it
+            content = new String(Files.readAllBytes(file), StandardCharsets.UTF_8).strip();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        try {
+            URI server = new URI(content);
+            String scheme = server.getScheme();
+            if (("http".equals(scheme) || "https".equals(scheme)) && server.getHost() != null) {
+                return server;
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(file + " names no server: " + content, e);
+        }
+        throw new IllegalArgumentException(file + " names no server: " + content);
     }
 
     /** Downloads categories one after the other. */

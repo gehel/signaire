@@ -13,6 +13,14 @@
             android:text="@string/library_notice"
             android:textSize="12sp"/>
 
+    <TextView
+            android:id="@+id/server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:textSize="12sp"
+            android:visibility="gone"/>
+
     <Button
             android:id="@+id/download"
             android:layout_width="match_parent"

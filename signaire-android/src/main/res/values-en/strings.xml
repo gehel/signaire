@@ -39,6 +39,7 @@
     <string name="library_imported">Imported: %1$s</string>
     <string name="library_import_failed">This file is not a valid file of signs.</string>
     <string name="library_notice">The signs come from SignSuisse, the lexicon of the Swiss Federation of the Deaf: they are for your personal use.</string>
+    <string name="library_server">Downloads from a test server: %1$s</string>
     <string name="download_categories">Categories to download</string>
     <string name="download_languages">Sign languages</string>
     <string name="download_media">Media to download</string>
