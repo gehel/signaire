@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Categories and sign languages, as the web application names them (messages*.properties). -->
+<resources>
+    <string name="category_ANIMALS">Animali</string>
+    <string name="category_CITY">Città</string>
+    <string name="category_ECONOMY">Economia</string>
+    <string name="category_EVENTS_MEDIA">Eventi/Media</string>
+    <string name="category_FAMILY">Famiglia</string>
+    <string name="category_FOOD">Cibo</string>
+    <string name="category_GENERAL">In generale</string>
+    <string name="category_HOUSEHOLD">Economia domestica</string>
+    <string name="category_HOUSE_BUILDING">Casa/Edificio</string>
+    <string name="category_MEDICINE">Medicina</string>
+    <string name="category_NATION">Nazione</string>
+    <string name="category_NATURE">Natura</string>
+    <string name="category_PEOPLE">Persone</string>
+    <string name="category_POLITICS_LAW">Politica/Diritto</string>
+    <string name="category_PROFESSION_SCHOOL">Professione/Scuola</string>
+    <string name="category_PROPERTY">Proprietà</string>
+    <string name="category_RELIGION">Religione</string>
+    <string name="category_SPORT_LEISURE">Sport/Tempo libero</string>
+    <string name="category_TRAFFIC">Circolazione</string>
+    <string name="category_VERB">Verbo</string>
+    <string name="sign_language_FRENCH">Lingua dei segni francese (LSF)</string>
+    <string name="sign_language_GERMAN">Lingua dei segni svizzero tedesca (DSGS)</string>
+    <string name="sign_language_ITALIAN">Lingua dei segni italiana (LIS)</string>
+    <string name="sign_language_short_FRENCH">LSF</string>
+    <string name="sign_language_short_GERMAN">DSGS</string>
+    <string name="sign_language_short_ITALIAN">LIS</string>
+</resources>

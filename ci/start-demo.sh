@@ -6,7 +6,8 @@ set -euo pipefail
 work=$(realpath -m "${1:-target/demo}")
 mkdir -p "$work"
 docker compose up -d
-./mvnw -B -ntp -q -pl signaire-it exec:java -Dexec.classpathScope=test \
+# not the Android app: its profile is active wherever ANDROID_HOME is set
+./mvnw -B -ntp -q -P '!android' -pl signaire-it exec:java -Dexec.classpathScope=test \
     -Dexec.mainClass=fr.ledcom.signaire.it.DemoBundles -Dexec.args="$work/bundles"
 jar=$(find signaire-web/target -maxdepth 1 -name 'signaire-web-*.jar' ! -name '*-sources.jar' ! -name '*-standalone.jar' | head -1)
 XDG_DATA_HOME="$work/data" XDG_CACHE_HOME="$work/cache" XDG_CONFIG_HOME="$work/config" \

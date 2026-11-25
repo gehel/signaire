@@ -38,4 +38,4 @@ doesn't (it would read every video at each startup). JSON goes through Jackson (
 
 ## Open questions
 
-- The Android app doesn't exist yet; when it does, it may need a lighter JSON library than Jackson.
+- The [Android app](android.md) reads bundles with Jackson; if it proves heavy there, a lighter JSON library.

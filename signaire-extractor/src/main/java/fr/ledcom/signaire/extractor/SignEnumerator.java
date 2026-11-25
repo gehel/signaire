@@ -1,20 +1,20 @@
 package fr.ledcom.signaire.extractor;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.text.Normalizer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CancellationException;
-import java.util.regex.Pattern;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -32,12 +32,15 @@ import fr.ledcom.signaire.model.Language;
  */
 public class SignEnumerator {
 
-    private static final Logger LOG = System.getLogger(SignEnumerator.class.getName());
+    private static final Logger LOG = Logger.getLogger(SignEnumerator.class.getName());
     /** Not 0: SignSuisse always fails on that search. */
     private static final String INITIAL_ALPHABET = "abcdefghijklmnopqrstuvwxyz123456789";
     private static final String ALPHABET = INITIAL_ALPHABET + "0";
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}");
     private static final Pattern SPACES = Pattern.compile("\\s+");
+
+    /** Prefixes with too many names are searched up to this length on SignSuisse. */
+    private static final int SIGNSUISSE_MAX_QUERY_LENGTH = 12;
 
     private final SignSearch search;
     private final int maxResults;
@@ -52,6 +55,11 @@ public class SignEnumerator {
         this.search = search;
         this.maxResults = maxResults;
         this.maxQueryLength = maxQueryLength;
+    }
+
+    /** The enumeration of SignSuisse's search, which truncates its results at {@link SignSuisseClient#MAX_RESULTS}. */
+    public static SignEnumerator forSignSuisse(SignSearch search) {
+        return new SignEnumerator(search, SignSuisseClient.MAX_RESULTS, SIGNSUISSE_MAX_QUERY_LENGTH);
     }
 
     /**
@@ -147,8 +155,8 @@ public class SignEnumerator {
             try {
                 results = search.search(prefix, language, category);
             } catch (ExtractionException e) {
-                LOG.log(Level.INFO, "Search for \"{0}\" failed, searching one character further: {1}", prefix,
-                        e.getMessage());
+                LOG.log(Level.INFO, "Search for \"{0}\" failed, searching one character further: {1}",
+                        new Object[] {prefix, e.getMessage()});
                 failed++;
                 observer.failed(prefix, e);
                 after(prefix, Character.MIN_VALUE);
@@ -164,7 +172,7 @@ public class SignEnumerator {
                 }
             }
             if (results.size() >= maxResults && onlyPrefixed) {
-                follow(prefix, normalize(results.getLast().name()));
+                follow(prefix, normalize(results.get(results.size() - 1).name()));
             }
             observer.searched(prefix, queries, pending.size(), hits.size());
         }

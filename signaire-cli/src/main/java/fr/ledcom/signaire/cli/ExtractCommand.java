@@ -26,7 +26,6 @@ import fr.ledcom.signaire.extractor.MediaChoice;
 import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.extractor.SignEnumerator;
 import fr.ledcom.signaire.extractor.SignSource;
-import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
@@ -45,8 +44,6 @@ import picocli.CommandLine.Spec;
 @NotThreadSafe
 public class ExtractCommand implements Callable<Integer> {
 
-    /** Prefixes with too many names are searched up to this length. */
-    private static final int MAX_QUERY_LENGTH = 12;
     private static final Duration PROGRESS_INTERVAL = Duration.ofSeconds(10);
 
     private final SignSourceFactory sourceFactory;
@@ -98,7 +95,7 @@ public class ExtractCommand implements Callable<Integer> {
         PrintWriter out = spec.commandLine().getOut();
         SignSource source = sourceFactory.create(Duration.ofMillis(intervalMillis));
         CategoryExtractor extractor = new CategoryExtractor(source,
-                new SignEnumerator(source, SignSuisseClient.MAX_RESULTS, MAX_QUERY_LENGTH),
+                SignEnumerator.forSignSuisse(source),
                 new BundleWriter(Clock.systemUTC()), new ProgressListener(), PROGRESS_INTERVAL, Clock.systemUTC());
         EnumSet<Language> selectedLanguages = languages == null || languages.isEmpty()
                 ? EnumSet.allOf(Language.class) : EnumSet.copyOf(languages);

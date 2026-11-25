@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light or dark as the phone is; red for the bar and the actions. -->
+    <style name="Theme.Signaire" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:colorPrimary">@color/brand</item>
+        <item name="android:colorAccent">@color/brand</item>
+        <item name="android:statusBarColor">@color/brand</item>
+    </style>
+
+    <!-- Glosses: the name of a sign, in capitals, bold and spaced, as on the web. -->
+    <style name="Gloss">
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+</resources>

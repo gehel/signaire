@@ -29,6 +29,7 @@
         <module>signaire-model</module>
         <module>signaire-bundle</module>
         <module>signaire-extractor</module>
+        <module>signaire-offline</module>
         <module>signaire-core</module>
         <module>signaire-accounts</module>
         <module>signaire-export</module>
@@ -142,6 +143,11 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-offline</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -229,6 +235,11 @@
                             <suppressAnnotation>**.SuppressForbidden</suppressAnnotation>
                         </suppressAnnotations>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <!-- the checkstyle of the parent POM (10.16) rejects unnamed variables (_); 13.9 and later lack
@@ -346,4 +357,52 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- the Android app, where the Android SDK is (docs/design/android.md): elsewhere, the rest builds -->
+            <id>android</id>
+            <activation>
+                <property>
+                    <name>env.ANDROID_HOME</name>
+                </property>
+            </activation>
+            <modules>
+                <module>signaire-android</module>
+            </modules>
+            <properties>
+                <android.platform>android-36</android.platform>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!--
+                          The Android API that the app compiles against, from the SDK into the local repository: a
+                          dependency like the others, without the deprecated system scope. Built first, the root
+                          installs it before the app needs it.
+                        -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>android-jar</id>
+                                <goals>
+                                    <goal>install-file</goal>
+                                </goals>
+                                <phase>validate</phase>
+                                <configuration>
+                                    <file>${env.ANDROID_HOME}/platforms/${android.platform}/android.jar</file>
+                                    <groupId>android.sdk</groupId>
+                                    <artifactId>android</artifactId>
+                                    <version>${android.platform}</version>
+                                    <packaging>jar</packaging>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

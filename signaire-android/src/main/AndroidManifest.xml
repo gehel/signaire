@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="fr.ledcom.signaire">
+
+    <!-- SignSuisse: downloads, and the videos that weren't downloaded -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- downloads go on when the app is in the background, with a notification -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <application
+            android:name="fr.ledcom.signaire.android.SignaireApplication"
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:supportsRtl="true"
+            android:theme="@style/Theme.Signaire">
+
+        <activity
+                android:name="fr.ledcom.signaire.android.SearchActivity"
+                android:exported="true"
+                android:windowSoftInputMode="stateHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+                android:name="fr.ledcom.signaire.android.SignActivity"
+                android:exported="false"
+                android:parentActivityName="fr.ledcom.signaire.android.SearchActivity"/>
+        <activity
+                android:name="fr.ledcom.signaire.android.ListsActivity"
+                android:exported="false"
+                android:parentActivityName="fr.ledcom.signaire.android.SearchActivity"/>
+        <activity
+                android:name="fr.ledcom.signaire.android.ListActivity"
+                android:exported="false"
+                android:parentActivityName="fr.ledcom.signaire.android.ListsActivity"/>
+        <activity
+                android:name="fr.ledcom.signaire.android.LibraryActivity"
+                android:exported="false"
+                android:parentActivityName="fr.ledcom.signaire.android.SearchActivity"/>
+
+        <service
+                android:name="fr.ledcom.signaire.android.DownloadService"
+                android:exported="false"
+                android:foregroundServiceType="dataSync"/>
+    </application>
+</manifest>

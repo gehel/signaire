@@ -1,12 +1,12 @@
 package fr.ledcom.signaire.extractor;
 
-import java.lang.System.Logger.Level;
-import java.lang.System.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +31,7 @@ import fr.ledcom.signaire.model.Sign;
  */
 public class SignPageParser {
 
-    private static final Logger LOG = System.getLogger(SignPageParser.class.getName());
+    private static final Logger LOG = Logger.getLogger(SignPageParser.class.getName());
 
     private static final List<String> PERIPHRASE_LABELS = List.of("périphrase", "umschreibung", "parafrasi");
     private static final List<String> DEFINITION_LABELS = List.of("définition", "definition", "definizione");
@@ -103,7 +103,8 @@ public class SignPageParser {
             if (category.isPresent()) {
                 result.add(category.get());
             } else {
-                LOG.log(Level.WARNING, "Unknown category \"{0}\" in {1}", label.strip(), url);
+                LOG.log(Level.WARNING, "Unknown category \"{0}\" in {1}",
+                        new Object[] {label.strip(), url});
             }
         }
         return result;

@@ -22,6 +22,9 @@ jobs:
           distribution: temurin
           java-version: '27'
           cache: maven
+      - name: Install the Android SDK's packages
+        # the runner has the SDK (ANDROID_HOME), so the android profile builds the app: its platform and build tools
+        run: ci/android-sdk.sh
       - name: Build and verify
         # the build cache is for local builds; CI builds everything (see .mvn/maven-build-cache-config.xml)
         run: ./mvnw -B -ntp -Dmaven.build.cache.enabled=false verify
@@ -37,6 +40,12 @@ jobs:
           name: signaire-standalone-jar
           path: signaire-web/target/signaire-web-*-standalone.jar
           if-no-files-found: error
+      - name: Upload the Android app
+        uses: actions/upload-artifact@v7
+        with:
+          name: signaire-android
+          path: signaire-android/target/android/signaire.apk
+          if-no-files-found: error
       - name: Upload the screenshots of the pages
         # taken by BrowserIT: the look of every page, to review changes
         if: always()
@@ -51,6 +60,44 @@ jobs:
         with:
           name: test-reports
           path: '**/target/surefire-reports/'
+
+  # The Android app on an emulator of Android 14 (AndroidIT): a job of its own, as the emulator takes a while.
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '27'
+          cache: maven
+      - name: Let the emulator use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install the Android SDK's packages
+        run: ci/android-sdk.sh --emulator
+      - name: Test the app on the emulator
+        # the quality gates run in the build job
+        run: >
+          ./mvnw -B -ntp -Dmaven.build.cache.enabled=false -PnoVerify verify -pl signaire-it -am
+          -Dtest=NONE -Dsurefire.failIfNoSpecifiedTests=false -Dit.test=AndroidIT -Dfailsafe.failIfNoSpecifiedTests=false
+      - name: Upload the screenshots of the app
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-android
+          path: signaire-it/target/screenshots/android/
+          if-no-files-found: ignore
+      - name: Upload the emulator's log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulator-log
+          path: signaire-it/target/it/emulator.log
+          if-no-files-found: ignore
 
   # The standalone application with its own Java runtime, for each system: jpackage only packages for the system
   # it runs on.

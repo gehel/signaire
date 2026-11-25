@@ -32,12 +32,13 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
 | `signaire-it` | Tests of the whole stack: CLI and web jars as processes | — |
-| `android/` (later) | Java Android app, Gradle build, offline-capable | — |
+| `signaire-offline` | Signs without a server, for the app: bundles of a directory in memory, search, word lists in a file, downloads | no |
+| `signaire-android` | The Android app, built by Maven with the Android SDK's tools (profile `android`, when `ANDROID_HOME` is set) | no |
 
 Key decisions:
-- `signaire-model` and `signaire-bundle` must stay **Android-compatible**: no Spring, Java release 17
-  (set per module), small dependency footprint. The Android app reuses them to read the same bundles
-  offline.
+- `signaire-model`, `signaire-bundle` and `signaire-extractor` must stay **Android-compatible**: no Spring, Java
+  release 17 (set per module; the extractor's tests are on 27), small dependency footprint, nothing Android lacks
+  (`java.net.http`, AWT, virtual threads). The Android app reads the same bundles, and extracts with the extractor.
 - **Bundles**: one zip per SignSuisse category (`city.zip`…), containing `manifest.json` (format version,
   category, sign count, SHA-256 of every entry), `signs.json`, and `media/` (videos, photos, illustrations).
   A `Media` keeps the SignSuisse URL and, when downloaded, its path in the bundle. Bundles are produced by
@@ -217,6 +218,12 @@ must get right (no page wider than a phone, cards, the tour) and writes screensh
 `signaire-it/target/screenshots/` (a CI artifact). Look at them after changing the look; use it, not a local
 browser, to see pages. Its image tag follows the Selenium version of the Spring Boot BOM.
 
+`AndroidIT` (in the `android` profile, with `ANDROID_HOME`) installs the APK on the device adb sees, or on an emulator
+it starts (`signaire.android.avd`, created from `system-images;android-34;google_apis;x86_64` when missing), pushes
+the demo bundles into the app (`run-as`), drives it with adb and uiautomator, in French, and writes screenshots to
+`signaire-it/target/screenshots/android/`. It skips without a device or that image. `AndroidApiTest` (signaire-android)
+fails on any use of Java that `android.jar` lacks: Java 17 compiling is not enough (`System.Logger` isn't on Android).
+
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
 scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
@@ -225,7 +232,8 @@ summarizes them (main keeps them as the `sitespeed-baseline` artifact, 90 days) 
 requests of a page grow by more than 10% (and more than 100 ms, 1 KB or 1 request). The comparison is in the summary of
 the job. SonarCloud runs when the `SONAR_TOKEN` secret exists, and fails on its quality gate. The gate wants 80% coverage of new
 code, from the **unit tests only** (on purpose: the jacoco report of the parent POM is written before the
-integration tests), so code reached only by ITs needs unit tests too. When a SonarCloud suggestion clashes with
+integration tests), so code reached only by ITs needs unit tests too (the Android app's screens excepted: they run on
+Android only, `AndroidIT` tests them). When a SonarCloud suggestion clashes with
 the WMF checkstyle rules, checkstyle wins; a false positive gets a `// NOSONAR` with its reason.
 
 Running the CLI locally:
@@ -243,6 +251,17 @@ To look at a PDF while working on the layouts: `pdftoppm -r 50 -png -f 1 -l 1 fi
 
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
+
+Building the Android app (`docs/design/android.md`) needs the Android SDK: `ANDROID_HOME`, with
+`platforms;android-36` and `build-tools;36.1.0` (`android.platform`, `android.buildTools.version` in its POM). Without
+it, the `android` profile is off and the module isn't built. The app uses Android's framework only, no AndroidX (AARs);
+Java 17; its texts are Android resources (`res/values*`, French in `values`), and `labels.xml` repeats the names of
+categories and sign languages of the web's messages.
+
+```bash
+./mvnw -PnoVerify -pl signaire-android -am package -DskipTests
+adb install -r signaire-android/target/android/signaire.apk
+```
 
 Running the web UI locally (http://localhost:8080; `docker compose up -d` starts PostgreSQL): it loads `signaire.bundles.directory` (default
 `bundles`) in the background at startup, and serves the media from the bundles.
@@ -306,7 +325,7 @@ Web UI gotchas:
   (signs are transient, user journeys) is tested in `signaire-it`.
 
 Architecture rules: each module has an `ArchitectureTest` (ArchUnit) for what Maven dependencies can't say:
-model and bundle stay Android compatible, extractor and export stay free of Spring, the packages of core don't
+model, bundle and extractor stay Android compatible, extractor and export stay free of Spring, the packages of core don't
 depend on each other (search ← bundles; media alone), accounts keeps its entities and repositories internal,
 the CLI and web never reach Lucene or JPA directly. Change the rules there when the architecture changes. Its
 `PackageCyclesTest` forbids cycles between packages, test classes included.

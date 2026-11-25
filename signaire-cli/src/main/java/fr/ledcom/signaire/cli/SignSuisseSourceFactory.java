@@ -1,7 +1,6 @@
 package fr.ledcom.signaire.cli;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,10 +34,6 @@ public class SignSuisseSourceFactory implements SignSourceFactory {
 
     @Override
     public SignSource create(Duration interval) {
-        HttpClient client = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofSeconds(30))
-                .build();
-        return new SignSuisseClient(new ThrottledHttpFetcher(client, interval, MAX_ATTEMPTS, userAgent), baseUri);
+        return new SignSuisseClient(new ThrottledHttpFetcher(interval, MAX_ATTEMPTS, userAgent), baseUri);
     }
 }

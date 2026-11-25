@@ -34,7 +34,8 @@ jobs:
         with:
           node-version: '22'
       - name: Build
-        run: ./mvnw -B -ntp -Dmaven.build.cache.enabled=false -PnoVerify install -DskipTests
+        # the web application only: not the Android app, which needs packages of the SDK
+        run: ./mvnw -B -ntp -Dmaven.build.cache.enabled=false -PnoVerify,!android install -DskipTests
       - name: Start Signaire on demo signs
         run: ci/start-demo.sh target/demo
       - name: Lighthouse
@@ -99,6 +100,10 @@ jobs:
           distribution: temurin
           java-version: '27'
           cache: maven
+      - name: Install the Android SDK's packages
+        # the app is analyzed too
+        if: env.SONAR_TOKEN != ''
+        run: ci/android-sdk.sh
       # -U: a failed download of the plugin, kept in the cached ~/.m2, would otherwise not be retried
       - name: Analyze
         if: env.SONAR_TOKEN != ''

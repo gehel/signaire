@@ -1,8 +1,6 @@
 package fr.ledcom.signaire.extractor;
 
 import java.io.IOException;
-import java.lang.System.Logger.Level;
-import java.lang.System.Logger;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +25,8 @@ import java.util.function.UnaryOperator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.bundle.Bundle;
+import fr.ledcom.signaire.bundle.BundleFiles;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleReader;
 import fr.ledcom.signaire.bundle.BundleWriter;
@@ -60,10 +61,12 @@ public class CategoryExtractor {
 
     /** Name of the media cache, inside the output directory. */
     public static final String MEDIA_CACHE = ".media";
-    private static final Logger LOG = System.getLogger(CategoryExtractor.class.getName());
+    private static final Logger LOG = Logger.getLogger(CategoryExtractor.class.getName());
     private static final Duration DEFAULT_PROGRESS_INTERVAL = Duration.ofSeconds(5);
     private static final long POLL_MILLIS = 100;
     private static final long STOP_SECONDS = 10;
+    /** Search, reading, download. */
+    private static final int STAGES = 3;
     private static final String EXTRACTION_OF = "Extraction of ";
 
     private final SignSource source;
@@ -119,7 +122,7 @@ public class CategoryExtractor {
             ExtractionOptions options) {
         createDirectories(outputDir);
         createDirectories(cache);
-        Path target = outputDir.resolve(bundleFileName(category));
+        Path target = outputDir.resolve(BundleFiles.fileName(category));
         Map<String, Sign> previous = options.refresh() ? Map.of() : previousSigns(target);
         Run run = new Run(category, EnumSet.copyOf(languages), cache, options.media(), previous);
         lastTracker.set(run.tracker);
@@ -152,11 +155,6 @@ public class CategoryExtractor {
         }
     }
 
-    /** Name of the bundle file of a category, e.g. {@code sport-leisure.zip}. */
-    public static String bundleFileName(Category category) {
-        return category.name().toLowerCase(Locale.ROOT).replace('_', '-') + ".zip";
-    }
-
     private static Map<String, Sign> previousSigns(Path bundle) {
         if (!Files.isRegularFile(bundle)) {
             return Map.of();
@@ -164,8 +162,8 @@ public class CategoryExtractor {
         try (Bundle existing = new BundleReader().read(bundle)) {
             return existing.signs().stream().collect(Collectors.toMap(Sign::uid, Function.identity(), (a, b) -> a));
         } catch (BundleException e) {
-            LOG.log(Level.WARNING, "Cannot read the signs of {0}, reading them all again: {1}", bundle,
-                    e.getMessage());
+            LOG.log(Level.WARNING, "Cannot read the signs of {0}, reading them all again: {1}",
+                    new Object[] {bundle, e.getMessage()});
             return Map.of();
         }
     }
@@ -194,7 +192,9 @@ public class CategoryExtractor {
         }
 
         void execute() {
-            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+            // a thread per stage: Android has no virtual threads
+            ExecutorService executor = Executors.newFixedThreadPool(STAGES,
+                    new NamedThreads("extraction-" + category.name().toLowerCase(Locale.ROOT).replace('_', '-')));
             try {
                 stages.set(List.of(
                         executor.submit(() -> stage(this::search, found)),
@@ -214,9 +214,10 @@ public class CategoryExtractor {
         private void awaitTermination(ExecutorService executor) {
             try {
                 if (!executor.awaitTermination(STOP_SECONDS, TimeUnit.SECONDS)) {
-                    LOG.log(Level.WARNING, "The extraction of {0} did not stop within {1} s", category, STOP_SECONDS);
+                    LOG.log(Level.WARNING, "The extraction of {0} did not stop within {1} s",
+                            new Object[] {category, STOP_SECONDS});
                 }
-            } catch (InterruptedException _) {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -260,7 +261,7 @@ public class CategoryExtractor {
             try {
                 stage.get(POLL_MILLIS, TimeUnit.MILLISECONDS);
                 return true;
-            } catch (TimeoutException _) {
+            } catch (TimeoutException e) {
                 return false;
             } catch (ExecutionException e) {
                 throw stop(e.getCause() instanceof RuntimeException cause ? cause
@@ -374,9 +375,11 @@ public class CategoryExtractor {
         private <T> Optional<T> take(BlockingQueue<Optional<T>> queue) {
             try {
                 return queue.take();
-            } catch (InterruptedException _) {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new CancellationException(EXTRACTION_OF + category + " interrupted");
+                CancellationException cancellation = new CancellationException(EXTRACTION_OF + category + " interrupted");
+                cancellation.initCause(e);
+                throw cancellation;
             }
         }
 
@@ -414,7 +417,7 @@ public class CategoryExtractor {
     private static long size(Path file) {
         try {
             return Files.size(file);
-        } catch (IOException _) {
+        } catch (IOException e) {
             return 0;
         }
     }

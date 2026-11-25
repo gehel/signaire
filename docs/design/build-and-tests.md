@@ -36,14 +36,16 @@ accessibility).
 - **Measures** (`quality.yml`): Lighthouse CI (accessibility at 1), sitespeed.io (budget, and comparison with the
   last build of main: no timing, size or request count up by more than 10% and a slack), SonarCloud (quality gate:
   80% coverage of new code by unit tests).
-- **CI artifacts**: the CLI jar, the standalone images for Linux, Windows and macOS, the screenshots of the pages.
+- **CI artifacts**: the CLI jar, the standalone images for Linux, Windows and macOS, the Android app, the screenshots
+  of the pages and of the app.
 
 ## Decisions
 
 - **Quality gates in the build, not only in CI**: `./mvnw verify` fails locally on what CI would reject.
 - **Mocks above the database layer, containers only end to end**: Docker-free tests for every module but one; the
   test suite went from about 180 s to about 126 s, and contributors without Docker can work on everything else.
-- **Coverage from unit tests only** (SonarCloud): code reached only by integration tests needs unit tests too.
+- **Coverage from unit tests only** (SonarCloud): code reached only by integration tests needs unit tests too. The
+  screens of the Android app are left out: they run on Android only, where `AndroidIT` tests them.
 - **Comparison with main rather than absolute thresholds alone**: catches regressions early while budgets stay
   loose enough for CI noise.
 - **Checkstyle wins over SonarCloud** when they clash; false positives get `// NOSONAR` with their reason.
