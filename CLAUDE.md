@@ -175,11 +175,12 @@ Gotchas with Spring Boot and picocli:
   because `PackageCyclesTest` also covers test classes.
 
 Gotchas with the WMF ruleset and Java 27:
-- The root POM overrides the parent's `lombok`, `spotbugs`, `forbiddenapis` and `jacoco` versions because
-  the parent's versions can't handle Java 27 class files. Check these first when bumping the JDK or the
-  parent. It also overrides checkstyle: the parent's 10.16 rejects unnamed variables. The rules are the WMF ruleset
-  from our copy, `checkstyle.xml`, because checkstyle 13.9 removed its `JavadocStyle` check: `SummaryJavadoc`
-  replaces it, and a Javadoc of block tags alone stays allowed. Keep the copy in step with the parent's.
+- The root POM overrides the parent's `spotbugs`, `forbiddenapis` and `jacoco` versions because the parent's
+  versions can't handle Java 27 class files, and turns off annotation processing: the parent runs Lombok, which we
+  don't use. Check these first when bumping the JDK or the parent. It also overrides checkstyle: the parent's 10.16
+  rejects unnamed variables. The rules are the WMF ruleset from our copy, `checkstyle.xml`, because checkstyle 13.9
+  removed its `JavadocStyle` check: `SummaryJavadoc` replaces it, and a Javadoc of block tags alone stays allowed.
+  Keep the copy in step with the parent's.
 - Unused catch parameters and try-with-resources variables are `_`, except in the Java 17 modules (model,
   bundle), where `_` doesn't compile.
 - Import order: `java.*`, `javax.*`, `org.*`, `com.*`, then everything else (`edu.*`, `picocli.*`, …) as
