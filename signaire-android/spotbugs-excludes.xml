@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The R classes that aapt2 writes: names and arrays as Android wants them. -->
+<FindBugsFilter>
+    <Match>
+        <Class name="~fr\.ledcom\.signaire\.android\.R(\$.*)?"/>
+    </Match>
+</FindBugsFilter>

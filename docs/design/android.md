@@ -40,13 +40,22 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 - **Screens**: the search (field, filters, results as entries: gloss, sign language, start of the definition), a sign
   (video, images, texts, examples, add to a list), the lists and a list, the library (bundles, download, import).
 - **Languages**: French, German, Italian and English, like the rest: Android's string resources (`values` in French,
-  `values-de`, `values-it`, `values-en`), with a test that each translation has the keys of the French.
+  `values-de`, `values-it`, `values-en`), with a test that each translation has the keys of the French. The build
+  copies `values` to `values-fr`: Android takes a language of the phone's list that the app names before its default,
+  so a phone in French then English would otherwise show English.
 - **Android 14 (API 34) and later**: the records and Java 17 APIs of the model and of Jackson run without
   desugaring.
-- **Tests**: JVM tests for the extractor and `signaire-offline`; `AndroidIT` (`signaire-it`, `android` profile) starts
-  an emulator (Android 14), installs the APK, pushes the demo bundles, drives the screens with `adb` and writes
-  screenshots, as `BrowserIT` does for the web.
-- **CI** builds the APK (the runners have the SDK) and keeps it as an artifact.
+- **Java 17 is not Android**: `System.Logger`, for one, compiles and isn't on the phone, and `d8` doesn't say so.
+  `AndroidApiTest` checks that the app and the modules it stands on use only the members of Java classes that
+  `android.jar` has; the Android-compatible modules log with `java.util.logging`.
+- **`android.jar` is a dependency** like the others (`provided`): the root's `android` profile installs the SDK's into
+  the local repository first, rather than the deprecated `system` scope.
+- **Tests**: JVM tests for the extractor and `signaire-offline`; `AndroidIT` (`signaire-it`) installs the APK on the
+  device adb sees, or on an emulator of Android 14 it starts, pushes the demo bundles, drives the screens with `adb`
+  (uiautomator to read them) in French, and writes screenshots, as `BrowserIT` does for the web. It skips without a
+  device or the system image to emulate one.
+- **CI** builds the APK (the runners have the SDK; `ci/android-sdk.sh` installs its packages) and keeps it as an
+  artifact; a job of its own runs `AndroidIT` on an emulator, with KVM.
 
 ## Decisions
 

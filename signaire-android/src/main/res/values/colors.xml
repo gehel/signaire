@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The red of the web application: the brand, the main actions. -->
+<resources>
+    <color name="brand">#b5121b</color>
+    <color name="on_brand">#ffffff</color>
+</resources>

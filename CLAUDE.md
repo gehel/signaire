@@ -32,7 +32,8 @@ Multi-module Maven build (`fr.ledcom:signaire`), Java 27, Spring Boot (imported 
 | `signaire-cli` | Spring Boot + picocli command line | yes |
 | `signaire-web` | Spring MVC + Thymeleaf + htmx UI, and REST API for Android/sync | yes |
 | `signaire-it` | Tests of the whole stack: CLI and web jars as processes | — |
-| `android/` (later) | Java Android app, Gradle build, offline-capable | — |
+| `signaire-offline` | Signs without a server, for the app: bundles of a directory in memory, search, word lists in a file, downloads | no |
+| `signaire-android` | The Android app, built by Maven with the Android SDK's tools (profile `android`, when `ANDROID_HOME` is set) | no |
 
 Key decisions:
 - `signaire-model`, `signaire-bundle` and `signaire-extractor` must stay **Android-compatible**: no Spring, Java
@@ -243,6 +244,17 @@ To look at a PDF while working on the layouts: `pdftoppm -r 50 -png -f 1 -l 1 fi
 
 The `jar-with-dependencies` jar is self-contained (Spring Boot layout); CI publishes it as the
 `signaire-cli` build artifact. The plain `signaire-cli-*.jar` holds only the module's classes.
+
+Building the Android app (`docs/design/android.md`) needs the Android SDK: `ANDROID_HOME`, with
+`platforms;android-36` and `build-tools;36.1.0` (`android.platform`, `android.buildTools.version` in its POM). Without
+it, the `android` profile is off and the module isn't built. The app uses Android's framework only, no AndroidX (AARs);
+Java 17; its texts are Android resources (`res/values*`, French in `values`), and `labels.xml` repeats the names of
+categories and sign languages of the web's messages.
+
+```bash
+./mvnw -PnoVerify -pl signaire-android -am package -DskipTests
+adb install -r signaire-android/target/android/signaire.apk
+```
 
 Running the web UI locally (http://localhost:8080; `docker compose up -d` starts PostgreSQL): it loads `signaire.bundles.directory` (default
 `bundles`) in the background at startup, and serves the media from the bundles.

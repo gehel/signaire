@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.ledcom</groupId>
+        <artifactId>signaire</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>signaire-android</artifactId>
+
+    <description>The Android app: signs on the phone, searched, shown and listed offline (docs/design/android.md).
+        Built with the tools of the Android SDK (ANDROID_HOME), without Gradle.</description>
+
+    <properties>
+        <android.apk>${android.out}/signaire.apk</android.apk>
+        <android.buildTools>${env.ANDROID_HOME}/build-tools/${android.buildTools.version}</android.buildTools>
+        <android.buildTools.version>36.1.0</android.buildTools.version>
+        <!-- the debug key of the Android tools: the same on every build of a machine, so that updates install -->
+        <android.debugKeystore>${user.home}/.android/debug.keystore</android.debugKeystore>
+        <android.generated>${project.build.directory}/generated-sources/aapt</android.generated>
+        <android.jar>${env.ANDROID_HOME}/platforms/${android.platform}/android.jar</android.jar>
+        <!-- Android 14: records and the Java 17 APIs of the model and of Jackson, without desugaring -->
+        <android.minSdk>34</android.minSdk>
+        <android.out>${project.build.directory}/android</android.out>
+        <!-- 34 until the screens handle the edge-to-edge display that Android 15 imposes on later targets -->
+        <android.targetSdk>34</android.targetSdk>
+        <android.versionCode>1</android.versionCode>
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.testRelease>27</maven.compiler.testRelease>
+        <!-- the screens run on Android only: AndroidIT tests them on an emulator, which no coverage measures -->
+        <sonar.coverage.exclusions>src/main/java/**</sonar.coverage.exclusions>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-offline</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+        <dependency>
+            <!-- the Android API of the SDK, which the phone provides: installed by the root's android profile -->
+            <groupId>android.sdk</groupId>
+            <artifactId>android</artifactId>
+            <version>${android.platform}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.stephenc.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <configuration>
+                    <!-- the parent's, and the R classes that aapt2 writes -->
+                    <excludeFilterFile>org/wikimedia/build/tools/spotbugs/spotbugs-excludes.xml,${project.basedir}/spotbugs-excludes.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- the resources compiled and linked with the manifest, and their R.java -->
+                        <id>resources</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${android.out}"/>
+                                <mkdir dir="${android.generated}"/>
+                                <delete dir="${android.out}/res"/>
+                                <copy todir="${android.out}/res">
+                                    <fileset dir="${project.basedir}/src/main/res"/>
+                                </copy>
+                                <!-- French is the default (other languages), and a language of its own: on a phone in
+                                     French then English, Android would take English over the default -->
+                                <copy todir="${android.out}/res/values-fr">
+                                    <fileset dir="${project.basedir}/src/main/res/values" includes="strings.xml,labels.xml"/>
+                                </copy>
+                                <exec executable="${android.buildTools}/aapt2" failonerror="true">
+                                    <arg value="compile"/>
+                                    <arg value="--dir"/>
+                                    <arg file="${android.out}/res"/>
+                                    <arg value="-o"/>
+                                    <arg file="${android.out}/resources.zip"/>
+                                </exec>
+                                <exec executable="${android.buildTools}/aapt2" failonerror="true">
+                                    <arg value="link"/>
+                                    <arg value="-I"/>
+                                    <arg file="${android.jar}"/>
+                                    <arg value="--manifest"/>
+                                    <arg file="${project.basedir}/src/main/AndroidManifest.xml"/>
+                                    <arg value="--java"/>
+                                    <arg file="${android.generated}"/>
+                                    <arg value="--custom-package"/>
+                                    <arg value="fr.ledcom.signaire.android"/>
+                                    <arg value="--min-sdk-version"/>
+                                    <arg value="${android.minSdk}"/>
+                                    <arg value="--target-sdk-version"/>
+                                    <arg value="${android.targetSdk}"/>
+                                    <arg value="--version-code"/>
+                                    <arg value="${android.versionCode}"/>
+                                    <arg value="--version-name"/>
+                                    <arg value="${project.version}"/>
+                                    <!-- debuggable: the tests push signs into the app with run-as -->
+                                    <arg value="--debug-mode"/>
+                                    <arg value="-o"/>
+                                    <arg file="${android.out}/resources.apk"/>
+                                    <arg file="${android.out}/resources.zip"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- dex, APK, aligned, signed -->
+                        <id>apk</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <delete dir="${android.out}/dex"/>
+                                <mkdir dir="${android.out}/dex"/>
+                                <!-- fails on classes Android doesn't have -->
+                                <apply executable="java" failonerror="true" parallel="true">
+                                    <arg value="-cp"/>
+                                    <arg file="${android.buildTools}/lib/d8.jar"/>
+                                    <arg value="com.android.tools.r8.D8"/>
+                                    <arg value="--release"/>
+                                    <arg value="--min-api"/>
+                                    <arg value="${android.minSdk}"/>
+                                    <arg value="--lib"/>
+                                    <arg file="${android.jar}"/>
+                                    <arg value="--output"/>
+                                    <arg file="${android.out}/dex"/>
+                                    <arg file="${project.build.directory}/${project.build.finalName}.jar"/>
+                                    <fileset dir="${android.out}/libs" includes="*.jar"/>
+                                </apply>
+                                <!-- resources.arsc stays stored, as Android wants it -->
+                                <zip destfile="${android.out}/unaligned.apk" keepcompression="true">
+                                    <zipfileset src="${android.out}/resources.apk"/>
+                                    <fileset dir="${android.out}/dex" includes="*.dex"/>
+                                    <fileset dir="${android.out}/java-resources"/>
+                                </zip>
+                                <exec executable="${android.buildTools}/zipalign" failonerror="true">
+                                    <arg value="-f"/>
+                                    <arg value="-p"/>
+                                    <arg value="4"/>
+                                    <arg file="${android.out}/unaligned.apk"/>
+                                    <arg file="${android.out}/aligned.apk"/>
+                                </exec>
+                                <mkdir dir="${user.home}/.android"/>
+                                <exec executable="keytool" failifexecutionfails="true" failonerror="false">
+                                    <arg value="-genkeypair"/>
+                                    <arg value="-noprompt"/>
+                                    <arg value="-keystore"/>
+                                    <arg file="${android.debugKeystore}"/>
+                                    <arg value="-storepass"/>
+                                    <arg value="android"/>
+                                    <arg value="-keypass"/>
+                                    <arg value="android"/>
+                                    <arg value="-alias"/>
+                                    <arg value="androiddebugkey"/>
+                                    <arg value="-keyalg"/>
+                                    <arg value="RSA"/>
+                                    <arg value="-keysize"/>
+                                    <arg value="2048"/>
+                                    <arg value="-validity"/>
+                                    <arg value="10000"/>
+                                    <arg value="-dname"/>
+                                    <arg value="CN=Android Debug,O=Android,C=US"/>
+                                </exec>
+                                <exec executable="${android.buildTools}/apksigner" failonerror="true">
+                                    <!-- its cryptography is native code, which the JDK will refuse unless allowed -->
+                                    <arg value="-J-enable-native-access=ALL-UNNAMED"/>
+                                    <arg value="sign"/>
+                                    <arg value="--ks"/>
+                                    <arg file="${android.debugKeystore}"/>
+                                    <arg value="--ks-pass"/>
+                                    <arg value="pass:android"/>
+                                    <arg value="--out"/>
+                                    <arg file="${android.apk}"/>
+                                    <arg file="${android.out}/aligned.apk"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- the libraries, for d8 -->
+                        <id>libraries</id>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${android.out}/libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- the files the libraries read from their jar (Jackson's services), in the APK -->
+                        <id>java-resources</id>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${android.out}/java-resources</outputDirectory>
+                            <excludes>**/*.class,META-INF/*.MF,META-INF/*.SF,META-INF/*.RSA,META-INF/*.DSA,META-INF/maven/**,META-INF/versions/**,META-INF/proguard/**,META-INF/*LICENSE*,META-INF/*NOTICE*,META-INF/jsoup/**</excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <id>r-java</id>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>${android.generated}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- the APK, as an artifact of the module (CI keeps it, AndroidIT installs it) -->
+                        <id>apk</id>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${android.apk}</file>
+                                    <type>apk</type>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
