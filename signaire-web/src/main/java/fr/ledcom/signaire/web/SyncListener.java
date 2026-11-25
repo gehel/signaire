@@ -14,16 +14,30 @@ import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
 
-/** Logs the extraction of a {@link SignSuisseSync}: its status every 30 s, the searches done and the failures. */
+/**
+ * Follows the extraction of a {@link SignSuisseSync}: indexes the signs extracted, logs the status every 30 s, the
+ * searches done and the failures.
+ */
 final class SyncListener implements ExtractionListener {
 
     private static final Logger LOG = System.getLogger(SyncListener.class.getName());
     private static final Duration LOG_INTERVAL = Duration.ofSeconds(30);
 
+    private final SyncIndexing indexing;
     private Instant lastLog = Instant.EPOCH;
+
+    SyncListener(SyncIndexing indexing) {
+        this.indexing = indexing;
+    }
+
+    @Override
+    public void signExtracted(Sign sign) {
+        indexing.add(sign);
+    }
 
     @Override
     public synchronized void progress(ExtractionStatus status) {
+        indexing.flushIfDue();
         Instant now = Instant.now();
         if (status.stage() == ExtractionStatus.Stage.DONE || !now.isBefore(lastLog.plus(LOG_INTERVAL))) {
             lastLog = now;

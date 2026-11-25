@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
@@ -22,7 +25,7 @@ import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
 
-/** What every page has: links to SignSuisse, accessibility helpers, exports explained. */
+/** What every page has: links to SignSuisse, accessibility helpers, its style, exports explained. */
 @WebMvcTest(SearchController.class)
 @Import({SecurityConfiguration.class, AdminUsers.class})
 class PageContentTest {
@@ -66,6 +69,27 @@ class PageContentTest {
     void pagesCanBeNavigatedWithTheKeyboard() {
         assertThat(mvc.get().uri("/").exchange()).bodyText()
                 .contains("<a class=\"skip\" href=\"#main\">Aller au contenu</a>", "<main id=\"main\"");
+    }
+
+    @Test
+    void pagesAreStyledByPicoServedFromItsWebjar() throws Exception {
+        String page = mvc.get().uri("/").exchange().getResponse().getContentAsString();
+        Matcher pico = Pattern.compile(
+                "<link rel=\"stylesheet\" href=\"(/webjars/picocss__pico/[^\"]+/pico.red.min.css)\">").matcher(page);
+        assertThat(pico.find()).as("link to Pico in %s", page).isTrue();
+        assertThat(page.indexOf(pico.group())).as("before our stylesheet")
+                .isLessThan(page.indexOf("/css/signaire.css"));
+        assertThat(mvc.get().uri(pico.group(1)).exchange()).hasStatus(HttpStatus.OK).hasContentType("text/css");
+    }
+
+    @Test
+    void pagesPreloadTheirFontServedWithItsLicense() {
+        String font = "/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2";
+        assertThat(mvc.get().uri("/").exchange()).bodyText().containsPattern("<link rel=\"preload\" href=\""
+                + Pattern.quote(font) + "\" as=\"font\"\\s+type=\"font/woff2\" crossorigin>");
+        assertThat(mvc.get().uri(font).exchange()).hasStatus(HttpStatus.OK).hasContentType("font/woff2");
+        assertThat(mvc.get().uri("/fonts/OFL.txt").exchange()).hasStatus(HttpStatus.OK).bodyText()
+                .contains("SIL Open Font License");
     }
 
     @Test

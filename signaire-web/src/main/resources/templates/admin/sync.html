@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(#{admin.sync.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main">
-    <p><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
+    <p class="back"><a th:href="@{/admin}" th:text="#{admin.title}">Administration</a></p>
     <h1 th:text="#{admin.sync.title}">Synchronization with SignSuisse</h1>
     <p th:if="${status}" class="error" role="status" th:text="${status}">Already running.</p>
 
@@ -30,6 +30,8 @@
                     th:text="#{admin.sync.media(${status.media().downloaded()}, ${status.media().queued()},
                              ${status.media().bytes() / 1000000}, ${status.media().failed()})}">Media to download:
                     12 of 40 (30 MB), 0 failed.</li>
+                <li th:if="${progress.indexed() > 0}" th:text="#{admin.sync.indexed(${progress.indexed()})}">Signs
+                    already searchable: 95.</li>
                 <li th:text="#{admin.sync.requests(${status.requestsDone()}, ${status.requestsLeft()})}">Requests to
                     SignSuisse: 200 done, 40 known to be left.</li>
             </ul>

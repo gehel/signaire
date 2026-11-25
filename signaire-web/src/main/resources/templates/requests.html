@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(#{requests.title})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
@@ -39,7 +39,9 @@
         <tr th:each="request : ${requests}">
             <td>
                 <strong th:text="${request.word()}">Zoug</strong>
-                <abbr th:text="#{'signLanguage.short.' + ${request.language().name()}}">LSF</abbr>
+                <abbr class="sign-language" th:data-language="${request.language().code()}"
+                      th:title="#{'signLanguage.' + ${request.language().name()}}"
+                      th:text="#{'signLanguage.short.' + ${request.language().name()}}">LSF</abbr>
                 <div class="note" th:if="${request.comment() != null}" th:text="${request.comment()}">Comment</div>
             </td>
             <td th:text="#{'requests.status.' + ${request.status().name()}}">Waiting</td>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(null)}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
@@ -9,8 +9,8 @@
         <h2 id="welcome-title" th:text="#{tour.welcome.title}">Welcome to Signaire</h2>
         <p th:text="#{tour.welcome.text}">Signaire helps you learn Swiss sign languages.</p>
         <p class="tour-links">
-            <a th:href="@{/tour/1}" th:text="#{tour.start}">Take the tour</a>
-            <a th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
+            <a class="button" th:href="@{/tour/1}" th:text="#{tour.start}">Take the tour</a>
+            <a class="button outline" th:href="@{/tour/done}" th:text="#{tour.dismiss}">No, thanks</a>
         </p>
     </section>
     <form class="search" data-tour="search" th:action="@{/}" method="get" th:hx-get="@{/}" hx-target="#results" hx-swap="outerHTML"
@@ -18,8 +18,11 @@
         <p class="words">
             <label for="q" th:text="#{search.label}">Search a sign</label>
             <a th:replace="~{fragments/help :: link('search')}"></a>
-            <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}" autofocus>
-            <button type="submit" th:text="#{search.submit}">Search</button>
+            <span class="field">
+                <input type="search" id="q" name="q" th:value="${q}" th:placeholder="#{search.placeholder}"
+                       autofocus>
+                <button type="submit" th:text="#{search.submit}">Search</button>
+            </span>
         </p>
         <fieldset class="languages">
             <legend th:text="#{search.languages}">Sign languages</legend>
@@ -50,19 +53,30 @@
         </p>
         <th:block th:if="${results.total() > 0}">
             <p class="count" th:text="#{search.found(${results.total()})}">1 sign found</p>
+            <!--/* Entries of a lexicon: listed by name, under their initials (Initial) */-->
+            <div class="entries">
+            <th:block th:each="initial : ${initials}">
+            <h2 th:if="${initial.letter() != null}" class="initial" th:text="${initial.letter()}">A</h2>
             <ul class="signs">
-                <li th:each="sign : ${results.signs()}">
+                <li th:each="sign : ${initial.signs()}">
                     <input th:if="${userLists != null}" type="checkbox" name="uid" th:value="${sign.uid()}"
                            form="add-to-list" th:aria-label="#{search.addTo.select(${sign.name()})}">
-                    <a th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
-                    <abbr class="sign-language" th:title="#{'signLanguage.' + ${sign.language().name()}}"
+                    <a class="name" th:lang="${sign.language().code()}" th:href="@{/signs/{uid}(uid=${sign.uid()})}"
+                       th:text="${sign.name()}">LAUSANNE</a>
+                    <abbr class="sign-language" th:data-language="${sign.language().code()}"
+                          th:title="#{'signLanguage.' + ${sign.language().name()}}"
                           th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
-                    <a th:if="${sign.sourceUrl() != null}" class="source" th:href="${sign.sourceUrl()}"
-                       rel="external" th:aria-label="#{search.signSuisse(${sign.name()})}">SignSuisse</a>
+                    <p th:if="${sign.definition() != null or sign.periphrase() != null}" class="definition"
+                       th:lang="${sign.language().code()}" th:text="${sign.definition() ?: sign.periphrase()}">
+                        Capitale du canton de Vaud</p>
                     <span class="categories"><th:block th:each="category, it : ${sign.categories()}"
                         >[[#{'category.' + ${category.name()}}]]<th:block th:unless="${it.last}">, </th:block></th:block></span>
+                    <a th:if="${sign.sourceUrl() != null}" class="source" th:href="${sign.sourceUrl()}"
+                       rel="external" th:aria-label="#{search.signSuisse(${sign.name()})}">SignSuisse</a>
                 </li>
             </ul>
+            </th:block>
+            </div>
             <!--/* The checkboxes of the results belong to this form, through their form attribute */-->
             <form th:if="${userLists != null}" id="add-to-list" class="add-to-list" method="post"
                   th:action="@{/lists/signs}" th:hx-post="@{/lists/signs}" hx-target="#add-status"
@@ -81,7 +95,8 @@
                        th:aria-label="#{search.addTo.newListName}" maxlength="100">
                 <button type="submit" name="scope" value="selection" th:text="#{search.addTo.selection}">
                     Add the selection</button>
-                <button type="submit" name="scope" value="all" th:text="#{search.addTo.all(${allCount})}">
+                <button type="submit" name="scope" value="all" class="secondary outline"
+                        th:text="#{search.addTo.all(${allCount})}">
                     Add all the results</button>
             </form>
             <details th:replace="~{fragments/export :: export('/export')}"></details>

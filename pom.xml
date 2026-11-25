@@ -45,10 +45,10 @@
           Test JVMs are short lived: the quick compiler and the serial collector start them faster.
         -->
         <argLine>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Duser.language=fr -Duser.country=CH -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9 -Dhttp.nonProxyHosts=localhost|127.0.0.1|[::1]</argLine>
-        <commonmark.version>0.32.0</commonmark.version>
+        <commonmark.version>0.33.0</commonmark.version>
         <forbiddenapis.version>3.11</forbiddenapis.version>
         <!-- the version from the parent POM cannot parse Java 27 class files -->
-        <htmx.version>4.0.1</htmx.version>
+        <htmx.version>4.0.2</htmx.version>
         <!-- the version from the parent POM breaks javac 27; lombok is on the annotation processor path -->
         <jsoup.version>1.24.1</jsoup.version>
         <lombok.version>1.18.48</lombok.version>
@@ -57,6 +57,7 @@
         <maven.compiler.source>27</maven.compiler.source>
         <maven.compiler.target>27</maven.compiler.target>
         <pdfbox.version>3.0.8</pdfbox.version>
+        <pico.version>2.1.1</pico.version>
         <picocli.version>4.7.7</picocli.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the version from the parent POM cannot read Java 27 class files -->
@@ -175,6 +176,11 @@
                 <groupId>org.webjars.npm</groupId>
                 <artifactId>htmx.org</artifactId>
                 <version>${htmx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.npm</groupId>
+                <artifactId>picocss__pico</artifactId>
+                <version>${pico.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

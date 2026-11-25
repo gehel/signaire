@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" th:data-theme="${theme}" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${page.title()})}"></head>
 <body>
 <header th:replace="~{layout :: header}"></header>
 <main id="main" class="help">
-    <p><a th:href="@{/help}" th:text="#{help.title}">Help</a></p>
+    <p class="back"><a th:href="@{/help}" th:text="#{help.title}">Help</a></p>
     <article>
         <h1 th:text="${page.title()}">Search</h1>
         <!--/* The manual is part of the application: its Markdown is trusted */-->

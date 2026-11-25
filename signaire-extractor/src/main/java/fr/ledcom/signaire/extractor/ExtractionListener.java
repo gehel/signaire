@@ -14,6 +14,13 @@ public interface ExtractionListener {
     default void progress(ExtractionStatus status) {
     }
 
+    /**
+     * A sign is complete: read (or reused), its chosen media downloaded (or failed, then linked), as it will be in the
+     * bundle. It can be indexed before the bundle is written.
+     */
+    default void signExtracted(Sign sign) {
+    }
+
     /** The search found the signs of a language and category. */
     default void enumerated(Category category, Language language, SignEnumerator.Result result) {
     }

@@ -1,3 +1,4 @@
-<!--/* Response to htmx searches: the results, and the language links updated for the new search. */-->
+<!--/* Response to htmx searches: the results, and the theme and language links updated for the new search. */-->
 <section th:replace="~{search :: results}"></section>
+<nav th:replace="~{layout :: themes(true)}"></nav>
 <nav th:replace="~{layout :: languages(true)}"></nav>

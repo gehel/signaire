@@ -50,8 +50,8 @@ public class SearchController {
         Set<Language> selectedLanguages = withoutBlanks(languages);
         Set<Category> selectedCategories = withoutBlanks(categories);
         int currentPage = Math.max(page, 1);
-        SearchResults results = search.search(query(text, languages, categories, (currentPage - 1) * pageSize,
-                pageSize));
+        SignQuery query = query(text, languages, categories, (currentPage - 1) * pageSize, pageSize);
+        SearchResults results = search.search(query);
         if (user != null) {
             // to add the results to a list
             model.addAttribute("userLists", lists.lists(user.accountId()));
@@ -66,6 +66,8 @@ public class SearchController {
         model.addAttribute("allLanguages", Arrays.asList(Language.values()));
         model.addAttribute("allCategories", Arrays.asList(Category.values()));
         model.addAttribute("results", results);
+        // listed by name without words: under their initials
+        model.addAttribute("initials", Initial.group(results.signs(), query.text() == null));
         model.addAttribute("page", currentPage);
         model.addAttribute("pages", (results.total() + pageSize - 1) / pageSize);
         return Htmx.isPartialRequest(request, response) ? "search-results" : "search";

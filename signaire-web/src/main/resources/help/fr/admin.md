@@ -22,8 +22,8 @@ ou réindexe tout (après une mise à jour de Signaire qui change l'index).
 
 Choisissez des catégories et des langues des signes (aucune cochée : toutes), et les médias à télécharger : vidéos et
 images, vidéos seulement, images seulement, ou aucun. Les médias non téléchargés sont montrés depuis SignSuisse, mais
-manquent aux exports et sans connexion. La synchronisation tourne en arrière-plan ; chaque catégorie est chargée dès
-qu'elle est prête.
+manquent aux exports et sans connexion. La synchronisation tourne en arrière-plan ; chaque signe est consultable dès
+qu'il est extrait (ses médias montrés depuis SignSuisse jusqu'à la fin de sa catégorie).
 
 Signaire ménage SignSuisse : les requêtes sont espacées d'au moins une demi-seconde, et les signes déjà extraits sont
 repris des bundles existants plutôt que relus ; cochez **Lire à nouveau les signes déjà extraits** pour obtenir les
