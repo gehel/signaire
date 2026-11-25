@@ -54,10 +54,10 @@ class StandaloneIT {
         awaitStarted(me);
 
         // the first run: the setup, whatever the page
-        assertThat(me.get("/lists").headers().firstValue("Location")).hasValue(base + "/setup");
+        assertThat(redirect(me.get("/lists"))).isEqualTo(base.resolve("/setup"));
         HttpResponse<String> setup = me.post("/setup", Map.of("alone", "true", "categories", "CITY",
                 "languages", "fr", "media", "ALL"), "/setup");
-        assertThat(setup.headers().firstValue("Location")).hasValue(base + "/admin/sync");
+        assertThat(redirect(setup)).isEqualTo(base.resolve("/admin/sync"));
 
         // the signs are downloaded in the background
         await("signs downloaded, see " + standalone.log())
@@ -88,6 +88,11 @@ class StandaloneIT {
         assertThat(Files.readString(work.resolve("config/signaire/standalone.properties")))
                 .contains("signaire.accounts.single-user=true");
         assertThat(work.resolve("state/signaire/database")).isDirectoryContaining("glob:**.mv.db");
+    }
+
+    /** Where a redirect leads, whether its location is relative (Spring Boot 4.2 and later) or absolute. */
+    private URI redirect(HttpResponse<?> response) {
+        return base.resolve(response.headers().firstValue("Location").orElseThrow());
     }
 
     private JavaProcess start(String name) throws IOException {
