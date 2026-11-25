@@ -50,6 +50,29 @@ class SearchPagesTest {
     }
 
     @Test
+    void groupsSignsUnderTheirInitialWhenListedByName() {
+        assertThat(mvc.get().uri("/").exchange()).bodyText()
+                .contains("<h2 class=\"initial\">C</h2>", "<h2 class=\"initial\">G</h2>");
+        // GENÈVE under G: accents count no more than in the order of the signs
+        assertThat(mvc.get().uri("/?page=2").exchange()).bodyText()
+                .contains("<h2 class=\"initial\">G</h2>", "<h2 class=\"initial\">K</h2>");
+    }
+
+    @Test
+    void searchesForWordsHaveNoInitials() {
+        assertThat(mvc.get().uri("/?q=chat").exchange()).bodyText().doesNotContain("class=\"initial\"");
+    }
+
+    @Test
+    void entriesTellSignsApartByTheirDefinitionInTheirLanguage() {
+        assertThat(mvc.get().uri("/?language=de").exchange()).bodyText()
+                .containsPattern("<p class=\"definition\"\\s+lang=\"de\">Ein kleines Haustier, das Mäuse jagt</p>");
+        // the periphrase of a sign without definition
+        assertThat(mvc.get().uri("/?q=geneve").exchange()).bodyText()
+                .containsPattern("<p class=\"definition\"\\s+lang=\"fr\">Ville du jet d&#39;eau</p>");
+    }
+
+    @Test
     void pagesThroughTheResults() {
         MvcTestResult result = mvc.get().uri("/?page=2").exchange();
 

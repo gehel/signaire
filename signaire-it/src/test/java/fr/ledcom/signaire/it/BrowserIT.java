@@ -151,22 +151,34 @@ class BrowserIT {
     }
 
     @Test
-    void signsAreCardsSideBySideOnComputersAndAboveEachOtherOnPhones() {
+    void entriesStandInTwoColumnsOnComputersAndOneOnPhones() {
+        driver = open(Theme.LIGHT);
+        resize(Device.COMPUTER);
+        // found by a word: by relevance, without initials
+        driver.get(base + "/?q=demonstration&category=NATURE");
+        List<WebElement> entries = driver.findElements(By.cssSelector("ul.signs > li"));
+        assertThat(entries).hasSize(7);
+        // down the first column, then the second
+        assertThat(entries.get(1).getRect().getX()).isEqualTo(entries.get(0).getRect().getX());
+        assertThat(entries.getLast().getRect().getX()).isGreaterThan(entries.get(0).getRect().getX());
+
+        resize(Device.PHONE);
+        assertThat(entries).extracting(entry -> entry.getRect().getX()).containsOnly(entries.get(0).getRect().getX());
+
+        // the whole entry opens the sign
+        String sign = entries.get(0).findElement(By.cssSelector("a.name")).getDomAttribute("href");
+        entries.get(0).click();
+        await().atMost(Duration.ofSeconds(10)).until(() -> driver.getCurrentUrl().endsWith(sign));
+    }
+
+    @Test
+    void signsListedByNameStandUnderTheirInitials() {
         driver = open(Theme.LIGHT);
         resize(Device.COMPUTER);
         driver.get(base + "/?category=NATURE");
-        List<WebElement> cards = driver.findElements(By.cssSelector("ul.signs > li"));
-        assertThat(cards).hasSize(7);
-        assertThat(cards.get(1).getRect().getY()).isEqualTo(cards.get(0).getRect().getY());
 
-        resize(Device.PHONE);
-        Rectangle first = cards.get(0).getRect();
-        assertThat(cards.get(1).getRect().getY()).isGreaterThanOrEqualTo(first.getY() + first.getHeight());
-
-        // the whole card opens the sign
-        String sign = cards.get(0).findElement(By.cssSelector("a.name")).getDomAttribute("href");
-        cards.get(0).click();
-        await().atMost(Duration.ofSeconds(10)).until(() -> driver.getCurrentUrl().endsWith(sign));
+        assertThat(driver.findElements(By.cssSelector("h2.initial"))).extracting(WebElement::getText)
+                .containsExactly("A", "D", "G", "J", "N", "R", "V");
     }
 
     @Test
@@ -270,9 +282,13 @@ class BrowserIT {
 
             assertThat(script("return matchMedia('(prefers-color-scheme: dark)').matches"))
                     .as("dark theme").isEqualTo(theme == Theme.DARK);
-            // Pico, from its webjar, and our stylesheet, with the brand
+            // Pico, from its webjar, and our stylesheet, with the brand and the font
             assertThat(script("return getComputedStyle(document.documentElement).fontFamily"))
-                    .as("font of %s", where).asString().startsWith("system-ui");
+                    .as("font of %s", where).asString().startsWith("\"Atkinson Hyperlegible Next\"");
+            assertThat(script("""
+                    return document.fonts.ready.then(() => [...document.fonts]
+                        .some(font => font.family.includes('Atkinson') && font.status === 'loaded'))"""))
+                    .as("font loaded on %s", where).isEqualTo(true);
             assertThat(script("return getComputedStyle(document.querySelector('header.site')).borderTopColor"))
                     .as("brand of %s", where).isEqualTo(theme.brand);
             assertThat(script("return innerWidth")).as("width of the window").isEqualTo((long) device.width);

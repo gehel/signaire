@@ -23,19 +23,20 @@
         <dl>
             <th:block th:if="${sign.periphrase() != null}">
                 <dt th:text="#{sign.periphrase}">Periphrase</dt>
-                <dd th:text="${sign.periphrase()}">Town on the lake</dd>
+                <dd th:lang="${sign.language().code()}" th:text="${sign.periphrase()}">Town on the lake</dd>
             </th:block>
             <th:block th:if="${sign.definition() != null}">
                 <dt th:text="#{sign.definition}">Definition</dt>
-                <dd th:text="${sign.definition()}">Capital of the canton of Vaud</dd>
+                <dd th:lang="${sign.language().code()}" th:text="${sign.definition()}">
+                    Capital of the canton of Vaud</dd>
             </th:block>
             <th:block th:unless="${sign.categories().isEmpty()}">
                 <dt th:text="#{sign.categories}">Categories</dt>
                 <dd class="categories">
-                    <th:block th:each="category, it : ${sign.categories()}">
-                        <a th:href="@{/(category=${category.name()})}"
-                           th:text="#{'category.' + ${category.name()}}">City</a>
-                    </th:block>
+                    <th:block th:each="category, it : ${sign.categories()}"><a
+                            th:href="@{/(category=${category.name()})}"
+                            th:text="#{'category.' + ${category.name()}}">City</a><th:block th:unless="${it.last}">,
+                    </th:block></th:block>
                 </dd>
             </th:block>
             <th:block th:unless="${sign.dialects().isEmpty()}">
@@ -48,7 +49,7 @@
             <h2 th:text="#{sign.examples}">Examples</h2>
             <ul>
                 <li th:each="example : ${sign.examples()}">
-                    <p th:text="${example.text()}">I work in Lausanne.</p>
+                    <p><q th:lang="${sign.language().code()}" th:text="${example.text()}">I work in Lausanne.</q></p>
                     <video th:if="${example.video() != null}" controls preload="none"
                            th:src="${links.media(example.video())}" th:text="#{sign.videoUnsupported}"></video>
                 </li>

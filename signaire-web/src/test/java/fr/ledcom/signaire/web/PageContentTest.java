@@ -83,6 +83,16 @@ class PageContentTest {
     }
 
     @Test
+    void pagesPreloadTheirFontServedWithItsLicense() {
+        String font = "/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2";
+        assertThat(mvc.get().uri("/").exchange()).bodyText().containsPattern("<link rel=\"preload\" href=\""
+                + Pattern.quote(font) + "\" as=\"font\"\\s+type=\"font/woff2\" crossorigin>");
+        assertThat(mvc.get().uri(font).exchange()).hasStatus(HttpStatus.OK).hasContentType("font/woff2");
+        assertThat(mvc.get().uri("/fonts/OFL.txt").exchange()).hasStatus(HttpStatus.OK).bodyText()
+                .contains("SIL Open Font License");
+    }
+
+    @Test
     void featuresLinkToTheirHelp() {
         assertThat(mvc.get().uri("/").exchange()).bodyText()
                 .contains("href=\"/help\"", "href=\"/help/search\"", "href=\"/help/exports\"");

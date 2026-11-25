@@ -273,6 +273,8 @@ Web UI gotchas:
   `--pico-color` on links and buttons (use `--ink` for the color of text there), makes submit buttons as wide as
   their form and every `dialog` a full-screen modal (the tour overrides it); its light theme selector also matches in
   dark mode, so colors of ours have values in both blocks.
+- The font, Atkinson Hyperlegible Next, is in `static/fonts` with its license (OFL); `layout.html` preloads it at the
+  address the stylesheet uses (a webjar's links get a version in templates, not in CSS: it would load twice).
 - The theme follows the system unless the user chose one (`?theme=dark`, cookie, `ThemeAdvice`): every page writes it
   as `<html th:lang="${#locale.language}" th:data-theme="${theme}">`. Our dark colors are in two blocks (dark system,
   dark chosen) that must stay the same: `BrowserIT` compares them.

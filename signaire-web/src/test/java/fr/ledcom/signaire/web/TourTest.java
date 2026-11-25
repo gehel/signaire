@@ -74,12 +74,13 @@ class TourTest {
         MvcTestResult first = mvc.get().uri("/?tour=1").header(HttpHeaders.ACCEPT_LANGUAGE, "de").exchange();
 
         assertThat(first).hasStatus(HttpStatus.OK).bodyText()
-                .contains("<html lang=\"de\">", "<dialog id=\"tour\"", "data-target=\"search\"", "1 / 5",
-                        "href=\"/?q=lac&amp;tour=2\"", "href=\"/help/search\"", "href=\"/tour/done\"",
-                        "src=\"/js/tour.js\"")
+                .contains("<html lang=\"de\">", "<dialog id=\"tour\"", "data-target=\"search\"",
+                        "Rundgang, Schritt 1 von 5", "href=\"/?q=lac&amp;tour=2\"", "href=\"/help/search\"",
+                        "href=\"/tour/done\"", "src=\"/js/tour.js\"")
                 .doesNotContain("tour=0");
         assertThat(mvc.get().uri("/?q=lac&tour=5").exchange()).bodyText()
-                .contains("data-target=\"help\"", "5 / 5", "href=\"/?q=lac&amp;tour=4\"", "href=\"/tour/done\"")
+                .contains("data-target=\"help\"", "Visite guidée, étape 5 sur 5", "href=\"/?q=lac&amp;tour=4\"",
+                        "href=\"/tour/done\"")
                 .doesNotContain("tour=6");
     }
 

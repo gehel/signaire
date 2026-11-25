@@ -11,10 +11,16 @@
     <p th:if="${list.size() == 0}" th:text="#{lists.empty}">This list is empty.</p>
     <ul class="signs">
         <li th:each="sign : ${signs}">
-            <a class="name" th:href="@{/signs/{uid}(uid=${sign.uid()})}" th:text="${sign.name()}">LAUSANNE</a>
+            <a class="name" th:lang="${sign.language().code()}" th:href="@{/signs/{uid}(uid=${sign.uid()})}"
+               th:text="${sign.name()}">LAUSANNE</a>
             <abbr class="sign-language" th:data-language="${sign.language().code()}"
                   th:title="#{'signLanguage.' + ${sign.language().name()}}"
                   th:text="#{'signLanguage.short.' + ${sign.language().name()}}">LSF</abbr>
+            <p th:if="${sign.definition() != null or sign.periphrase() != null}" class="definition"
+               th:lang="${sign.language().code()}" th:text="${sign.definition() ?: sign.periphrase()}">
+                Capitale du canton de Vaud</p>
+            <span class="categories"><th:block th:each="category, it : ${sign.categories()}"
+                >[[#{'category.' + ${category.name()}}]]<th:block th:unless="${it.last}">, </th:block></th:block></span>
             <form th:action="@{/lists/{id}/signs/{uid}/remove(id=${list.id()},uid=${sign.uid()})}" method="post"
                   class="inline">
                 <button type="submit" class="small secondary outline" th:text="#{lists.remove}">Remove</button>
