@@ -11,6 +11,9 @@ accessibility).
 - **Maven, multi-module**, Java 27, Spring Boot imported as a BOM, the WMF parent POM for quality gates (checkstyle,
   forbiddenapis, spotbugs with findsecbugs and sb-contrib, no package cycles, duplicate-finder, sortpom). The root POM
   overrides the tool versions that can't handle Java 27 or unnamed variables.
+- **Checkstyle rules**: the WMF ruleset, from our copy (`checkstyle.xml`, at the root): checkstyle 13.9 removed its
+  `JavadocStyle` check. `SummaryJavadoc` replaces it: a summary ends with a period, and as before a Javadoc of block
+  tags alone (`@param`, `@throws`) needs none.
 - **Architecture rules**: an `ArchitectureTest` (ArchUnit) per module for what Maven dependencies can't say (Android
   compatibility, no Spring in extractor and export, Lucene and JPA internal, packages of core independent).
 - **Tests at the lowest level that can show the behavior**:
@@ -38,6 +41,13 @@ accessibility).
 - **Comparison with main rather than absolute thresholds alone**: catches regressions early while budgets stay
   loose enough for CI noise.
 - **Checkstyle wins over SonarCloud** when they clash; false positives get `// NOSONAR` with their reason.
+- **Our copy of the WMF checkstyle rules**, to follow checkstyle: an old checkstyle stops reading new Java (the
+  parent's 10.16 rejects unnamed variables). The copy differs by its Javadoc check only, so the parent's other rules
+  can still be followed by hand.
+  - Staying on checkstyle 12.3.1, the last with `JavadocStyle`, until the WMF ruleset changes: it would stop reading
+    the Java to come, as 10.16 did.
+  - A summary on every Javadoc, as `SummaryJavadoc` wants by default: a Javadoc of tags alone documents a parameter
+    or an exception the names don't explain; a summary there would restate the name of the method.
 
 ## Open questions
 
