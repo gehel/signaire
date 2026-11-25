@@ -10,8 +10,10 @@ import java.util.List;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.ThreadSafe;
 
 /** Access to the SignSuisse lexicon. */
+@ThreadSafe
 public class SignSuisseClient implements SignSource {
 
     /** SignSuisse returns at most this number of search results. */

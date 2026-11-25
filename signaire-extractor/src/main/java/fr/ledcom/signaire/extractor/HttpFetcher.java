@@ -3,7 +3,10 @@ package fr.ledcom.signaire.extractor;
 import java.net.URI;
 import java.nio.file.Path;
 
-/** Fetches resources over HTTP. */
+import net.jcip.annotations.ThreadSafe;
+
+/** Fetches resources over HTTP, for the stages of an extraction at the same time. */
+@ThreadSafe
 public interface HttpFetcher {
 
     /** Fetches a text resource, decoded with the charset announced by the server (UTF-8 by default). */

@@ -10,11 +10,14 @@ import java.util.List;
 
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Indexes the signs of a synchronization as they are extracted, by batches (a commit of the index per sign would
  * cost more than the sign). Best effort: the bundle, loaded at the end of the category, holds all the signs anyway.
  */
+@ThreadSafe
 final class SyncIndexing {
 
     private static final Logger LOG = System.getLogger(SyncIndexing.class.getName());
@@ -23,8 +26,11 @@ final class SyncIndexing {
     private final Clock clock;
     private final int batchSize;
     private final Duration maxDelay;
+    @GuardedBy("this")
     private final List<Sign> pending = new ArrayList<>();
+    @GuardedBy("this")
     private Instant oldest;
+    @GuardedBy("this")
     private int indexed;
 
     SyncIndexing(BundleLoading loading, Clock clock, int batchSize, Duration maxDelay) {

@@ -81,6 +81,12 @@
                 <version>${spotbugs.version}</version>
             </dependency>
             <dependency>
+                <!-- the annotations of Java Concurrency in Practice, Apache licensed (docs/design/thread-safety.md) -->
+                <groupId>com.github.stephenc.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>1.0-1</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.zxing</groupId>
                 <artifactId>core</artifactId>
                 <version>${zxing.version}</version>

@@ -25,12 +25,15 @@ import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.SignSource;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Synchronizes the bundles with SignSuisse, in the background: extracts categories into the bundle directory,
  * loading each bundle as soon as it is written. One synchronization at a time; it can be cancelled.
  */
 @Component
+@ThreadSafe
 public class SignSuisseSync {
 
     private static final Logger LOG = System.getLogger(SignSuisseSync.class.getName());
@@ -42,6 +45,7 @@ public class SignSuisseSync {
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.IDLE);
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private final AtomicReference<SyncExtraction> extraction = new AtomicReference<>();
+    @GuardedBy("this")
     private Thread worker;
 
     public SignSuisseSync(SignSource source, BundleLoading loading,

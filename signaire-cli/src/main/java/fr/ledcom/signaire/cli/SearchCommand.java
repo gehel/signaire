@@ -16,6 +16,7 @@ import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.NotThreadSafe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -27,6 +28,7 @@ import picocli.CommandLine.Spec;
 // a new instance per command line: picocli doesn't reset all options (e.g. positional lists) between runs
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Command(name = "chercher", resourceBundle = "fr.ledcom.signaire.cli.search")
+@NotThreadSafe
 public class SearchCommand implements Runnable {
 
     private final SignSearchService search;

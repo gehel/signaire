@@ -13,9 +13,12 @@ import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 
+import net.jcip.annotations.Immutable;
+
 /**
  * Opens the writers of an index, one at a time across processes, and commits with the version of the schema.
  */
+@Immutable
 final class IndexWriters {
 
     private static final String SCHEMA_KEY = "signaire.schema";

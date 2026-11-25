@@ -319,5 +319,9 @@ the CLI and web never reach Lucene or JPA directly. Change the rules there when 
 - **Branch per feature** (`feature/<name>`), merged to `main` through a GitHub PR. Commits tell a story
   (one logical step each, buildable). History of an unmerged branch may be rewritten.
 - Prefer records and immutable types; no Lombok (doesn't keep up with new JDKs).
+- Classes that threads share say so with the JCIP annotations (`net.jcip.annotations`): `@ThreadSafe`, and
+  `@GuardedBy("this")` on each field a lock protects (SpotBugs fails the build on an access without the lock);
+  `@Immutable` for classes other than records, `@NotThreadSafe` where sharing would break (the CLI commands). Not on
+  records, stateless beans or entities (`docs/design/thread-safety.md`).
 - JavaDoc only where it adds what the code doesn't say (why, constraints, units, side effects): never a comment
   that restates the name of what it documents.

@@ -8,31 +8,53 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.extractor.ExtractionStatus.Stage;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
-/** Counts what the stages of an extraction do, for {@link ExtractionStatus} snapshots; safe for concurrent use. */
+/** Counts what the stages of an extraction do, for {@link ExtractionStatus} snapshots. */
+@ThreadSafe
 final class ExtractionTracker {
 
     private final Category category;
     private final Clock clock;
     private final Instant start;
+    @GuardedBy("this")
     private Instant end;
+    @GuardedBy("this")
     private Stage stage = Stage.SEARCHING;
+    @GuardedBy("this")
     private Language language;
+    @GuardedBy("this")
     private int searches;
+    @GuardedBy("this")
     private int searchesPending;
+    @GuardedBy("this")
     private int searchesFailed;
+    @GuardedBy("this")
     private boolean complete = true;
+    @GuardedBy("this")
     private String currentSearch;
+    @GuardedBy("this")
     private int signsFound;
+    @GuardedBy("this")
     private int signsToRead;
+    @GuardedBy("this")
     private int signsRead;
+    @GuardedBy("this")
     private int signsReused;
+    @GuardedBy("this")
     private int signsFailed;
+    @GuardedBy("this")
     private String currentSign;
+    @GuardedBy("this")
     private int mediaQueued;
+    @GuardedBy("this")
     private int mediaDownloaded;
+    @GuardedBy("this")
     private int mediaFailed;
+    @GuardedBy("this")
     private long bytes;
+    @GuardedBy("this")
     private String currentMedia;
 
     ExtractionTracker(Category category, Clock clock) {

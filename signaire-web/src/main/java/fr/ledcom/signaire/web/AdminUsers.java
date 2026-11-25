@@ -10,8 +10,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import net.jcip.annotations.ThreadSafe;
+
 /** The administrators: the usernames listed in {@code signaire.accounts.admins}. */
 @Component
+@ThreadSafe
 public class AdminUsers {
 
     static final String ADMIN_ROLE = "ADMIN";

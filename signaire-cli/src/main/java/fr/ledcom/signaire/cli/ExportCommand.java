@@ -21,6 +21,7 @@ import fr.ledcom.signaire.export.PdfLayout;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
+import net.jcip.annotations.NotThreadSafe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -32,6 +33,7 @@ import picocli.CommandLine.Spec;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Command(name = "exporter", resourceBundle = "fr.ledcom.signaire.cli.export")
+@NotThreadSafe
 public class ExportCommand implements Callable<Integer> {
 
     /** Signs are fetched from the index in batches. */
