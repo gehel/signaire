@@ -27,7 +27,7 @@ import fr.ledcom.signaire.accounts.SignOverrideService;
 import fr.ledcom.signaire.accounts.SignRequest;
 import fr.ledcom.signaire.accounts.SignRequest.Status;
 import fr.ledcom.signaire.accounts.SignRequestService;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Language;
@@ -59,7 +59,7 @@ class SignRequestsTest {
     @BeforeEach
     void setUp() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 

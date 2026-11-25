@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import fr.ledcom.signaire.accounts.WordList;
 import fr.ledcom.signaire.accounts.WordListException;
 import fr.ledcom.signaire.accounts.WordListService;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
 @WebLayerTest({ExportController.class, ListController.class, SearchController.class})
@@ -48,7 +48,7 @@ class ExportTest {
     @BeforeEach
     void setUp() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
         when(lists.get(ALICE_ID, FAMILY.id())).thenReturn(FAMILY);
         when(lists.get(BOB_ID, FAMILY.id())).thenThrow(

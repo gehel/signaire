@@ -29,7 +29,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import fr.ledcom.signaire.accounts.SignOverride;
 import fr.ledcom.signaire.accounts.SignOverrideService;
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Category;
@@ -72,7 +72,7 @@ class AdminSignsTest {
                 List.of(TestSigns.LAUSANNE.toBuilder().videos(List.of()).build(), TestSigns.GENEVE),
                 bundles.resolve(".media"));
         loading.load();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 
@@ -112,12 +112,13 @@ class AdminSignsTest {
 
     @Test
     void editsSignsKeepingTheirDownloadedMedia() {
+        String address = TestSigns.LAUSANNE.videos().getFirst().sourceUrl();
         assertThat(mvc.get().uri("/admin/signs/1/edit").with(ADMIN).exchange()).bodyText()
-                .contains("value=\"LAUSANNE\"", "Capitale du canton de Vaud", "https://example.org/lausanne.mp4");
+                .contains("value=\"LAUSANNE\"", "Capitale du canton de Vaud", address);
 
         MvcTestResult result = mvc.post().uri("/admin/signs/1").with(ADMIN).with(csrf())
                 .param("name", "LAUSANNE").param("language", "fr").param("categories", "CITY")
-                .param("definition", "Ville olympique").param("videos", "https://example.org/lausanne.mp4")
+                .param("definition", "Ville olympique").param("videos", address)
                 .exchange();
 
         assertThat(result).hasRedirectedUrl("/signs/1");

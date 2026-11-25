@@ -16,7 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.Resource;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;

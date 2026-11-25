@@ -17,7 +17,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Sign;
 

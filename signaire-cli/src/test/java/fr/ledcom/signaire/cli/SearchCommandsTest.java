@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.model.Category;
 import picocli.CommandLine;

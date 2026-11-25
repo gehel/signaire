@@ -1,9 +1,9 @@
 package fr.ledcom.signaire.core.search;
 
-import static fr.ledcom.signaire.core.TestSigns.CHAT;
-import static fr.ledcom.signaire.core.TestSigns.GATTO;
-import static fr.ledcom.signaire.core.TestSigns.KATZE;
-import static fr.ledcom.signaire.core.TestSigns.LAUSANNE;
+import static fr.ledcom.signaire.model.TestSigns.CHAT;
+import static fr.ledcom.signaire.model.TestSigns.GATTO;
+import static fr.ledcom.signaire.model.TestSigns.KATZE;
+import static fr.ledcom.signaire.model.TestSigns.LAUSANNE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
@@ -33,7 +33,7 @@ class SignSearchServiceTest {
     void indexSigns() {
         index = new SignIndex(directory);
         search = new SignSearchService(index);
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 

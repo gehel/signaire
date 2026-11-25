@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.media.MediaLibrary;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.model.Category;

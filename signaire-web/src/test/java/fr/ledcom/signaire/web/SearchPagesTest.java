@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
 @WebLayerTest(SearchController.class)
@@ -25,7 +25,7 @@ class SearchPagesTest {
     @BeforeEach
     void indexSigns() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 
