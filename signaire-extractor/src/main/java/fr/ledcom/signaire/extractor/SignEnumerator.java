@@ -39,6 +39,9 @@ public class SignEnumerator {
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}");
     private static final Pattern SPACES = Pattern.compile("\\s+");
 
+    /** Prefixes with too many names are searched up to this length on SignSuisse. */
+    private static final int SIGNSUISSE_MAX_QUERY_LENGTH = 12;
+
     private final SignSearch search;
     private final int maxResults;
     private final int maxQueryLength;
@@ -52,6 +55,11 @@ public class SignEnumerator {
         this.search = search;
         this.maxResults = maxResults;
         this.maxQueryLength = maxQueryLength;
+    }
+
+    /** The enumeration of SignSuisse's search, which truncates its results at {@link SignSuisseClient#MAX_RESULTS}. */
+    public static SignEnumerator forSignSuisse(SignSearch search) {
+        return new SignEnumerator(search, SignSuisseClient.MAX_RESULTS, SIGNSUISSE_MAX_QUERY_LENGTH);
     }
 
     /**

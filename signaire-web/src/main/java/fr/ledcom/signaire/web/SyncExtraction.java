@@ -16,7 +16,6 @@ import fr.ledcom.signaire.extractor.ExtractionReport;
 import fr.ledcom.signaire.extractor.ExtractionStatus;
 import fr.ledcom.signaire.extractor.SignEnumerator;
 import fr.ledcom.signaire.extractor.SignSource;
-import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.web.SignSuisseSync.CategoryResult;
@@ -26,7 +25,6 @@ import fr.ledcom.signaire.web.SignSuisseSync.Progress;
 final class SyncExtraction {
 
     private static final Logger LOG = System.getLogger(SyncExtraction.class.getName());
-    private static final int MAX_QUERY_LENGTH = 12;
     private static final Duration PROGRESS_INTERVAL = Duration.ofSeconds(5);
     private static final int INDEX_BATCH = 25;
     private static final Duration INDEX_DELAY = Duration.ofSeconds(2);
@@ -42,7 +40,7 @@ final class SyncExtraction {
             AtomicReference<Progress> progress) {
         this.indexing = new SyncIndexing(loading, Clock.systemUTC(), INDEX_BATCH, INDEX_DELAY);
         this.extractor = new CategoryExtractor(source,
-                new SignEnumerator(source, SignSuisseClient.MAX_RESULTS, MAX_QUERY_LENGTH),
+                SignEnumerator.forSignSuisse(source),
                 new BundleWriter(Clock.systemUTC()), new SyncListener(indexing), PROGRESS_INTERVAL,
                 Clock.systemUTC());
         this.loading = loading;
