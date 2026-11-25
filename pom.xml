@@ -132,6 +132,12 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-extractor</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
