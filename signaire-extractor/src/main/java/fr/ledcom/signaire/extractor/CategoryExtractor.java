@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.bundle.Bundle;
+import fr.ledcom.signaire.bundle.BundleFiles;
 import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.bundle.BundleReader;
 import fr.ledcom.signaire.bundle.BundleWriter;
@@ -121,7 +122,7 @@ public class CategoryExtractor {
             ExtractionOptions options) {
         createDirectories(outputDir);
         createDirectories(cache);
-        Path target = outputDir.resolve(bundleFileName(category));
+        Path target = outputDir.resolve(BundleFiles.fileName(category));
         Map<String, Sign> previous = options.refresh() ? Map.of() : previousSigns(target);
         Run run = new Run(category, EnumSet.copyOf(languages), cache, options.media(), previous);
         lastTracker.set(run.tracker);
@@ -152,11 +153,6 @@ public class CategoryExtractor {
         if (current != null) {
             current.stop();
         }
-    }
-
-    /** Name of the bundle file of a category, e.g. {@code sport-leisure.zip}. */
-    public static String bundleFileName(Category category) {
-        return category.name().toLowerCase(Locale.ROOT).replace('_', '-') + ".zip";
     }
 
     private static Map<String, Sign> previousSigns(Path bundle) {
