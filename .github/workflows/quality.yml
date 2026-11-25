@@ -48,7 +48,7 @@ jobs:
           docker run --rm --network host -v "$PWD:/sitespeed.io" sitespeedio/sitespeed.io:43.0.0
           --budget.configPath .sitespeed/budget.json -n 3 --outputFolder target/sitespeed
           --plugins.add analysisstorer
-          http://localhost:8080/ "http://localhost:8080/?q=arbre" http://localhost:8080/signs/90000
+          http://localhost:8080/ "http://localhost:8080/?q=arbre" http://localhost:8080/signs/15
       - name: Summarize the sitespeed.io measures
         run: python3 ci/sitespeed.py summary target/sitespeed > target/sitespeed-summary.json
       - name: Keep the measures of main as the baseline

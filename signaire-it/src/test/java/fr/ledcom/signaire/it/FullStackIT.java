@@ -1,5 +1,8 @@
 package fr.ledcom.signaire.it;
 
+import static fr.ledcom.signaire.model.TestSigns.GARE;
+import static fr.ledcom.signaire.model.TestSigns.GENEVE;
+import static fr.ledcom.signaire.model.TestSigns.LAUSANNE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -25,6 +28,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+
+import fr.ledcom.signaire.extractor.FakeSignSuisse;
 
 /**
  * The whole stack, as users run it: the command line extracts signs from a (fake) SignSuisse into bundles, and the
@@ -85,11 +90,11 @@ class FullStackIT {
     void findsTheSignsExtractedFromSignSuisse() throws Exception {
         Session visitor = new Session(base);
 
-        String results = visitor.get("/?q=geneve").body();
-        assertThat(results).contains("GENÈVE", "href=\"/signs/9002\"");
+        String results = visitor.get("/?q=gare").body();
+        assertThat(results).contains("GARE", "href=\"/signs/" + GARE.uid() + "\"");
 
-        String sign = visitor.get("/signs/9002").body();
-        assertThat(sign).contains("<h1>GENÈVE</h1>", "Une ville au bout du lac.");
+        String sign = visitor.get("/signs/" + GARE.uid()).body();
+        assertThat(sign).contains("<h1>GARE</h1>", "Le train part de la gare à midi.");
         Matcher video = Pattern.compile("<video[^>]* src=\"(/media/[^\"]+\\.mp4)\"").matcher(sign);
         assertThat(video.find()).as("a video served from the bundle").isTrue();
 
@@ -107,14 +112,15 @@ class FullStackIT {
         assertThat(created.statusCode()).isEqualTo(302);
         String location = created.headers().firstValue("Location").orElseThrow();
         String list = location.substring(location.lastIndexOf('/') + 1);
-        alice.post("/signs/9001/lists/" + list, Map.of());
-        alice.post("/signs/9002/lists/" + list, Map.of());
+        alice.post("/signs/" + LAUSANNE.uid() + "/lists/" + list, Map.of());
+        // GARE has a photo, for the cards of Anki
+        alice.post("/signs/" + GARE.uid() + "/lists/" + list, Map.of());
 
-        assertThat(alice.get("/lists/" + list).body()).contains("LAUSANNE", "GENÈVE");
+        assertThat(alice.get("/lists/" + list).body()).contains("LAUSANNE", "GARE");
 
         byte[] pdf = alice.download("/lists/" + list + "/export?format=PDF&paper=A5&perPage=2&layout=BOOKLET");
         try (PDDocument document = Loader.loadPDF(pdf)) {
-            assertThat(new PDFTextStripper().getText(document)).contains("Villes", "LAUSANNE", "GENÈVE");
+            assertThat(new PDFTextStripper().getText(document)).contains("Villes", "LAUSANNE", "GARE");
         }
         byte[] anki = alice.download("/lists/" + list + "/export?format=ANKI");
         assertThat(entries(anki)).contains("collection.anki2", "media", "0");
@@ -124,11 +130,12 @@ class FullStackIT {
     void administratorsEditSigns() throws Exception {
         Session admin = Session.registered(base, "admin");
 
-        HttpResponse<String> saved = admin.post("/admin/signs/9001", Map.of("name", "LAUSANNE", "language", "fr",
+        HttpResponse<String> saved = admin.post("/admin/signs/" + LAUSANNE.uid(), Map.of("name", "LAUSANNE",
+                "language", "fr",
                 "categories", "CITY", "definition", "La ville olympique."));
 
         assertThat(saved.statusCode()).isEqualTo(302);
-        assertThat(new Session(base).get("/signs/9001").body()).contains("La ville olympique.");
+        assertThat(new Session(base).get("/signs/" + LAUSANNE.uid()).body()).contains("La ville olympique.");
     }
 
     /**
@@ -143,10 +150,10 @@ class FullStackIT {
         String location = carol.post("/lists", Map.of("name", "Genève")).headers().firstValue("Location")
                 .orElseThrow();
         String list = location.substring(location.indexOf("/lists/"));
-        carol.post("/signs/9002" + list, Map.of());
-        // 9001, as administratorsEditSigns: the form drops the media of the sign, that other tests export
-        curator.post("/admin/signs/9001", Map.of("name", "LAUSANNE", "language", "fr", "categories", "CITY",
-                "definition", "Ville au bord du lac."));
+        carol.post("/signs/" + GENEVE.uid() + list, Map.of());
+        // LAUSANNE, as administratorsEditSigns: the form drops the media of the sign, that other tests export
+        curator.post("/admin/signs/" + LAUSANNE.uid(), Map.of("name", "LAUSANNE", "language", "fr",
+                "categories", "CITY", "definition", "La ville du CIO."));
         String added = curator.post("/admin/signs", Map.of("name", "SIGNAIRE", "language", "fr",
                 "definition", "Ce logiciel.")).headers().firstValue("Location").orElseThrow();
         String addedUid = added.substring(added.lastIndexOf('/') + 1);
@@ -164,7 +171,7 @@ class FullStackIT {
             }
         }
         curator.post("/admin/bundles/reindex", Map.of());
-        assertThat(carol.get("/signs/9002").statusCode()).isEqualTo(404);
+        assertThat(carol.get("/signs/" + GENEVE.uid()).statusCode()).isEqualTo(404);
         assertThat(carol.get(list).body()).contains("Signes absents du lexique : 1.");
 
         // and extracted again from SignSuisse
@@ -172,7 +179,7 @@ class FullStackIT {
         curator.post("/admin/bundles/reload", Map.of());
 
         assertThat(carol.get(list).body()).contains("GENÈVE").doesNotContain("absents");
-        assertThat(carol.get("/signs/9001").body()).contains("Ville au bord du lac.");
+        assertThat(carol.get("/signs/" + LAUSANNE.uid()).body()).contains("La ville du CIO.");
         assertThat(carol.get(added).body()).contains("SIGNAIRE", "Ce logiciel.");
         assertThat(carol.get("/requests").body()).contains("href=\"/signs/" + addedUid + "\"");
     }
@@ -197,7 +204,7 @@ class FullStackIT {
                 .failFast("web application stopped, see " + web.log(), () -> !web.isAlive())
                 // not started yet
                 .ignoreExceptionsInstanceOf(IOException.class)
-                .until(() -> visitor.get("/?q=lausanne").body().contains("href=\"/signs/9001\""));
+                .until(() -> visitor.get("/?q=lausanne").body().contains("href=\"/signs/" + LAUSANNE.uid() + "\""));
     }
 
     private static List<String> entries(byte[] zip) throws IOException {

@@ -33,6 +33,8 @@ import org.testcontainers.Testcontainers;
 import org.testcontainers.selenium.BrowserWebDriverContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import fr.ledcom.signaire.model.TestSigns;
+
 /**
  * The pages of the web application in a real browser (Chromium, in a container), in the light and dark themes, on
  * a computer and on a phone: what the stylesheets must get right, and screenshots of every page in
@@ -78,17 +80,17 @@ class BrowserIT {
                 .pollInterval(Duration.ofMillis(500))
                 .failFast("web application stopped, see " + web.log(), () -> !web.isAlive())
                 .ignoreExceptionsInstanceOf(IOException.class)
-                .until(() -> anybody.get("/?q=arbre").body().contains("href=\"/signs/90000\""));
+                .until(() -> anybody.get("/?q=arbre").body().contains("href=\"/signs/" + TestSigns.ARBRE.uid() + "\""));
 
         // an administrator, with a list and a request
         Session alice = Session.registered(local, "alice");
         HttpResponse<String> created = alice.post("/lists", Map.of("name", "Nature"));
         list = created.headers().firstValue("Location").orElseThrow().replace(local.toString(), "");
         String id = list.substring(list.lastIndexOf('/') + 1);
-        for (String uid : List.of("90000", "90003")) {
+        for (String uid : List.of(TestSigns.ARBRE.uid(), TestSigns.FORET.uid())) {
             alice.post("/signs/" + uid + "/lists/" + id, Map.of());
         }
-        alice.post("/requests", Map.of("word", "Zoug", "language", "fr", "comment", "La ville et le canton"),
+        alice.post("/requests", Map.of("word", "Lac", "language", "fr", "comment", "Comme le Léman"),
                 "/requests");
 
         // the browser reaches the application through a tunnel to this machine
@@ -125,7 +127,7 @@ class BrowserIT {
         List<Page> pages = new ArrayList<>(List.of(
                 new Page("home", "/"),
                 new Page("results", "/?category=NATURE"),
-                new Page("sign", "/signs/90000"),
+                new Page("sign", "/signs/" + TestSigns.ARBRE.uid()),
                 new Page("tour", "/tour/1"),
                 new Page("help", "/help/search"),
                 new Page("login", "/login"),
@@ -137,7 +139,7 @@ class BrowserIT {
         logIn();
         pages = List.of(
                 new Page("results-member", "/?category=NATURE"),
-                new Page("sign-member", "/signs/90000"),
+                new Page("sign-member", "/signs/" + TestSigns.ARBRE.uid()),
                 new Page("lists", "/lists"),
                 new Page("list", list),
                 new Page("requests", "/requests"),
@@ -156,9 +158,10 @@ class BrowserIT {
         driver = open(Theme.LIGHT);
         resize(Device.COMPUTER);
         // found by a word: by relevance, without initials
-        driver.get(base + "/?q=demonstration&category=NATURE");
+        // ARBRE, FORÊT, MONTAGNE, and ALBERO ("grande")
+        driver.get(base + "/?q=grand&category=NATURE");
         List<WebElement> entries = driver.findElements(By.cssSelector("ul.signs > li"));
-        assertThat(entries).hasSize(7);
+        assertThat(entries).hasSize(4);
         // down the first column, then the second
         assertThat(entries.get(1).getRect().getX()).isEqualTo(entries.get(0).getRect().getX());
         assertThat(entries.getLast().getRect().getX()).isGreaterThan(entries.get(0).getRect().getX());
@@ -179,7 +182,7 @@ class BrowserIT {
         driver.get(base + "/?category=NATURE");
 
         assertThat(driver.findElements(By.cssSelector("h2.initial"))).extracting(WebElement::getText)
-                .containsExactly("A", "D", "G", "J", "N", "R", "V");
+                .containsExactly("A", "B", "F", "M", "W");
     }
 
     @Test

@@ -43,6 +43,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-extractor</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.ledcom</groupId>
+            <artifactId>signaire-model</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <scope>test</scope>
