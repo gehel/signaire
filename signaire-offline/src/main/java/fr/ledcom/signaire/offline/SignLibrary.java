@@ -3,14 +3,12 @@ package fr.ledcom.signaire.offline;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,10 +16,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.stream.Stream;
+import java.util.TreeMap;
 
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleException;
@@ -39,7 +39,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public final class SignLibrary implements AutoCloseable {
 
-    private static final Logger LOG = System.getLogger(SignLibrary.class.getName());
+    private static final Logger LOG = Logger.getLogger(SignLibrary.class.getName());
     private static final String BUNDLE_EXTENSION = ".zip";
 
     private final Path directory;
@@ -214,7 +214,8 @@ public final class SignLibrary implements AutoCloseable {
             long size = Files.size(file);
             bundles.put(file, new Loaded(reader.read(file), modified, size));
         } catch (BundleException | IOException e) {
-            LOG.log(Level.WARNING, "Ignoring the invalid bundle {0}: {1}", file, e.getMessage());
+            LOG.log(Level.WARNING, "Ignoring the invalid bundle {0}: {1}",
+                    new Object[] {file, e.getMessage()});
         }
     }
 

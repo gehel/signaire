@@ -31,6 +31,11 @@ final class ArchitectureTest {
             .resideInAnyPackage("java.net.http..", "java.awt..", "javax.swing..", "java.sql..",
                     "java.lang.management..", "javax.management..");
 
+    /** Java has it since 9, Android doesn't: java.util.logging instead (AndroidApiTest checks all of Java). */
+    @ArchTest
+    static final ArchRule NO_SYSTEM_LOGGER = noClasses().should().dependOnClassesThat()
+            .haveFullyQualifiedName("java.lang.System$Logger");
+
     @ArchTest
     static final ArchRule NO_APPLICATION_MODULE = noClasses().should().dependOnClassesThat()
             .resideInAnyPackage("fr.ledcom.signaire.core..", "fr.ledcom.signaire.accounts..",

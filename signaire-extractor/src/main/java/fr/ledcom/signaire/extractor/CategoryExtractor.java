@@ -1,8 +1,6 @@
 package fr.ledcom.signaire.extractor;
 
 import java.io.IOException;
-import java.lang.System.Logger.Level;
-import java.lang.System.Logger;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +25,8 @@ import java.util.function.UnaryOperator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -61,7 +61,7 @@ public class CategoryExtractor {
 
     /** Name of the media cache, inside the output directory. */
     public static final String MEDIA_CACHE = ".media";
-    private static final Logger LOG = System.getLogger(CategoryExtractor.class.getName());
+    private static final Logger LOG = Logger.getLogger(CategoryExtractor.class.getName());
     private static final Duration DEFAULT_PROGRESS_INTERVAL = Duration.ofSeconds(5);
     private static final long POLL_MILLIS = 100;
     private static final long STOP_SECONDS = 10;
@@ -162,8 +162,8 @@ public class CategoryExtractor {
         try (Bundle existing = new BundleReader().read(bundle)) {
             return existing.signs().stream().collect(Collectors.toMap(Sign::uid, Function.identity(), (a, b) -> a));
         } catch (BundleException e) {
-            LOG.log(Level.WARNING, "Cannot read the signs of {0}, reading them all again: {1}", bundle,
-                    e.getMessage());
+            LOG.log(Level.WARNING, "Cannot read the signs of {0}, reading them all again: {1}",
+                    new Object[] {bundle, e.getMessage()});
             return Map.of();
         }
     }
@@ -214,7 +214,8 @@ public class CategoryExtractor {
         private void awaitTermination(ExecutorService executor) {
             try {
                 if (!executor.awaitTermination(STOP_SECONDS, TimeUnit.SECONDS)) {
-                    LOG.log(Level.WARNING, "The extraction of {0} did not stop within {1} s", category, STOP_SECONDS);
+                    LOG.log(Level.WARNING, "The extraction of {0} did not stop within {1} s",
+                            new Object[] {category, STOP_SECONDS});
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

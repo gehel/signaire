@@ -1,20 +1,20 @@
 package fr.ledcom.signaire.extractor;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.text.Normalizer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CancellationException;
-import java.util.regex.Pattern;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
@@ -32,7 +32,7 @@ import fr.ledcom.signaire.model.Language;
  */
 public class SignEnumerator {
 
-    private static final Logger LOG = System.getLogger(SignEnumerator.class.getName());
+    private static final Logger LOG = Logger.getLogger(SignEnumerator.class.getName());
     /** Not 0: SignSuisse always fails on that search. */
     private static final String INITIAL_ALPHABET = "abcdefghijklmnopqrstuvwxyz123456789";
     private static final String ALPHABET = INITIAL_ALPHABET + "0";
@@ -155,8 +155,8 @@ public class SignEnumerator {
             try {
                 results = search.search(prefix, language, category);
             } catch (ExtractionException e) {
-                LOG.log(Level.INFO, "Search for \"{0}\" failed, searching one character further: {1}", prefix,
-                        e.getMessage());
+                LOG.log(Level.INFO, "Search for \"{0}\" failed, searching one character further: {1}",
+                        new Object[] {prefix, e.getMessage()});
                 failed++;
                 observer.failed(prefix, e);
                 after(prefix, Character.MIN_VALUE);
