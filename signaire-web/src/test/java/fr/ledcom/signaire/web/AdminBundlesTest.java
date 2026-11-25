@@ -32,7 +32,7 @@ import fr.ledcom.signaire.core.search.SignSearchService;
 import fr.ledcom.signaire.model.Category;
 
 @WebLayerTest({AdminBundlesController.class, AdminUploadsController.class, AdminSyncController.class})
-@Import({SignEditor.class, BundleLoading.class, BundleUploads.class, SignSuisseSync.class, FakeSignSuisse.class})
+@Import({SignEditor.class, BundleLoading.class, BundleUploads.class, SignSuisseSync.class, FakeSignSuisseConfiguration.class})
 class AdminBundlesTest {
 
     @TempDir
@@ -140,9 +140,9 @@ class AdminBundlesTest {
         assertThat(started).hasRedirectedUrl("/admin/sync");
         assertThat(sync.awaitCompletion(Duration.ofSeconds(30))).isTrue();
         assertThat(bundles.resolve("city.zip")).exists();
-        assertThat(search.findByUid(FakeSignSuisse.ZOUG.uid())).isPresent();
+        assertThat(search.findByUid(TestSigns.GARE.uid())).isPresent();
         assertThat(mvc.get().uri("/admin/sync/status").with(ADMIN).exchange()).bodyText()
-                .contains("Synchronisation terminée", "Ville", "2 signes");
+                .contains("Synchronisation terminée", "Ville", "3 signes");
     }
 
     @Test

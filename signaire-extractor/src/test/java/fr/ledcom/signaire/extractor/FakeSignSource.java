@@ -52,6 +52,18 @@ public class FakeSignSource implements SignSource {
         return TestSigns.atSignSuisse(sign).toBuilder().sourceUrl(hit(sign).url()).build();
     }
 
+    /** Forgets what it served, its failures and its hooks: for a fake that tests share (a Spring bean). */
+    public FakeSignSource reset() {
+        searches.clear();
+        pages.clear();
+        downloads.clear();
+        failingPages.clear();
+        failingMedia.clear();
+        beforeSearch = term -> { };
+        beforePage = hit -> { };
+        return this;
+    }
+
     /** The page of this sign fails, as a page SignSuisse doesn't answer. */
     public FakeSignSource failingPage(Sign sign) {
         failingPages.add(sign.uid());
