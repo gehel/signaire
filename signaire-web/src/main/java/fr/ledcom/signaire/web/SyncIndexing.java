@@ -1,12 +1,14 @@
 package fr.ledcom.signaire.web;
 
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.model.Sign;
@@ -29,7 +31,7 @@ final class SyncIndexing {
     @GuardedBy("this")
     private final List<Sign> pending = new ArrayList<>();
     @GuardedBy("this")
-    private Instant oldest;
+    private @Nullable Instant oldest;
     @GuardedBy("this")
     private int indexed;
 
@@ -54,7 +56,8 @@ final class SyncIndexing {
 
     /** Indexes the signs waiting since longer than the delay. */
     synchronized void flushIfDue() {
-        if (!pending.isEmpty() && !clock.instant().isBefore(oldest.plus(maxDelay))) {
+        // oldest is set as soon as a sign is pending
+        if (oldest != null && !pending.isEmpty() && !clock.instant().isBefore(oldest.plus(maxDelay))) {
             flush();
         }
     }

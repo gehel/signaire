@@ -3,14 +3,15 @@ package fr.ledcom.signaire.web;
 import java.util.List;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.LocaleResolver;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -53,7 +54,8 @@ public class LocaleConfiguration implements WebMvcConfigurer {
         }
 
         @Override
-        public void setLocale(HttpServletRequest request, HttpServletResponse response, Locale locale) {
+        public void setLocale(HttpServletRequest request, @Nullable HttpServletResponse response,
+                @Nullable Locale locale) {
             Locale language = locale == null ? null : Locale.of(locale.getLanguage());
             super.setLocale(request, response, SUPPORTED_LOCALES.contains(language) ? language : null);
         }

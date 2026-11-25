@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import org.jspecify.annotations.Nullable;
+
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -52,7 +54,7 @@ public class Standalone {
      *
      * @param admin the administrator, with several users
      */
-    public synchronized void completeSetup(boolean alone, String admin) {
+    public synchronized void completeSetup(boolean alone, @Nullable String admin) {
         Properties properties = new Properties();
         properties.setProperty("signaire.standalone.setup-done", "true");
         properties.setProperty("signaire.accounts.single-user", Boolean.toString(alone));

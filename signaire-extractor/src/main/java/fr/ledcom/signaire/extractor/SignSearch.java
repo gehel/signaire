@@ -2,6 +2,8 @@ package fr.ledcom.signaire.extractor;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 
@@ -12,5 +14,5 @@ public interface SignSearch {
     /**
      * @param category the category to search, or {@code null} to search them all
      */
-    List<SearchHit> search(String term, Language language, Category category);
+    List<SearchHit> search(String term, Language language, @Nullable Category category);
 }

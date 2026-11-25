@@ -2,6 +2,7 @@ package fr.ledcom.signaire.web;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -79,14 +80,14 @@ public class ListController {
         return "redirect:/lists/" + id;
     }
 
-    private void addListsModel(AccountPrincipal user, Model model, String error, String name) {
+    private void addListsModel(AccountPrincipal user, Model model, @Nullable String error, String name) {
         model.addAttribute("lists", lists.lists(user.accountId()));
         model.addAttribute("error", error);
         model.addAttribute("name", name);
         model.addAttribute("maxNameLength", WordListService.MAX_NAME_LENGTH);
     }
 
-    private void addListModel(WordList list, Model model, String error) {
+    private void addListModel(WordList list, Model model, @Nullable String error) {
         List<Sign> signs = search.findByUids(list.signUids());
         model.addAttribute("list", list);
         model.addAttribute("signs", signs);

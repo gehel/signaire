@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +72,8 @@ public class AccountService {
      *
      * @param preferredUsername the username to give to a new account, if it's free
      */
-    public Account findOrCreateOidc(String issuer, String subject, String preferredUsername, String displayName) {
+    public Account findOrCreateOidc(String issuer, String subject, String preferredUsername,
+            @Nullable String displayName) {
         AccountEntity account = repository.findByOidcIssuerAndOidcSubject(issuer, subject).orElseGet(() -> {
             String username = freeUsername(preferredUsername);
             AccountEntity created = new AccountEntity(username, username, Instant.now());

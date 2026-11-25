@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -102,7 +103,7 @@ public class SetupController {
     }
 
     /** Creates the administrator account; null, with the error in the model, when it can't be. */
-    private String registerAdmin(Setup setup, Model model) {
+    private @Nullable String registerAdmin(Setup setup, Model model) {
         if (setup.password() == null || !setup.password().equals(setup.confirmation())) {
             model.addAttribute("error", "register.error.passwordMismatch");
             return null;

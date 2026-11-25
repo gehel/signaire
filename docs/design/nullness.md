@@ -21,6 +21,8 @@ there; tests catch the cases they think of. The compiler can check it, if the co
   the check.
 - **Where frameworks set fields** (JPA entities, picocli options), NullAway is told so rather than the fields declared
   `@Nullable`: their annotations (`@Id`, `@Option`, …) mark them as initialized outside the constructor.
+- **What the web gets from a request may be absent**: parameters and cookies `required = false` are `@Nullable`, so
+  that NullAway follows them into the code.
 - **Tests aren't checked**: they pass `null` on purpose to see what the code does with it, and their packages are the
   same as the main code's.
 - Error Prone works inside javac: Maven's JVM opens the internals of the compiler to it (`.mvn/jvm.config`).

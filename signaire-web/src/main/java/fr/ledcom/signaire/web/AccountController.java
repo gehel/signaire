@@ -3,8 +3,9 @@ package fr.ledcom.signaire.web;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.ObjectProvider;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.stereotype.Controller;
@@ -41,7 +42,7 @@ public class AccountController {
     public record OidcProvider(String id, String name) {
     }
 
-    private static List<OidcProvider> oidcProviders(ClientRegistrationRepository registrations) {
+    private static List<OidcProvider> oidcProviders(@Nullable ClientRegistrationRepository registrations) {
         List<OidcProvider> providers = new ArrayList<>();
         // Spring Boot's repository lists its registrations; others can't be listed
         if (registrations instanceof Iterable<?> iterable) {

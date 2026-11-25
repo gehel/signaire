@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -63,7 +64,7 @@ public class AdminSignsController {
      * @param requestId the request the sign is for, whose word and language fill the form
      */
     @GetMapping("/admin/signs/new")
-    public String newSign(@RequestParam(name = "request", required = false) Long requestId, Model model) {
+    public String newSign(@RequestParam(name = "request", required = false) @Nullable Long requestId, Model model) {
         SignForm form = Optional.ofNullable(requestId).flatMap(requests::get)
                 .map(request -> SignForm.empty(request.word(), request.language().code()))
                 .orElseGet(() -> SignForm.empty("", Language.FRENCH.code()));
@@ -75,7 +76,7 @@ public class AdminSignsController {
 
     @PostMapping("/admin/signs")
     public ModelAndView create(@ModelAttribute("form") SignForm form,
-            @RequestParam(name = "request", required = false) Long requestId,
+            @RequestParam(name = "request", required = false) @Nullable Long requestId,
             @AuthenticationPrincipal AccountPrincipal admin, Model model) {
         List<String> errors = form.errors();
         if (!errors.isEmpty()) {
@@ -124,7 +125,7 @@ public class AdminSignsController {
         return "redirect:/admin/signs";
     }
 
-    private static ModelAndView formWithErrors(Model model, String uid, List<String> errors) {
+    private static ModelAndView formWithErrors(Model model, @Nullable String uid, List<String> errors) {
         model.addAttribute("uid", uid);
         model.addAttribute("errors", errors);
         return new ModelAndView(FORM_VIEW, model.asMap());

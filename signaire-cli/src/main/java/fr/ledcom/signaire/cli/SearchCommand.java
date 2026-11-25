@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -38,15 +39,15 @@ public class SearchCommand implements Runnable {
     private CommandSpec spec;
 
     @Parameters(arity = "0..*", descriptionKey = "words", paramLabel = "<mot>")
-    private List<String> words;
+    private @Nullable List<String> words;
 
     @Option(names = {"-l", "--langue"}, descriptionKey = "language", split = ",", paramLabel = "<langue>",
             converter = LanguageCodes.Converter.class, completionCandidates = LanguageCodes.Candidates.class)
-    private List<Language> languages;
+    private @Nullable List<Language> languages;
 
     @Option(names = {"-c", "--categorie"}, descriptionKey = "category", split = ",", paramLabel = "<categorie>",
             converter = CategoryNames.Converter.class, completionCandidates = CategoryNames.Candidates.class)
-    private List<Category> categories;
+    private @Nullable List<Category> categories;
 
     @Option(names = {"-n", "--nombre"}, descriptionKey = "size", defaultValue = "20", paramLabel = "<n>")
     private int size;
@@ -66,8 +67,8 @@ public class SearchCommand implements Runnable {
     public void run() {
         PrintWriter out = spec.commandLine().getOut();
         String text = words == null ? null : String.join(" ", words);
-        SignQuery query = new SignQuery(text, languages == null ? null : Set.copyOf(languages),
-                categories == null ? null : Set.copyOf(categories), (Math.max(page, 1) - 1) * size, size);
+        SignQuery query = new SignQuery(text, languages == null ? Set.of() : Set.copyOf(languages),
+                categories == null ? Set.of() : Set.copyOf(categories), (Math.max(page, 1) - 1) * size, size);
         SearchResults results = search.search(query);
         if (results.total() == 0) {
             out.println(messages.get("search.none"));

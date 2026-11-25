@@ -2,6 +2,7 @@ package fr.ledcom.signaire.web;
 
 import java.util.Collection;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -33,7 +34,7 @@ public class OidcAccountUser extends DefaultOidcUser implements AccountPrincipal
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(@Nullable Object other) {
         return other instanceof OidcAccountUser user && accountId == user.accountId && super.equals(other);
     }
 

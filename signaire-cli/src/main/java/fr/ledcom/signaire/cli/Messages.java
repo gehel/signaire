@@ -2,8 +2,10 @@ package fr.ledcom.signaire.cli;
 
 import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
+import java.util.ResourceBundle;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * Formats the messages of a resource bundle in the user's language: the default locale when the message is
@@ -25,7 +27,7 @@ final class Messages {
         return new Messages(bundleName);
     }
 
-    String get(String key, Object... arguments) {
+    String get(String key, @Nullable Object... arguments) {
         Locale locale = Locale.getDefault();
         return new MessageFormat(bundle(locale).getString(key), locale).format(arguments);
     }

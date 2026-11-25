@@ -2,13 +2,15 @@ package fr.ledcom.signaire.web;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Function;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Example;
@@ -55,7 +57,7 @@ public record SignForm(String name, String language, List<Category> categories, 
      *
      * @param original the sign before the edition, whose media and examples are kept when unchanged; or null
      */
-    Sign toSign(String uid, Sign original) {
+    Sign toSign(String uid, @Nullable Sign original) {
         Map<String, Media> knownMedia = original == null ? Map.of()
                 : Stream.concat(original.videos().stream(), original.images().stream())
                         .collect(Collectors.toMap(Media::sourceUrl, Function.identity(), (a, b) -> a));
@@ -90,11 +92,11 @@ public record SignForm(String name, String language, List<Category> categories, 
         return media.stream().map(Media::sourceUrl).collect(Collectors.joining("\n"));
     }
 
-    private static String orEmpty(String text) {
+    private static String orEmpty(@Nullable String text) {
         return text == null ? "" : text;
     }
 
-    private static String blankToNull(String text) {
+    private static @Nullable String blankToNull(@Nullable String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }
 }

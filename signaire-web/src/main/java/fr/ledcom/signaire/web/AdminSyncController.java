@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -50,8 +51,8 @@ public class AdminSyncController {
     }
 
     @PostMapping("/admin/sync")
-    public String start(@RequestParam(name = "categories", required = false) List<Category> categories,
-            @RequestParam(name = "languages", required = false) List<Language> languages,
+    public String start(@RequestParam(name = "categories", required = false) @Nullable List<Category> categories,
+            @RequestParam(name = "languages", required = false) @Nullable List<Language> languages,
             @RequestParam(name = "media", defaultValue = "NONE") MediaChoice media,
             @RequestParam(name = "refresh", defaultValue = "false") boolean refresh, Locale locale,
             RedirectAttributes redirect) {

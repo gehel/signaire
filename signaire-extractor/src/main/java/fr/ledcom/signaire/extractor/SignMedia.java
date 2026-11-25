@@ -39,15 +39,17 @@ final class SignMedia {
     static Sign with(Sign sign, UnaryOperator<Media> video, UnaryOperator<Media> image) {
         return sign.toBuilder()
                 .videos(sign.videos().stream().map(video).toList())
-                .examples(sign.examples().stream()
-                        .map(example -> example.video() == null ? example
-                                : new Example(example.text(), video.apply(example.video())))
-                        .toList())
+                .examples(sign.examples().stream().map(example -> with(example, video)).toList())
                 .dialectVariants(sign.dialectVariants().stream()
                         .map(variant -> new DialectVariant(variant.dialects(), video.apply(variant.video())))
                         .toList())
                 .images(sign.images().stream().map(image).toList())
                 .build();
+    }
+
+    private static Example with(Example example, UnaryOperator<Media> video) {
+        Media signed = example.video();
+        return signed == null ? example : new Example(example.text(), video.apply(signed));
     }
 
     /** The media referenced by its SignSuisse URL only (a reused sign may have had it downloaded). */

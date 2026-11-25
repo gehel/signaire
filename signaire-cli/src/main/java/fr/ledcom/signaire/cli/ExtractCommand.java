@@ -5,11 +5,12 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -61,15 +62,15 @@ public class ExtractCommand implements Callable<Integer> {
 
     @Option(names = {"-c", "--categorie"}, descriptionKey = "category", split = ",", paramLabel = "<categorie>",
             converter = CategoryNames.Converter.class, completionCandidates = CategoryNames.Candidates.class)
-    private List<Category> categories;
+    private @Nullable List<Category> categories;
 
     @Option(names = {"-l", "--langue"}, descriptionKey = "language", split = ",", paramLabel = "<langue>",
             converter = LanguageCodes.Converter.class, completionCandidates = LanguageCodes.Candidates.class)
-    private List<Language> languages;
+    private @Nullable List<Language> languages;
 
     @Option(names = "--medias", descriptionKey = "medias", paramLabel = "<medias>",
             converter = MediaNames.Converter.class, completionCandidates = MediaNames.Candidates.class)
-    private MediaChoice media;
+    private @Nullable MediaChoice media;
 
     @Option(names = "--sans-medias", descriptionKey = "noMedia")
     private boolean noMedia;
@@ -133,8 +134,8 @@ public class ExtractCommand implements Callable<Integer> {
             if (status.stage() == ExtractionStatus.Stage.DONE) {
                 return;
             }
-            String remaining = status.remaining() == null ? ""
-                    : messages.get("progress.remaining", Math.max(1, status.remaining().toMinutes()));
+            Duration left = status.remaining();
+            String remaining = left == null ? "" : messages.get("progress.remaining", Math.max(1, left.toMinutes()));
             spec.commandLine().getOut().println(messages.get("progress.status", CategoryNames.name(status.category()),
                     status.searches().sent(), status.searches().pending(), status.signs().found(),
                     status.signs().read(), status.signs().reused(), status.signs().failed(),

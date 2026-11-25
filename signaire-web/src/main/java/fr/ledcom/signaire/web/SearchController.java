@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -41,9 +42,9 @@ public class SearchController {
     }
 
     @GetMapping("/")
-    public String search(@RequestParam(name = "q", required = false) String text,
-            @RequestParam(name = "language", required = false) Set<Language> languages,
-            @RequestParam(name = "category", required = false) Set<Category> categories,
+    public String search(@RequestParam(name = "q", required = false) @Nullable String text,
+            @RequestParam(name = "language", required = false) @Nullable Set<Language> languages,
+            @RequestParam(name = "category", required = false) @Nullable Set<Category> categories,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @AuthenticationPrincipal AccountPrincipal user,
             HttpServletRequest request, HttpServletResponse response, Model model) {
@@ -74,13 +75,13 @@ public class SearchController {
     }
 
     /** The search described by the request parameters. */
-    static SignQuery query(String text, Collection<Language> languages, Collection<Category> categories, int from,
-            int size) {
+    static SignQuery query(@Nullable String text, @Nullable Collection<Language> languages,
+            @Nullable Collection<Category> categories, int from, int size) {
         return new SignQuery(text, withoutBlanks(languages), withoutBlanks(categories), from, size);
     }
 
     /** Empty parameters ({@code ?category=}) mean no filter. */
-    private static <T> Set<T> withoutBlanks(Collection<T> values) {
+    private static <T> Set<T> withoutBlanks(@Nullable Collection<T> values) {
         return values == null ? Set.of() : values.stream().filter(Objects::nonNull).collect(Collectors.toSet());
     }
 }
