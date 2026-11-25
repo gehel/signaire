@@ -2,8 +2,10 @@ package fr.ledcom.signaire.web;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -41,12 +43,12 @@ public class SearchToListController {
 
     @PostMapping("/lists/signs")
     public String add(@RequestParam(name = "scope", defaultValue = "selection") String scope,
-            @RequestParam(name = "uid", required = false) List<String> uids,
-            @RequestParam(name = "list", required = false) Long listId,
-            @RequestParam(name = "newList", required = false) String newList,
-            @RequestParam(name = "q", required = false) String text,
-            @RequestParam(name = "language", required = false) Set<Language> languages,
-            @RequestParam(name = "category", required = false) Set<Category> categories,
+            @RequestParam(name = "uid", required = false) @Nullable List<String> uids,
+            @RequestParam(name = "list", required = false) @Nullable Long listId,
+            @RequestParam(name = "newList", required = false) @Nullable String newList,
+            @RequestParam(name = "q", required = false) @Nullable String text,
+            @RequestParam(name = "language", required = false) @Nullable Set<Language> languages,
+            @RequestParam(name = "category", required = false) @Nullable Set<Category> categories,
             @AuthenticationPrincipal AccountPrincipal user, Locale locale,
             HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirect, Model model) {
         List<String> signs;
@@ -62,7 +64,7 @@ public class SearchToListController {
             status = messages.getMessage("search.addTo.noSelection", null, locale);
         } else {
             try {
-                WordList list = listId == null ? lists.create(user.accountId(), newList)
+                WordList list = listId == null ? lists.create(user.accountId(), Objects.requireNonNullElse(newList, ""))
                         : lists.get(user.accountId(), listId);
                 int added = lists.addAll(user.accountId(), list.id(), signs);
                 status = messages.getMessage("search.addTo.added", new Object[] {added, list.name()}, locale);
@@ -85,7 +87,8 @@ public class SearchToListController {
         return "redirect:" + searchUrl(text, languages, categories);
     }
 
-    private static String searchUrl(String text, Set<Language> languages, Set<Category> categories) {
+    private static String searchUrl(@Nullable String text, @Nullable Set<Language> languages,
+            @Nullable Set<Category> categories) {
         UriComponentsBuilder url = UriComponentsBuilder.fromPath("/");
         if (text != null && !text.isBlank()) {
             url.queryParam("q", text);

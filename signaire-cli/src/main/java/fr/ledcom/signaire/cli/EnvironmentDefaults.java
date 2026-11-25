@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.cli;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.env.Environment;
 
 import picocli.CommandLine.IDefaultValueProvider;
@@ -19,7 +20,7 @@ final class EnvironmentDefaults implements IDefaultValueProvider {
     }
 
     @Override
-    public String defaultValue(ArgSpec argument) {
+    public @Nullable String defaultValue(ArgSpec argument) {
         if (argument instanceof OptionSpec option
                 && ("--bundles".equals(option.longestName()) || "--sortie".equals(option.longestName()))) {
             return environment.getProperty("signaire.bundles.directory");

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -61,9 +62,9 @@ public class ExportController {
 
     @GetMapping("/export")
     public void exportSearch(@RequestParam("format") WebExports.Format format,
-            @RequestParam(name = "q", required = false) String text,
-            @RequestParam(name = "language", required = false) Set<Language> languages,
-            @RequestParam(name = "category", required = false) Set<Category> categories,
+            @RequestParam(name = "q", required = false) @Nullable String text,
+            @RequestParam(name = "language", required = false) @Nullable Set<Language> languages,
+            @RequestParam(name = "category", required = false) @Nullable Set<Category> categories,
             @RequestParam(name = "paper", defaultValue = "A4") PdfLayout.PaperSize paper,
             @RequestParam(name = "perPage", defaultValue = "4") int perPage,
             @RequestParam(name = "layout", defaultValue = "SHEETS") PdfLayout.Mode layout,

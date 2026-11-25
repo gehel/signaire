@@ -2,6 +2,7 @@ package fr.ledcom.signaire.cli;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -9,13 +10,13 @@ import fr.ledcom.signaire.bundle.BundleException;
 import fr.ledcom.signaire.core.search.SearchException;
 import fr.ledcom.signaire.export.ExportException;
 import fr.ledcom.signaire.extractor.ExtractionException;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IFactory;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 import picocli.CommandLine.TypeConversionException;
+import picocli.CommandLine;
 
 /** Root command of the CLI; subcommands are registered as nested commands. */
 @Component
@@ -72,7 +73,7 @@ public class SignaireCommand implements Runnable {
     }
 
     /** Key of the message for the expected failures, {@code null} for bugs. */
-    private static String errorKey(Exception e) {
+    private static @Nullable String errorKey(Exception e) {
         return EXPECTED_ERRORS.stream()
                 .filter(error -> error.type().isInstance(e))
                 .map(ExpectedError::key)

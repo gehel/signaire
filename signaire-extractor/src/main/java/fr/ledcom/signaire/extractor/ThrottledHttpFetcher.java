@@ -4,18 +4,20 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
+import java.net.http.HttpResponse;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
+import java.util.Objects;
+
+import org.jspecify.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.jcip.annotations.GuardedBy;
@@ -40,7 +42,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
     private final Sleeper sleeper;
     private final Semaphore inFlight = new Semaphore(MAX_IN_FLIGHT, true);
     @GuardedBy("this")
-    private Instant lastRequest;
+    private @Nullable Instant lastRequest;
 
     /** Waits, interruptibly. */
     @FunctionalInterface
@@ -72,7 +74,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
             justification = "ExtractionException is how extraction failures are reported")
     public void download(URI uri, Path target) {
         Path directory = Objects.requireNonNull(target.toAbsolutePath().getParent(), "target directory");
-        Path tmp = null;
+        @Nullable Path tmp = null;
         try {
             Files.createDirectories(directory);
             tmp = Files.createTempFile(directory, ".download-", ".tmp");
@@ -147,7 +149,7 @@ public class ThrottledHttpFetcher implements HttpFetcher {
         }
     }
 
-    private static void deleteQuietly(Path file) {
+    private static void deleteQuietly(@Nullable Path file) {
         if (file == null) {
             return;
         }

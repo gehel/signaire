@@ -93,13 +93,15 @@ public class BundleLoading {
         editor.indexWithChanges(signs.stream().map(BundleLoading::linked).toList());
     }
 
+    private static Example linked(Example example) {
+        Media video = example.video();
+        return video == null ? example : new Example(example.text(), linked(video));
+    }
+
     private static Sign linked(Sign sign) {
         return sign.toBuilder()
                 .videos(sign.videos().stream().map(BundleLoading::linked).toList())
-                .examples(sign.examples().stream()
-                        .map(example -> example.video() == null ? example
-                                : new Example(example.text(), linked(example.video())))
-                        .toList())
+                .examples(sign.examples().stream().map(BundleLoading::linked).toList())
                 .dialectVariants(sign.dialectVariants().stream()
                         .map(variant -> new DialectVariant(variant.dialects(), linked(variant.video())))
                         .toList())

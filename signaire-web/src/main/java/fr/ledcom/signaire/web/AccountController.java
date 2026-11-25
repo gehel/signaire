@@ -3,8 +3,9 @@ package fr.ledcom.signaire.web;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.ObjectProvider;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.stereotype.Controller;
@@ -41,7 +42,7 @@ public class AccountController {
     public record OidcProvider(String id, String name) {
     }
 
-    private static List<OidcProvider> oidcProviders(ClientRegistrationRepository registrations) {
+    private static List<OidcProvider> oidcProviders(@Nullable ClientRegistrationRepository registrations) {
         List<OidcProvider> providers = new ArrayList<>();
         // Spring Boot's repository lists its registrations; others can't be listed
         if (registrations instanceof Iterable<?> iterable) {
@@ -59,7 +60,8 @@ public class AccountController {
      *
      * @param confirmation the password again
      */
-    public record Registration(String username, String displayName, String password, String confirmation) {
+    public record Registration(@Nullable String username, @Nullable String displayName, @Nullable String password,
+            @Nullable String confirmation) {
     }
 
     @ModelAttribute("registrationEnabled")
@@ -89,12 +91,13 @@ public class AccountController {
             return "redirect:/login";
         }
         model.addAttribute("minPasswordLength", AccountService.MIN_PASSWORD_LENGTH);
-        if (registration.password() == null || !registration.password().equals(registration.confirmation())) {
+        String password = registration.password();
+        if (password == null || !password.equals(registration.confirmation())) {
             model.addAttribute("error", "register.error.passwordMismatch");
             return "register";
         }
         try {
-            accounts.register(registration.username(), registration.password(), registration.displayName());
+            accounts.register(registration.username(), password, registration.displayName());
         } catch (AccountException e) {
             model.addAttribute("error", "register.error." + e.reason().name());
             return "register";

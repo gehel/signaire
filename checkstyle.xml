@@ -3,7 +3,8 @@
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 <!--
   The checkstyle rules of the WMF parent POM (wmf-maven-tool-configs 1.42), but for JavadocStyle, which checkstyle 13.9
-  and later don't have (see below). Keep the rest in step with the parent.
+  and later don't have, and the annotations of nullness and thread safety, which don't count in the fan-out of a class
+  (see below). Keep the rest in step with the parent.
 -->
 <module name="Checker">
     <module name="SuppressWarningsFilter" />
@@ -125,6 +126,8 @@
         <module name="ClassFanOutComplexity">
             <property name="id" value="checkstyle:classfanoutcomplexity"/>
             <property name="max" value="25"/>
+            <!-- ours: annotations that only document (nullness, thread safety) couple nothing -->
+            <property name="excludedPackages" value="org.jspecify.annotations, net.jcip.annotations"/>
         </module>
         <module name="CyclomaticComplexity">
             <property name="switchBlockAsSingleDecisionPoint" value="true"/>

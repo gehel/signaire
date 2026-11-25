@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
@@ -48,7 +49,7 @@ public class AdminBundlesController {
      *
      * @param loaded what the index knows of the bundle, null when it was not loaded
      */
-    public record BundleFile(String name, long size, BundleRecord loaded) {
+    public record BundleFile(String name, long size, @Nullable BundleRecord loaded) {
     }
 
     @GetMapping("/admin/bundles")

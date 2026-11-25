@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.web;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,7 +17,7 @@ public class StandaloneAdvice {
 
     /** Null in the tests of parts of the web layer, and in the error pages of Spring Boot. */
     @ModelAttribute("standalone")
-    public Standalone standalone() {
+    public @Nullable Standalone standalone() {
         return standalone.getIfAvailable();
     }
 }

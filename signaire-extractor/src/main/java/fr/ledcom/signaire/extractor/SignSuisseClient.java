@@ -7,6 +7,8 @@ import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
@@ -31,7 +33,7 @@ public class SignSuisseClient implements SignSource {
     }
 
     @Override
-    public List<SearchHit> search(String term, Language language, Category category) {
+    public List<SearchHit> search(String term, Language language, @Nullable Category category) {
         URI uri = baseUri.resolve("/signsuisse/index.php?eID=signsuisse_search"
                 + "&sword=" + encode(term)
                 + "&lang=" + language.code()

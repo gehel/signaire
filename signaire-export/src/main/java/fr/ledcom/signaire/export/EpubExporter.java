@@ -14,11 +14,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.UUID;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.jspecify.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.model.Media;
@@ -80,7 +82,7 @@ public final class EpubExporter {
     }
 
     /** A text and its video: an example sentence, a regional variant. */
-    private record Captioned(String text, Media video) {
+    private record Captioned(@Nullable String text, @Nullable Media video) {
     }
 
     /** A file of the book, listed in its manifest. Compared by the bytes of its content. */
@@ -171,8 +173,9 @@ public final class EpubExporter {
             body.append("<h2>").append(Markup.html(labels.get(label))).append("</h2>\n<ul>\n");
             for (Captioned entry : entries) {
                 body.append("<li>").append(Markup.html(entry.text()));
-                if (entry.video() != null) {
-                    body.append(' ').append(video(entry.video()));
+                Media video = entry.video();
+                if (video != null) {
+                    body.append(' ').append(video(video));
                 }
                 body.append("</li>\n");
             }
@@ -187,7 +190,7 @@ public final class EpubExporter {
                     .orElseGet(() -> "<p>" + link(video.sourceUrl(), labels.get("watchVideo")) + "</p>");
         }
 
-        private void section(StringBuilder body, String label, String text) {
+        private void section(StringBuilder body, String label, @Nullable String text) {
             if (text != null && !text.isBlank()) {
                 body.append("<h2>").append(Markup.html(labels.get(label))).append("</h2>\n<p>")
                         .append(Markup.html(text)).append("</p>\n");

@@ -45,5 +45,4 @@ a lock forgotten on one access to a field is a bug that tests rarely show.
 
 ## Open questions
 
-- Nullness annotations (JSpecify) and a checker of them, which Error Prone (NullAway) would bring: Error Prone also
-  checks `@GuardedBy` more strictly than SpotBugs.
+- Error Prone, now in the build for [nullness](nullness.md), also checks `@GuardedBy`, more strictly than SpotBugs.

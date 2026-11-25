@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -46,15 +47,15 @@ public class ExportCommand implements Callable<Integer> {
     private CommandSpec spec;
 
     @Parameters(arity = "0..*", descriptionKey = "words", paramLabel = "<mot>")
-    private List<String> words;
+    private @Nullable List<String> words;
 
     @Option(names = {"-l", "--langue"}, descriptionKey = "language", split = ",", paramLabel = "<langue>",
             converter = LanguageCodes.Converter.class, completionCandidates = LanguageCodes.Candidates.class)
-    private List<Language> languages;
+    private @Nullable List<Language> languages;
 
     @Option(names = {"-c", "--categorie"}, descriptionKey = "category", split = ",", paramLabel = "<categorie>",
             converter = CategoryNames.Converter.class, completionCandidates = CategoryNames.Candidates.class)
-    private List<Category> categories;
+    private @Nullable List<Category> categories;
 
     @Option(names = {"-f", "--format"}, descriptionKey = "format", required = true, paramLabel = "<format>")
     private Exports.Format format;
@@ -63,7 +64,7 @@ public class ExportCommand implements Callable<Integer> {
     private Path output;
 
     @Option(names = {"-t", "--titre"}, descriptionKey = "title", paramLabel = "<titre>")
-    private String title;
+    private @Nullable String title;
 
     @Option(names = "--papier", descriptionKey = "paper", defaultValue = "A4", paramLabel = "<papier>")
     private PdfLayout.PaperSize paper;
@@ -73,7 +74,7 @@ public class ExportCommand implements Callable<Integer> {
 
     @Option(names = "--mise-en-page", descriptionKey = "layout", paramLabel = "<mise-en-page>",
             converter = LayoutNames.Converter.class, completionCandidates = LayoutNames.Candidates.class)
-    private PdfLayout.Mode layout;
+    private PdfLayout.@Nullable Mode layout;
 
     @Option(names = "--avec-videos", descriptionKey = "withVideos")
     private boolean withVideos;
@@ -90,7 +91,7 @@ public class ExportCommand implements Callable<Integer> {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public ExportCommand(SignSearchService search) {
+    public ExportCommand(SignSearchService search) { // NOSONAR spec: set by picocli
         this.search = search;
     }
 
@@ -98,8 +99,8 @@ public class ExportCommand implements Callable<Integer> {
     public Integer call() throws IOException {
         PdfLayout pdfLayout = pdfLayout();
         String text = words == null ? null : String.join(" ", words);
-        List<Sign> signs = signs(new SignQuery(text, languages == null ? null : Set.copyOf(languages),
-                categories == null ? null : Set.copyOf(categories), 0, 1));
+        List<Sign> signs = signs(new SignQuery(text, languages == null ? Set.of() : Set.copyOf(languages),
+                categories == null ? Set.of() : Set.copyOf(categories), 0, 1));
         ExportRequest request = new ExportRequest(documentTitle(text), signs, Locale.getDefault());
         Exports.write(format, request, pdfLayout, withVideos, bundles, output);
         PrintWriter console = spec.commandLine().getOut();
@@ -108,7 +109,7 @@ public class ExportCommand implements Callable<Integer> {
     }
 
     /** The title given, else the words searched, else a default title. */
-    private String documentTitle(String text) {
+    private String documentTitle(@Nullable String text) {
         if (title != null) {
             return title;
         }

@@ -47,7 +47,7 @@ public class LoadCommand implements Callable<Integer> {
     @Option(names = {"-h", "--help"}, usageHelp = true, descriptionKey = "help")
     private boolean helpRequested;
 
-    public LoadCommand(BundleLoader loader, SignIndex index) {
+    public LoadCommand(BundleLoader loader, SignIndex index) { // NOSONAR spec: set by picocli
         this.loader = loader;
         this.index = index;
     }
@@ -72,7 +72,7 @@ public class LoadCommand implements Callable<Integer> {
             String file = Objects.toString(report.file().getFileName());
             switch (report.status()) {
                 case LOADED -> out.println(messages.get("load.loaded", file, report.signCount(),
-                        CategoryNames.name(report.category())));
+                        CategoryNames.name(Objects.requireNonNull(report.category(), "category of a loaded bundle"))));
                 case UNCHANGED -> out.println(messages.get("load.unchanged", file));
                 case FAILED -> {
                     err.println(messages.get("load.failed", file, report.error()));

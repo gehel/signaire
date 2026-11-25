@@ -1,19 +1,20 @@
 package fr.ledcom.signaire.web;
 
 import java.io.UncheckedIOException;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CancellationException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,7 @@ public class SignSuisseSync {
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private final AtomicReference<SyncExtraction> extraction = new AtomicReference<>();
     @GuardedBy("this")
-    private Thread worker;
+    private @Nullable Thread worker;
 
     public SignSuisseSync(SignSource source, BundleLoading loading,
             @Value("${signaire.bundles.directory:bundles}") Path bundles,
@@ -79,8 +80,8 @@ public class SignSuisseSync {
      * @param left the categories not started yet
      * @param error why the synchronization failed, or null
      */
-    public record Progress(State state, ExtractionStatus current, int indexed, List<CategoryResult> done,
-            List<Category> left, String error) {
+    public record Progress(State state, @Nullable ExtractionStatus current, int indexed, List<CategoryResult> done,
+            List<Category> left, @Nullable String error) {
 
         static final Progress IDLE = new Progress(State.IDLE, null, 0, List.of(), List.of(), null);
 
@@ -97,7 +98,7 @@ public class SignSuisseSync {
             return state == State.RUNNING;
         }
 
-        Progress with(State newState, String newError) {
+        Progress with(State newState, @Nullable String newError) {
             return new Progress(newState, null, 0, done, left, newError);
         }
 

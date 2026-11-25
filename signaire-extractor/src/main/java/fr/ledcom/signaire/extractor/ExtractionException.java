@@ -1,5 +1,7 @@
 package fr.ledcom.signaire.extractor;
 
+import org.jspecify.annotations.Nullable;
+
 /** SignSuisse data cannot be fetched or does not look as expected. */
 public class ExtractionException extends RuntimeException {
 
@@ -9,7 +11,7 @@ public class ExtractionException extends RuntimeException {
         super(message);
     }
 
-    public ExtractionException(String message, Throwable cause) {
+    public ExtractionException(String message, @Nullable Throwable cause) {
         super(message, cause);
     }
 }

@@ -4,6 +4,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import fr.ledcom.signaire.extractor.ExtractionStatus.Stage;
 import fr.ledcom.signaire.model.Category;
@@ -19,11 +21,11 @@ final class ExtractionTracker {
     private final Clock clock;
     private final Instant start;
     @GuardedBy("this")
-    private Instant end;
+    private @Nullable Instant end;
     @GuardedBy("this")
     private Stage stage = Stage.SEARCHING;
     @GuardedBy("this")
-    private Language language;
+    private @Nullable Language language;
     @GuardedBy("this")
     private int searches;
     @GuardedBy("this")
@@ -33,7 +35,7 @@ final class ExtractionTracker {
     @GuardedBy("this")
     private boolean complete = true;
     @GuardedBy("this")
-    private String currentSearch;
+    private @Nullable String currentSearch;
     @GuardedBy("this")
     private int signsFound;
     @GuardedBy("this")
@@ -45,7 +47,7 @@ final class ExtractionTracker {
     @GuardedBy("this")
     private int signsFailed;
     @GuardedBy("this")
-    private String currentSign;
+    private @Nullable String currentSign;
     @GuardedBy("this")
     private int mediaQueued;
     @GuardedBy("this")
@@ -55,7 +57,7 @@ final class ExtractionTracker {
     @GuardedBy("this")
     private long bytes;
     @GuardedBy("this")
-    private String currentMedia;
+    private @Nullable String currentMedia;
 
     ExtractionTracker(Category category, Clock clock) {
         this.category = category;

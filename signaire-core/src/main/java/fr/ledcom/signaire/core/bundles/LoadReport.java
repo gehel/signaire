@@ -2,6 +2,8 @@ package fr.ledcom.signaire.core.bundles;
 
 import java.nio.file.Path;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Category;
 
 /**
@@ -13,7 +15,8 @@ import fr.ledcom.signaire.model.Category;
  * @param status what happened
  * @param error why loading failed, {@code null} otherwise
  */
-public record LoadReport(Path file, Category category, int signCount, Status status, String error) {
+public record LoadReport(Path file, @Nullable Category category, int signCount, Status status,
+        @Nullable String error) {
 
     /** What happened to a bundle. */
     public enum Status {
@@ -25,7 +28,7 @@ public record LoadReport(Path file, Category category, int signCount, Status sta
         FAILED
     }
 
-    static LoadReport failed(Path file, String error) {
+    static LoadReport failed(Path file, @Nullable String error) {
         return new LoadReport(file, null, 0, Status.FAILED, error);
     }
 }

@@ -3,6 +3,7 @@ package fr.ledcom.signaire.web;
 import java.time.Duration;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -29,22 +30,21 @@ public class ThemeAdvice {
 
     /** The theme chosen by the user, null to follow the system. */
     @ModelAttribute("theme")
-    public String theme(@RequestParam(name = PARAMETER, required = false) String choice,
-            @CookieValue(name = COOKIE, required = false) String remembered, HttpServletResponse response) {
+    public @Nullable String theme(@RequestParam(name = PARAMETER, required = false) @Nullable String choice,
+            @CookieValue(name = COOKIE, required = false) @Nullable String remembered, HttpServletResponse response) {
         if (AUTO.equals(choice)) {
             remember(response, "", Duration.ZERO);
             return null;
         }
-        if (isTheme(choice)) {
+        if (choice != null && isTheme(choice)) {
             remember(response, choice, REMEMBERED);
             return choice;
         }
-        return isTheme(remembered) ? remembered : null;
+        return remembered != null && isTheme(remembered) ? remembered : null;
     }
 
-    /** Sets of {@code Set.of} reject null. */
     private static boolean isTheme(String theme) {
-        return theme != null && THEMES.contains(theme);
+        return THEMES.contains(theme);
     }
 
     private static void remember(HttpServletResponse response, String theme, Duration duration) {

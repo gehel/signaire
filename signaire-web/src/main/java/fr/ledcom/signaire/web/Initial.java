@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Sign;
 
 /**
@@ -14,7 +16,7 @@ import fr.ledcom.signaire.model.Sign;
  * @param letter the initial, without accent; {@code #} for names that don't start with a letter; null for signs
  *               found by words, in the order of relevance
  */
-public record Initial(String letter, List<Sign> signs) {
+public record Initial(@Nullable String letter, List<Sign> signs) {
 
     public Initial {
         signs = List.copyOf(signs);

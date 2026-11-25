@@ -89,7 +89,8 @@ public class BundleLoader {
         try (Bundle bundle = reader.read(file)) {
             BundleManifest manifest = bundle.manifest();
             String key = Objects.toString(file.getFileName(), file.toString());
-            String checksum = manifest.checksums().get(BundleManifest.SIGNS_ENTRY);
+            String checksum = Objects.requireNonNull(manifest.checksums().get(BundleManifest.SIGNS_ENTRY),
+                    "checksum of the signs, checked by the reader");
             Optional<BundleRecord> previous = index.findBundle(key, BundleRecord.class);
             if (previous.isPresent() && previous.get().checksum().equals(checksum)) {
                 return new LoadReport(file, manifest.category(), manifest.signCount(), LoadReport.Status.UNCHANGED,

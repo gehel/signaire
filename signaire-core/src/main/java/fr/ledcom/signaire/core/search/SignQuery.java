@@ -2,6 +2,8 @@ package fr.ledcom.signaire.core.search;
 
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 
@@ -15,7 +17,8 @@ import fr.ledcom.signaire.model.Language;
  * @param from index of the first result to return
  * @param size maximum number of results to return
  */
-public record SignQuery(String text, Set<Language> languages, Set<Category> categories, int from, int size) {
+public record SignQuery(@Nullable String text, Set<Language> languages, Set<Category> categories, int from,
+        int size) {
 
     public static final int DEFAULT_SIZE = 20;
 
@@ -29,10 +32,10 @@ public record SignQuery(String text, Set<Language> languages, Set<Category> cate
     }
 
     public static SignQuery forText(String text) {
-        return new SignQuery(text, null, null, 0, DEFAULT_SIZE);
+        return new SignQuery(text, Set.of(), Set.of(), 0, DEFAULT_SIZE);
     }
 
     public static SignQuery all(int from, int size) {
-        return new SignQuery(null, null, null, from, size);
+        return new SignQuery(null, Set.of(), Set.of(), from, size);
     }
 }

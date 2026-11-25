@@ -1,14 +1,18 @@
 package fr.ledcom.signaire.web;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Example;
@@ -26,8 +30,9 @@ import fr.ledcom.signaire.model.Sign;
  * @param images URLs, one per line
  * @param examples sentences, one per line
  */
-public record SignForm(String name, String language, List<Category> categories, String periphrase,
-        String definition, String dialects, String videos, String images, String examples, String sourceUrl) {
+public record SignForm(@Nullable String name, @Nullable String language, @Nullable List<Category> categories,
+        @Nullable String periphrase, @Nullable String definition, @Nullable String dialects, @Nullable String videos,
+        @Nullable String images, @Nullable String examples, @Nullable String sourceUrl) {
 
     /** A form for a new sign. */
     static SignForm empty(String name, String language) {
@@ -37,7 +42,8 @@ public record SignForm(String name, String language, List<Category> categories, 
     static SignForm of(Sign sign) {
         return new SignForm(sign.name(), sign.language().code(), sign.categories(), orEmpty(sign.periphrase()),
                 orEmpty(sign.definition()), String.join(", ", sign.dialects()), urls(sign.videos()),
-                urls(sign.images()), sign.examples().stream().map(Example::text).collect(Collectors.joining("\n")),
+                urls(sign.images()), sign.examples().stream().map(Example::text).filter(Objects::nonNull)
+                        .collect(Collectors.joining("\n")),
                 orEmpty(sign.sourceUrl()));
     }
 
@@ -53,16 +59,25 @@ public record SignForm(String name, String language, List<Category> categories, 
     /**
      * The sign described by the form.
      *
-     * @param original the sign before the edition, whose media and examples are kept when unchanged; or null
+     * @param original the sign before the edition, whose media and examples are kept when unchanged, and its
+     *                 examples without text (signed only, which the form doesn't show); or null
      */
-    Sign toSign(String uid, Sign original) {
+    Sign toSign(String uid, @Nullable Sign original) {
         Map<String, Media> knownMedia = original == null ? Map.of()
                 : Stream.concat(original.videos().stream(), original.images().stream())
                         .collect(Collectors.toMap(Media::sourceUrl, Function.identity(), (a, b) -> a));
-        Map<String, Example> knownExamples = original == null ? Map.of()
-                : original.examples().stream()
-                        .collect(Collectors.toMap(Example::text, Function.identity(), (a, b) -> a));
-        return Sign.builder(uid, signLanguage().orElseThrow(), name.strip())
+        List<Example> originalExamples = original == null ? List.of() : original.examples();
+        Map<String, Example> knownExamples = new HashMap<>();
+        List<Example> signedOnly = new ArrayList<>();
+        for (Example example : originalExamples) {
+            String text = example.text();
+            if (text == null) {
+                signedOnly.add(example);
+            } else {
+                knownExamples.putIfAbsent(text, example);
+            }
+        }
+        return Sign.builder(uid, signLanguage().orElseThrow(), Objects.requireNonNull(name, "name").strip())
                 .sourceUrl(blankToNull(sourceUrl))
                 .periphrase(blankToNull(periphrase))
                 .definition(blankToNull(definition))
@@ -71,8 +86,9 @@ public record SignForm(String name, String language, List<Category> categories, 
                 .dialects(split(dialects, ",").toList())
                 .videos(split(videos, "\n").map(url -> knownMedia.getOrDefault(url, new Media(url, null))).toList())
                 .images(split(images, "\n").map(url -> knownMedia.getOrDefault(url, new Media(url, null))).toList())
-                .examples(split(examples, "\n").map(text -> knownExamples.getOrDefault(text, new Example(text, null)))
-                        .toList())
+                .examples(Stream.concat(
+                        split(examples, "\n").map(text -> knownExamples.getOrDefault(text, new Example(text, null))),
+                        signedOnly.stream()).toList())
                 .dialectVariants(original == null ? List.of() : original.dialectVariants())
                 .build();
     }
@@ -81,7 +97,7 @@ public record SignForm(String name, String language, List<Category> categories, 
         return Arrays.stream(Language.values()).filter(value -> value.code().equals(language)).findFirst();
     }
 
-    private static Stream<String> split(String text, String separator) {
+    private static Stream<String> split(@Nullable String text, String separator) {
         return text == null ? Stream.empty()
                 : Arrays.stream(text.split(separator)).map(String::strip).filter(value -> !value.isEmpty());
     }
@@ -90,11 +106,11 @@ public record SignForm(String name, String language, List<Category> categories, 
         return media.stream().map(Media::sourceUrl).collect(Collectors.joining("\n"));
     }
 
-    private static String orEmpty(String text) {
+    private static String orEmpty(@Nullable String text) {
         return text == null ? "" : text;
     }
 
-    private static String blankToNull(String text) {
+    private static @Nullable String blankToNull(@Nullable String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }
 }

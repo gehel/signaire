@@ -1,19 +1,20 @@
 package fr.ledcom.signaire.core.media;
 
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -71,7 +72,7 @@ public class MediaLibrary implements AutoCloseable {
         return bundle == null ? Optional.empty() : Optional.of(new FileSystemResource(bundle.files().getPath(file)));
     }
 
-    private synchronized OpenBundle bundleFor(String file) {
+    private synchronized @Nullable OpenBundle bundleFor(String file) {
         return bundleByMedia.get(file);
     }
 

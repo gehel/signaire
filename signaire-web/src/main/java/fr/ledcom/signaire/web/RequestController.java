@@ -3,6 +3,7 @@ package fr.ledcom.signaire.web;
 import java.util.Arrays;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -28,7 +29,7 @@ public class RequestController {
     }
 
     @GetMapping("/requests")
-    public String requests(@RequestParam(name = "word", required = false) String word,
+    public String requests(@RequestParam(name = "word", required = false) @Nullable String word,
             @AuthenticationPrincipal AccountPrincipal user, Model model) {
         addModel(user, model, word, null);
         return "requests";
@@ -36,7 +37,7 @@ public class RequestController {
 
     @PostMapping("/requests")
     public String request(@RequestParam("word") String word, @RequestParam("language") Language language,
-            @RequestParam(name = "comment", required = false) String comment,
+            @RequestParam(name = "comment", required = false) @Nullable String comment,
             @AuthenticationPrincipal AccountPrincipal user, Locale locale, Model model, RedirectAttributes redirect) {
         try {
             String requested = requests.request(user.accountId(), word, language, comment).word();
@@ -49,7 +50,7 @@ public class RequestController {
         }
     }
 
-    private void addModel(AccountPrincipal user, Model model, String word, String error) {
+    private void addModel(AccountPrincipal user, Model model, @Nullable String word, @Nullable String error) {
         model.addAttribute("requests", requests.byRequester(user.accountId()));
         model.addAttribute("word", word == null ? "" : word);
         model.addAttribute("allLanguages", Arrays.asList(Language.values()));

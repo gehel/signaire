@@ -181,6 +181,8 @@ Gotchas with the WMF ruleset and Java 27:
   rejects unnamed variables. The rules are the WMF ruleset from our copy, `checkstyle.xml`, because checkstyle 13.9
   removed its `JavadocStyle` check: `SummaryJavadoc` replaces it, and a Javadoc of block tags alone stays allowed.
   Keep the copy in step with the parent's.
+- Error Prone runs inside javac, with NullAway only (`compilerArgs` of the root POM): `.mvn/jvm.config` opens the
+  internals of the compiler to it. When a new JDK breaks the compilation, check Error Prone's version first.
 - Unused catch parameters and try-with-resources variables are `_`, except in the Java 17 modules (model,
   bundle), where `_` doesn't compile.
 - Import order: `java.*`, `javax.*`, `org.*`, `com.*`, then everything else (`edu.*`, `picocli.*`, …) as
@@ -319,6 +321,11 @@ the CLI and web never reach Lucene or JPA directly. Change the rules there when 
 - **Branch per feature** (`feature/<name>`), merged to `main` through a GitHub PR. Commits tell a story
   (one logical step each, buildable). History of an unmerged branch may be rewritten.
 - Prefer records and immutable types; no Lombok (doesn't keep up with new JDKs).
+- Every package is `@NullMarked` (`package-info.java`, checked by each `ArchitectureTest`): write `@Nullable`
+  (JSpecify) where null is allowed, record components, `required = false` request parameters, form records and the
+  `@AuthenticationPrincipal` of public pages included; NullAway fails the build otherwise (`docs/design/nullness.md`).
+  Read a nullable accessor once into a local rather than `x.f() != null ? x.f() : …`: neither NullAway, SpotBugs nor
+  SonarCloud knows that the second call returns the same.
 - Classes that threads share say so with the JCIP annotations (`net.jcip.annotations`): `@ThreadSafe`, and
   `@GuardedBy("this")` on each field a lock protects (SpotBugs fails the build on an access without the lock);
   `@Immutable` for classes other than records, `@NotThreadSafe` where sharing would break (the CLI commands). Not on

@@ -2,6 +2,8 @@ package fr.ledcom.signaire.extractor;
 
 import java.time.Duration;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 
@@ -13,8 +15,8 @@ import fr.ledcom.signaire.model.Language;
  * @param requestsLeft requests known to be left; it grows while the search finds names
  * @param remaining estimate of the time left (requests left at the average pace so far), null before any request
  */
-public record ExtractionStatus(Category category, Stage stage, Language language, Searches searches, Signs signs,
-        Media media, int requestsDone, int requestsLeft, Duration elapsed, Duration remaining) {
+public record ExtractionStatus(Category category, Stage stage, @Nullable Language language, Searches searches, Signs signs,
+        Media media, int requestsDone, int requestsLeft, Duration elapsed, @Nullable Duration remaining) {
 
     /** The stages of an extraction: the search, then the signs and their media (which start during the search). */
     public enum Stage {
@@ -28,7 +30,7 @@ public record ExtractionStatus(Category category, Stage stage, Language language
      * @param complete false when some prefixes had more names than the search returns but reached the length limit
      * @param current the term searched now, or null
      */
-    public record Searches(int sent, int pending, int failed, boolean complete, String current) {
+    public record Searches(int sent, int pending, int failed, boolean complete, @Nullable String current) {
     }
 
     /**
@@ -39,7 +41,7 @@ public record ExtractionStatus(Category category, Stage stage, Language language
      * @param failed signs whose page could not be read
      * @param current the name of the sign read now, or null
      */
-    public record Signs(int found, int read, int reused, int failed, String current) {
+    public record Signs(int found, int read, int reused, int failed, @Nullable String current) {
 
         /** Signs found but not read, reused or failed yet. */
         public int pending() {
@@ -55,7 +57,7 @@ public record ExtractionStatus(Category category, Stage stage, Language language
      * @param bytes bytes downloaded
      * @param current the file downloaded now, or null
      */
-    public record Media(int queued, int downloaded, int failed, long bytes, String current) {
+    public record Media(int queued, int downloaded, int failed, long bytes, @Nullable String current) {
 
         public int pending() {
             return queued - downloaded - failed;

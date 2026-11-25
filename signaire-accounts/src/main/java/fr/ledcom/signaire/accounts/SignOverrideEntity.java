@@ -2,6 +2,8 @@ package fr.ledcom.signaire.accounts;
 
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -16,21 +18,25 @@ class SignOverrideEntity {
     @Id
     private String uid;
     private boolean deleted;
-    private String signJson;
+    private @Nullable String signJson;
     private Instant updatedAt;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by")
-    private AccountEntity updatedBy;
+    private @Nullable AccountEntity updatedBy;
 
     protected SignOverrideEntity() {
         // for JPA
     }
 
-    SignOverrideEntity(String uid) {
+    SignOverrideEntity(String uid, @Nullable String json, @Nullable AccountEntity admin, Instant now) {
         this.uid = uid;
+        this.deleted = json == null;
+        this.signJson = json;
+        this.updatedBy = admin;
+        this.updatedAt = now;
     }
 
-    void update(String json, AccountEntity admin, Instant now) {
+    void update(@Nullable String json, @Nullable AccountEntity admin, Instant now) {
         this.deleted = json == null;
         this.signJson = json;
         this.updatedBy = admin;
@@ -45,7 +51,7 @@ class SignOverrideEntity {
         return deleted;
     }
 
-    String signJson() {
+    @Nullable String signJson() {
         return signJson;
     }
 
@@ -53,7 +59,7 @@ class SignOverrideEntity {
         return updatedAt;
     }
 
-    String updatedByUsername() {
+    @Nullable String updatedByUsername() {
         return updatedBy == null ? null : updatedBy.username();
     }
 }

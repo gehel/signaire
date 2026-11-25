@@ -2,6 +2,8 @@ package fr.ledcom.signaire.accounts;
 
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
+
 import fr.ledcom.signaire.model.Sign;
 
 /**
@@ -13,5 +15,6 @@ import fr.ledcom.signaire.model.Sign;
  * @param updatedAt when the change was made
  * @param updatedBy username of the administrator who made it, {@code null} when the account was deleted
  */
-public record SignOverride(String uid, Sign sign, boolean deleted, Instant updatedAt, String updatedBy) {
+public record SignOverride(String uid, @Nullable Sign sign, boolean deleted, Instant updatedAt,
+        @Nullable String updatedBy) {
 }

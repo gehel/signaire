@@ -34,7 +34,7 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
     }
 
     OidcAccountUser toAccountUser(OidcUser user) {
-        Account account = accounts.findOrCreateOidc(String.valueOf(user.getIssuer()), user.getSubject(),
+        Account account = accounts.findOrCreateOidc(String.valueOf(user.getIssuer()), subject(user),
                 username(user), user.getFullName());
         List<GrantedAuthority> authorities = new ArrayList<>(user.getAuthorities());
         authorities.addAll(admins.authorities(account.username()));
@@ -43,14 +43,19 @@ public class OidcAccounts implements OAuth2UserService<OidcUserRequest, OidcUser
 
     /** The username to give to a new account: the preferred one, else from the email address, else the subject. */
     private static String username(OidcUser user) {
-        if (user.getPreferredUsername() != null) {
-            return user.getPreferredUsername();
+        String preferred = user.getPreferredUsername();
+        if (preferred != null) {
+            return preferred;
         }
         String email = user.getEmail();
         // > 0: an address starting with @ has no name before it
         if (email != null && email.indexOf('@') > 0) { // NOSONAR
             return email.substring(0, email.indexOf('@'));
         }
-        return user.getSubject();
+        return subject(user);
+    }
+
+    private static String subject(OidcUser user) {
+        return Objects.requireNonNull(user.getSubject(), "subject, mandatory in OpenID Connect");
     }
 }

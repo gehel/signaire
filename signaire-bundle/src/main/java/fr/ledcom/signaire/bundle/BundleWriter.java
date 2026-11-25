@@ -8,25 +8,27 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Collection;
+import java.util.function.Function;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.UUID;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.DialectVariant;
@@ -59,7 +61,7 @@ public class BundleWriter {
         Map<String, Path> mediaFiles = resolveMediaFiles(signs, mediaRoot);
         Path absoluteTarget = target.toAbsolutePath();
         Path directory = Objects.requireNonNull(absoluteTarget.getParent(), "target directory");
-        Path tmp = null;
+        @Nullable Path tmp = null;
         try {
             // not Files.createTempFile, whose files are only readable by their owner: bundles get the usual
             // permissions (umask), as they are meant to be read by other processes
@@ -138,7 +140,7 @@ public class BundleWriter {
             .flatMap(Function.identity());
     }
 
-    private static void deleteQuietly(Path file) {
+    private static void deleteQuietly(@Nullable Path file) {
         if (file == null) {
             return;
         }

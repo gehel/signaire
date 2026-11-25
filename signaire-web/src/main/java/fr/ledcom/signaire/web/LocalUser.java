@@ -2,6 +2,7 @@ package fr.ledcom.signaire.web;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.User;
 
 import fr.ledcom.signaire.accounts.LocalCredentials;
@@ -31,7 +32,7 @@ public class LocalUser extends User implements AccountPrincipal {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(@Nullable Object other) {
         return other instanceof LocalUser user && accountId == user.accountId && super.equals(other);
     }
 

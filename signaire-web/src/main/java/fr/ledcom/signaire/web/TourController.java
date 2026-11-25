@@ -3,12 +3,13 @@ package fr.ledcom.signaire.web;
 import java.time.Duration;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,24 +54,24 @@ public class TourController {
      */
     public record Current(Step step, int number, int count) {
 
-        public String previous() {
+        public @Nullable String previous() {
             return number > 1 ? href(number - 1) : null;
         }
 
-        public String next() {
+        public @Nullable String next() {
             return number < count ? href(number + 1) : null;
         }
     }
 
     /** Whether the page should welcome the visitor: not when the tour was done or dismissed. */
     @ModelAttribute("welcome")
-    public boolean welcome(@CookieValue(name = COOKIE, required = false) String done) {
+    public boolean welcome(@CookieValue(name = COOKIE, required = false) @Nullable String done) {
         return done == null;
     }
 
     /** The step of the tour to show over the page, if any. */
     @ModelAttribute("tour")
-    public Current tour(@RequestParam(name = "tour", required = false) Integer number) {
+    public @Nullable Current tour(@RequestParam(name = "tour", required = false) @Nullable Integer number) {
         if (number == null || number < 1 || number > STEPS.size()) {
             return null;
         }

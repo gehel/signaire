@@ -1,7 +1,7 @@
 package fr.ledcom.signaire.extractor;
 
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +16,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.jspecify.annotations.Nullable;
 
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.DialectVariant;
@@ -68,7 +69,7 @@ public class SignPageParser {
     }
 
     /** Text of the paragraph following the heading whose label starts with one of {@code labels}. */
-    private static String section(Element left, Collection<String> labels) {
+    private static @Nullable String section(Element left, Collection<String> labels) {
         for (Element heading : left.select("h2")) {
             Element next = heading.nextElementSibling();
             if (hasLabel(heading, labels) && next != null && "p".equals(next.tagName())) {
@@ -78,7 +79,7 @@ public class SignPageParser {
         return null;
     }
 
-    private static String status(Element left) {
+    private static @Nullable String status(Element left) {
         for (Element strong : left.select("strong")) {
             Node next = strong.nextSibling();
             if (hasLabel(strong, STATUS_LABELS) && next instanceof TextNode text) {
@@ -168,7 +169,7 @@ public class SignPageParser {
         return labels.stream().anyMatch(text::startsWith);
     }
 
-    private static String nonBlank(String text) {
+    private static @Nullable String nonBlank(@Nullable String text) {
         return text == null || text.isBlank() ? null : text.strip();
     }
 }
