@@ -20,6 +20,14 @@
             </dirNames>
         </attachedOutputs>
     </configuration>
+    <!-- the checkstyle rules, at the root: the modules are one level below it -->
+    <input>
+        <global>
+            <includes>
+                <include recursive="false" glob="checkstyle.xml">..</include>
+            </includes>
+        </global>
+    </input>
     <!--
       A cached build stands in for another one only when these parameters are the same: a run of selected tests
       (-Dtest=…, -Dit.test=…) runs them, and a build without tests (-DskipTests, -DskipITs) never replaces one with
