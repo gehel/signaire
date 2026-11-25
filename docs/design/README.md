@@ -45,6 +45,7 @@ Applications:
 - [Web interface](web-ui.md), [its visual design](visual-design.md)
 - [Command line](cli.md)
 - [Standalone application](standalone.md)
+- [Android app](android.md)
 - [Languages of the interface](i18n.md)
 - [User directories](user-directories.md)
 
