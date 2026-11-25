@@ -181,6 +181,8 @@ Gotchas with the WMF ruleset and Java 27:
   rejects unnamed variables. The rules are the WMF ruleset from our copy, `checkstyle.xml`, because checkstyle 13.9
   removed its `JavadocStyle` check: `SummaryJavadoc` replaces it, and a Javadoc of block tags alone stays allowed.
   Keep the copy in step with the parent's.
+- Error Prone runs inside javac, with NullAway only (`compilerArgs` of the root POM): `.mvn/jvm.config` opens the
+  internals of the compiler to it. When a new JDK breaks the compilation, check Error Prone's version first.
 - Unused catch parameters and try-with-resources variables are `_`, except in the Java 17 modules (model,
   bundle), where `_` doesn't compile.
 - Import order: `java.*`, `javax.*`, `org.*`, `com.*`, then everything else (`edu.*`, `picocli.*`, …) as
