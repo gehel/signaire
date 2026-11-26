@@ -368,14 +368,18 @@ final class AndroidDevice implements AutoCloseable {
 
     /** The center of the first view whose text, description or id is this. */
     static Optional<int[]> find(String screen, String textOrId) {
+        return bounds(screen, textOrId).map(box -> new int[] {(box[0] + box[2]) / 2, (box[1] + box[3]) / 2});
+    }
+
+    /** Left, top, right and bottom of the first view whose text, description or id is this. */
+    static Optional<int[]> bounds(String screen, String textOrId) {
         String wanted = textOrId.toLowerCase(Locale.ROOT);
         for (Element node : nodes(screen)) {
             for (String attribute : List.of("text", "content-desc", "resource-id")) {
                 String value = node.getAttribute(attribute).toLowerCase(Locale.ROOT);
                 Optional<int[]> bounds = bounds(node);
                 if ((value.equals(wanted) || value.endsWith(":id/" + wanted)) && bounds.isPresent()) {
-                    int[] box = bounds.get();
-                    return Optional.of(new int[] {(box[0] + box[2]) / 2, (box[1] + box[3]) / 2});
+                    return bounds;
                 }
             }
         }

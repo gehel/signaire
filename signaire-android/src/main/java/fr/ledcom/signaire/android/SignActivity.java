@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,7 +30,10 @@ import fr.ledcom.signaire.model.Sign;
 import fr.ledcom.signaire.offline.WordList;
 import fr.ledcom.signaire.offline.WordListException;
 
-/** A sign: its gloss, its video, its texts, its examples; and the lists it is in. */
+/**
+ * A sign: its gloss, its video, its texts, its examples; and the lists it is in. The videos of the examples play in a
+ * player of their own, so that the sign's stays.
+ */
 public final class SignActivity extends Activity {
 
     private static final String UID = "uid";
@@ -37,6 +41,8 @@ public final class SignActivity extends Activity {
 
     private SignaireApplication app;
     private Player player;
+    private View examplePlayerView;
+    private Player examplePlayer;
     private @Nullable Sign sign;
 
     static Intent intent(Context context, String uid) {
@@ -49,6 +55,9 @@ public final class SignActivity extends Activity {
         setContentView(R.layout.activity_sign);
         app = SignaireApplication.of(this);
         player = new Player(app, findViewById(R.id.video), findViewById(R.id.online_only));
+        examplePlayerView = getLayoutInflater().inflate(R.layout.example_player, findViewById(R.id.examples), false);
+        examplePlayer = new Player(app, examplePlayerView.findViewById(R.id.example_video),
+                examplePlayerView.findViewById(R.id.example_online_only));
         String uid = String.valueOf(getIntent().getStringExtra(UID));
         app.inBackground(() -> app.library().sign(uid), found -> {
             if (found.isPresent()) {
@@ -63,6 +72,7 @@ public final class SignActivity extends Activity {
     protected void onStop() {
         super.onStop();
         player.stop();
+        examplePlayer.stop();
     }
 
     private void show(Sign shown) {
@@ -119,22 +129,38 @@ public final class SignActivity extends Activity {
         texts.append(text);
     }
 
-    /** The examples and the regional variants: a line each, which plays its video when it has one. */
+    /**
+     * The examples and the regional variants: a line each, which plays its video, when it has one, under the heading
+     * of its section.
+     */
     private void showExamples(Sign shown) {
         LinearLayout examples = findViewById(R.id.examples);
         if (!shown.examples().isEmpty()) {
-            examples.addView(heading(R.string.sign_examples));
-        }
-        for (Example example : shown.examples()) {
-            String text = example.text();
-            examples.addView(line(text == null ? getString(R.string.sign_play) : text, example.video()));
+            TextView heading = heading(R.string.sign_examples);
+            examples.addView(heading);
+            for (Example example : shown.examples()) {
+                String text = example.text();
+                examples.addView(line(text == null ? getString(R.string.sign_play) : text, example.video(), heading));
+            }
         }
         if (!shown.dialectVariants().isEmpty()) {
-            examples.addView(heading(R.string.sign_variants));
+            TextView heading = heading(R.string.sign_variants);
+            examples.addView(heading);
+            for (DialectVariant variant : shown.dialectVariants()) {
+                examples.addView(line(String.join(", ", variant.dialects()), variant.video(), heading));
+            }
         }
-        for (DialectVariant variant : shown.dialectVariants()) {
-            examples.addView(line(String.join(", ", variant.dialects()), variant.video()));
-        }
+    }
+
+    /** Plays the video of an example or a variant under the heading of its section, the sign's paused. */
+    private void playExample(Media video, View heading) {
+        LinearLayout examples = findViewById(R.id.examples);
+        examples.removeView(examplePlayerView);
+        examples.addView(examplePlayerView, examples.indexOfChild(heading) + 1);
+        player.pause();
+        examplePlayer.play(video);
+        examplePlayerView.post(() -> examplePlayerView.requestRectangleOnScreen(
+                new Rect(0, 0, examplePlayerView.getWidth(), examplePlayerView.getHeight())));
     }
 
     private TextView heading(int label) {
@@ -145,7 +171,7 @@ public final class SignActivity extends Activity {
         return heading;
     }
 
-    private TextView line(String text, @Nullable Media video) {
+    private TextView line(String text, @Nullable Media video, View heading) {
         TextView line = new TextView(this);
         line.setPadding(0, padding() / 2, 0, padding() / 2);
         if (video == null) {
@@ -153,7 +179,7 @@ public final class SignActivity extends Activity {
         } else {
             line.setText("▶︎ " + text);
             line.setContentDescription(getString(R.string.sign_play) + " : " + text);
-            line.setOnClickListener(view -> player.play(video));
+            line.setOnClickListener(view -> playExample(video, heading));
         }
         return line;
     }

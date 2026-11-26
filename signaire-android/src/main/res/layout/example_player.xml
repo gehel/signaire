@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The player of the examples and regional variants: put under the heading of the section of the line tapped -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/example_player"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:paddingTop="8dp">
+
+    <VideoView
+            android:id="@+id/example_video"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_gravity="center_horizontal"/>
+
+    <TextView
+            android:id="@+id/example_online_only"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sign_online_only"
+            android:textSize="12sp"
+            android:visibility="gone"/>
+</LinearLayout>
