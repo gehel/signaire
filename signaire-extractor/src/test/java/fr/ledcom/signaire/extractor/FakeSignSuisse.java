@@ -38,8 +38,8 @@ import net.jcip.annotations.ThreadSafe;
 /**
  * SignSuisse over HTTP on {@code 127.0.0.1}, serving {@link TestSigns}, for what runs the real client (the CLI and web
  * jars, the Android app): its search (JSON, the search of {@link FakeSignSource}), the pages of the signs (the structure
- * of SignSuisse's, as the parser's fixtures have it, with the labels of the sign's language) and their media (invented
- * bytes, a PNG for images). {@code FakeSignSuisseTest} reads every page back with the parser.
+ * of SignSuisse's, as the parser's fixtures have it, with the labels of the sign's language) and their media (a PNG for
+ * images, videos that play: {@link FakeVideo}). {@code FakeSignSuisseTest} reads every page back with the parser.
  */
 @ThreadSafe
 @SuppressForbidden(reason = "the JDK HTTP server is fine for a test server")
@@ -117,7 +117,7 @@ public final class FakeSignSuisse implements AutoCloseable {
             sign.ifPresentOrElse(found -> respond(exchange, "text/html", page(found).getBytes(StandardCharsets.UTF_8)),
                     () -> respond(exchange, 404));
         } else if (path.endsWith(".mp4")) {
-            respond(exchange, "video/mp4", ("fake video " + path).repeat(500).getBytes(StandardCharsets.UTF_8));
+            respond(exchange, "video/mp4", FakeVideo.mp4(FakeVideo.color(path)));
         } else if (path.endsWith(".jpg") || path.endsWith(".png")) {
             respond(exchange, "image/png", IMAGE);
         } else {

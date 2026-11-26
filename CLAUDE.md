@@ -202,8 +202,9 @@ Every test uses the same invented signs (`docs/design/test-signs.md`): `TestSign
 cities, animals and nature in the three sign languages; `FIVE` for the search tests, `LEXICON` for all), served by
 the fake SignSuisse of the extractor's test-jar, in two forms: `FakeSignSource`, a `SignSource` in the process
 (failing pages or media, hooks before searches and pages, what it served), and `FakeSignSuisse`, over HTTP on
-127.0.0.1, for what runs the real client (`FakeSignSuisseTest` reads its pages back with the parser). Add what a
-test needs to them rather than another fake.
+127.0.0.1, for what runs the real client (`FakeSignSuisseTest` reads its pages back with the parser). Its videos play:
+`FakeVideo` writes MP4s of H.264 without an encoder (uncompressed macroblocks), a color per video, which `AndroidIT`
+finds on the screen. Add what a test needs to them rather than another fake.
 
 Only `signaire-it` needs Docker (PostgreSQL and Chromium in containers, Testcontainers); the other modules have unit
 tests only. A test above the database mocks the services below it rather than using a database: the accounts tests

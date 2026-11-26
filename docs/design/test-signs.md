@@ -41,9 +41,15 @@ Licensing doesn't change: the signs are invented, nothing comes from SignSuisse.
     bean).
   - `FakeSignSuisse`, the same over HTTP (`com.sun.net.httpserver`, on `127.0.0.1`), for what runs the real client:
     the CLI and web jars in `signaire-it`, the Android app, `SignSuisseClient`'s tests. The search JSON, the pages
-    (the structure of SignSuisse's, as the parser's fixtures have it, with the signs' texts), the media (invented
-    bytes, a PNG for images). A test reads every page it serves with `SignPageParser` and finds its sign again: the
+    (the structure of SignSuisse's, as the parser's fixtures have it, with the signs' texts), the media (a PNG for
+    images, videos that play). A test reads every page it serves with `SignPageParser` and finds its sign again: the
     fake keeps the structure of SignSuisse as long as the parser's fixtures do.
+  - **Videos that play** (`FakeVideo`): one second of a color of their own (from their path), crossed by a white bar,
+    64×48 pixels, in MP4 (about 40 KB, as the bytes they replace). H.264 written by the test code, without an
+    encoder: every frame is a picture of its own (IDR) of uncompressed macroblocks (I_PCM), in the constrained
+    baseline profile that every decoder reads, Android's and the browsers'; the stream says its colors are BT.601, so
+    that they come out as given. `AndroidIT` plays the video of a sign it downloaded and finds its color on the
+    screen; `FakeVideoTest` checks the structure of the file and the pixels of its frames.
   - The web's tests get `FakeSignSource` as the `SignSource` bean (`FakeSignSuisseConfiguration`, a
     `@TestConfiguration`).
 - **The demonstration** (`DemoBundles`) writes `TestSigns` as bundles, one per category, with an image of a color of
@@ -65,10 +71,16 @@ Licensing doesn't change: the signs are invented, nothing comes from SignSuisse.
   - HTTP only, every test through `SignSuisseClient`: one fake, but each unit test also tests the parser and HTTP.
 - **Pages written from the signs**, rather than files: the signs are the data, and the test reading the pages back
   keeps the writing honest.
+- **Videos written by the tests**, rather than:
+  - a file made with an encoder (ffmpeg, x264), in the repository: a binary that only a tool outside the build
+    remakes, and the project commits no video;
+  - an encoder in Java (JCodec): a dependency, without a release for years, for frames of one color;
+  - compressed frames (intra prediction, residuals): much smaller, but an entropy coder to write; with
+    uncompressed macroblocks, the stream is a few headers around the pixels.
 - **The pages measured by CI change** (`/?q=arbre`, `/signs/90000` become pages of the new signs): sitespeed.io
   shows them as new pages once, then compares them with main's as before.
 
 ## Open questions
 
-- The fake's videos aren't videos: the Android app's player can't play them, so `AndroidIT` checks that videos were
-  downloaded without playing them. A small MP4, invented, would let it play one; the build has no encoder to make it.
+- The demonstration (`DemoBundles`) could have videos too: the sign pages of `BrowserIT` and of the measures would
+  show a player, and the measures would count one more request per page.
