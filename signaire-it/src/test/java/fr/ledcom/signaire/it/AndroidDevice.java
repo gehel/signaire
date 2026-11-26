@@ -13,12 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -308,6 +310,26 @@ final class AndroidDevice implements AutoCloseable {
         }
     }
 
+    /** Waits for a part of the screen (left, top, right, bottom) to stay the same for a second: a video that ended. */
+    void waitForStill(int[] box) throws IOException, InterruptedException {
+        AtomicReference<int[]> previous = new AtomicReference<>(pixels(box));
+        await("still at " + Arrays.toString(box)).atMost(SCREEN).pollInterval(Duration.ofSeconds(1))
+                .until(() -> Arrays.equals(previous.getAndSet(pixels(box)), previous.get()));
+    }
+
+    /** Waits for a part of the screen to change: a video playing. */
+    void waitForMotion(int[] box) throws IOException, InterruptedException {
+        AtomicReference<int[]> previous = new AtomicReference<>(pixels(box));
+        await("moving at " + Arrays.toString(box)).atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200))
+                .until(() -> !Arrays.equals(previous.getAndSet(pixels(box)), previous.get()));
+    }
+
+    private int[] pixels(int[] box) throws IOException, InterruptedException {
+        BufferedImage screen = ImageIO.read(new ByteArrayInputStream(capture()));
+        int width = box[2] - box[0];
+        return screen.getRGB(box[0], box[1], width, box[3] - box[1], null, 0, width);
+    }
+
     private Color color(int[] point) throws IOException, InterruptedException {
         BufferedImage screen = ImageIO.read(new ByteArrayInputStream(capture()));
         return new Color(screen.getRGB(point[0], point[1]));
@@ -373,13 +395,22 @@ final class AndroidDevice implements AutoCloseable {
 
     /** Left, top, right and bottom of the first view whose text, description or id is this. */
     static Optional<int[]> bounds(String screen, String textOrId) {
+        return node(screen, textOrId).flatMap(AndroidDevice::bounds);
+    }
+
+    /** Whether the first view whose text, description or id is this is checked: a check box. */
+    static boolean checked(String screen, String textOrId) {
+        return node(screen, textOrId).map(node -> "true".equals(node.getAttribute("checked"))).orElse(false);
+    }
+
+    /** The first view on the screen whose text, description or id is this. */
+    private static Optional<Element> node(String screen, String textOrId) {
         String wanted = textOrId.toLowerCase(Locale.ROOT);
         for (Element node : nodes(screen)) {
             for (String attribute : List.of("text", "content-desc", "resource-id")) {
                 String value = node.getAttribute(attribute).toLowerCase(Locale.ROOT);
-                Optional<int[]> bounds = bounds(node);
-                if ((value.equals(wanted) || value.endsWith(":id/" + wanted)) && bounds.isPresent()) {
-                    return bounds;
+                if ((value.equals(wanted) || value.endsWith(":id/" + wanted)) && bounds(node).isPresent()) {
+                    return Optional.of(node);
                 }
             }
         }

@@ -2,8 +2,9 @@
 
 Die Seite einer Gebärde zeigt alles, was SignSuisse über sie sagt:
 
-- das **Video** der Gebärde: Mit den Bedienelementen des Players können Sie es wiederholen, anhalten oder
-  verlangsamen;
+- das **Video** der Gebärde, das einmal abgespielt wird: Mit den Bedienelementen des Players können Sie es
+  wiederholen oder anhalten, und die Schaltfläche **Zeitlupe** spielt es mit halber Geschwindigkeit nochmals ab
+  (nochmals drücken für die normale Geschwindigkeit);
 - die **Bilder** (Foto oder Zeichnung);
 - die **Umschreibung** und die **Definition**;
 - die **Kategorien**, die zu den anderen Gebärden der Kategorie führen;

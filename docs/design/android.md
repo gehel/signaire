@@ -42,6 +42,10 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 - **The videos of examples and regional variants** play in a player of their own, under the heading of their section
   ("Exemples", "Variantes régionales"), shown when a line is tapped and scrolled into view. The sign's video stays at
   the top, paused while an example plays.
+- **Videos play once**, as on the web. Under each player:
+  - "Revoir" plays it again;
+  - "Ralenti", a check box, plays it again at half speed (the playback parameters of `MediaPlayer`), and so the next
+    ones of that player, until unchecked.
 - **Languages**: French, German, Italian and English, like the rest: Android's string resources (`values` in French,
   `values-de`, `values-it`, `values-en`), with a test that each translation has the keys of the French. The build
   copies `values` to `values-fr`: Android takes a language of the phone's list that the app names before its default,
@@ -107,6 +111,9 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   - The name `www.sgb-fss.ch` sent to the computer on the phone: the site is HTTPS, so the fake would need a
     certificate the phone trusts, and the phone root access; a mistake would reach the real site.
   - An instrumented test APK: Android's test runner is an AndroidX library, which Maven doesn't use.
+- **Videos once, "Revoir" and "Ralenti" in sight**, rather than looping videos, which never let the eye rest, and
+  `MediaController`'s controls, which show only when the video is tapped and have no speed (see
+  [web-ui.md](web-ui.md)).
 - **A player for the examples, under their heading**, rather than:
   - the sign's player: an example replaced the sign's video, with no way back to it but leaving the screen;
   - a player under each line: the lines move as it opens and closes, and only one plays at a time anyway;

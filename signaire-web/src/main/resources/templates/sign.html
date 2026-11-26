@@ -15,8 +15,13 @@
 
     <div class="sign-main">
         <div class="media">
-            <video th:each="video : ${sign.videos()}" controls preload="metadata" th:src="${links.media(video)}"
-                   th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
+            <!--/* Each video plays once; its button, shown by videos.js, plays it again in slow motion */-->
+            <div th:each="video : ${sign.videos()}" class="player">
+                <video controls preload="metadata" th:src="${links.media(video)}"
+                       th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
+                <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                        th:text="#{sign.slow}">Slow motion</button>
+            </div>
             <img th:each="image : ${sign.images()}" th:src="${links.media(image)}" th:alt="${sign.name()}">
         </div>
 
@@ -50,8 +55,12 @@
             <ul>
                 <li th:each="example : ${sign.examples()}">
                     <p><q th:lang="${sign.language().code()}" th:text="${example.text()}">I work in Lausanne.</q></p>
-                    <video th:if="${example.video() != null}" controls preload="none"
-                           th:src="${links.media(example.video())}" th:text="#{sign.videoUnsupported}"></video>
+                    <div th:if="${example.video() != null}" class="player">
+                        <video controls preload="none" th:src="${links.media(example.video())}"
+                               th:text="#{sign.videoUnsupported}"></video>
+                        <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                                th:text="#{sign.slow}">Slow motion</button>
+                    </div>
                 </li>
             </ul>
         </section>
@@ -61,8 +70,12 @@
             <ul>
                 <li th:each="variant : ${sign.dialectVariants()}">
                     <p th:text="${#strings.listJoin(variant.dialects(), ', ')}">ZH, SG</p>
-                    <video th:if="${variant.video() != null}" controls preload="none"
-                           th:src="${links.media(variant.video())}" th:text="#{sign.videoUnsupported}"></video>
+                    <div th:if="${variant.video() != null}" class="player">
+                        <video controls preload="none" th:src="${links.media(variant.video())}"
+                               th:text="#{sign.videoUnsupported}"></video>
+                        <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                                th:text="#{sign.slow}">Slow motion</button>
+                    </div>
                 </li>
             </ul>
         </section>
@@ -122,5 +135,6 @@
     </aside>
 </main>
 <footer th:replace="~{layout :: footer}"></footer>
+<script th:src="@{/js/videos.js}" defer></script>
 </body>
 </html>

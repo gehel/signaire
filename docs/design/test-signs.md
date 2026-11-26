@@ -53,7 +53,8 @@ Licensing doesn't change: the signs are invented, nothing comes from SignSuisse.
   - The web's tests get `FakeSignSource` as the `SignSource` bean (`FakeSignSuisseConfiguration`, a
     `@TestConfiguration`).
 - **The demonstration** (`DemoBundles`) writes `TestSigns` as bundles, one per category, with an image of a color of
-  its own per sign, generated, and no video, as now. The pages that CI measures and that `BrowserIT` and `AndroidIT`
+  its own per sign, generated. GARE also has its videos, the sign's and its example's (`FakeVideo`), for `BrowserIT`
+  to play; the other signs have none, and the pages that CI measures stay as they were (ARBRE's, for one). The pages that CI measures and that `BrowserIT` and `AndroidIT`
   show are those of these signs. `AndroidIT`'s phone starts without the city, which it downloads from the fake
   SignSuisse: an extraction reuses the signs of the bundle already there, so a city on the phone would be kept as the
   demonstration has it.
@@ -82,5 +83,5 @@ Licensing doesn't change: the signs are invented, nothing comes from SignSuisse.
 
 ## Open questions
 
-- The demonstration (`DemoBundles`) could have videos too: the sign pages of `BrowserIT` and of the measures would
-  show a player, and the measures would count one more request per page.
+- Videos for every sign of the demonstration: the sign pages of the measures would show a player, and count one more
+  request each.

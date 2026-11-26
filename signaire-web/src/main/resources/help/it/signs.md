@@ -2,7 +2,8 @@
 
 La pagina di un segno mostra tutto ciò che SignSuisse ne dice:
 
-- il **video** del segno: usa i comandi del lettore per rivederlo, metterlo in pausa o rallentarlo;
+- il **video** del segno, che si riproduce una volta: i comandi del lettore lo rivedono o lo mettono in pausa, e il
+  pulsante **Al rallentatore** lo rivede a metà velocità (premilo di nuovo per la velocità normale);
 - le **immagini** (foto o illustrazione);
 - la **perifrasi** e la **definizione**;
 - le **categorie**, che portano agli altri segni della categoria;

@@ -2,7 +2,8 @@
 
 La page d'un signe montre tout ce que SignSuisse en dit :
 
-- la **vidéo** du signe : utilisez les commandes du lecteur pour la revoir, la mettre en pause ou la ralentir ;
+- la **vidéo** du signe, qui se lit une fois : les commandes du lecteur la revoient ou la mettent en pause, et le
+  bouton **Ralenti** la revoit à mi-vitesse (appuyez à nouveau pour la vitesse normale) ;
 - les **images** (photo ou illustration) ;
 - la **périphrase** et la **définition** ;
 - les **catégories**, qui mènent aux autres signes de la catégorie ;

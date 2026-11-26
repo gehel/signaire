@@ -14,6 +14,8 @@
     <string name="sign_variants">Variantes régionales</string>
     <string name="sign_categories">Catégories : %1$s</string>
     <string name="sign_play">Voir en vidéo</string>
+    <string name="sign_replay">Revoir</string>
+    <string name="sign_slow">Ralenti</string>
     <string name="sign_source">Voir sur SignSuisse</string>
     <string name="sign_add_to_list">Ajouter à une liste</string>
     <string name="sign_in_lists">Dans : %1$s</string>

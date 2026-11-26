@@ -28,6 +28,27 @@
                 android:layout_height="240dp"
                 android:layout_gravity="center_horizontal"/>
 
+        <!-- the video plays once: again, and again in slow motion -->
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+            <Button
+                    android:id="@+id/replay"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sign_replay"/>
+
+            <CheckBox
+                    android:id="@+id/slow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sign_slow"/>
+        </LinearLayout>
+
         <TextView
                 android:id="@+id/online_only"
                 android:layout_width="match_parent"
