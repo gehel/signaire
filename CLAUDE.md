@@ -245,6 +245,13 @@ integration tests), so code reached only by ITs needs unit tests too (the Androi
 Android only, `AndroidIT` tests them). When a SonarCloud suggestion clashes with
 the WMF checkstyle rules, checkstyle wins; a false positive gets a `// NOSONAR` with its reason.
 
+Supply chain (`docs/design/supply-chain.md`): OpenSSF Scorecard (`scorecard.yml`, its badge in the README) and CodeQL
+(`codeql.yml`: Java without a build, JavaScript, the workflows) report to code scanning. Actions are pinned by commit
+SHA with the version as a comment (`uses: actions/checkout@<sha> # v7.0.1`), which Dependabot updates: pin new ones
+the same way (`gh api repos/<owner>/<action>/commits/<tag> --jq .sha`). Lighthouse CI comes from
+`ci/lighthouse/package-lock.json` (`npm ci`), Docker images run by CI by digest, Maven by the wrapper's
+`distributionSha256Sum` (update it with the Maven version). Vulnerabilities are reported privately (`SECURITY.md`).
+
 Running the CLI locally:
 
 ```bash
