@@ -1,5 +1,16 @@
 # Signaire
 
+[![Build](https://github.com/gehel/signaire/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/gehel/signaire/actions/workflows/build.yml?query=branch%3Amain)
+[![Quality](https://github.com/gehel/signaire/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/gehel/signaire/actions/workflows/quality.yml?query=branch%3Amain)
+[![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=gehel_signaire)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=coverage)](https://sonarcloud.io/component_measures?id=gehel_signaire&metric=coverage)
+[![Security rating](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=security_rating)](https://sonarcloud.io/summary/overall?id=gehel_signaire)
+[![License](https://img.shields.io/github/license/gehel/signaire)](LICENSE)
+[![Java 27](https://img.shields.io/badge/Java-27-ED8B00?logo=openjdk&logoColor=white)](#quick-start)
+[![Android 14+](https://img.shields.io/badge/Android-14%2B-3DDC84?logo=android&logoColor=white)](docs/design/android.md)
+[![Languages: FR, DE, IT, EN](https://img.shields.io/badge/languages-FR%20%C2%B7%20DE%20%C2%B7%20IT%20%C2%B7%20EN-informational)](docs/design/i18n.md)
+[![Lighthouse accessibility: 100](https://img.shields.io/badge/Lighthouse%20accessibility-100-brightgreen?logo=lighthouse&logoColor=white)](.lighthouserc.json)
+
 Signaire is a tool to learn and look up signs of the Swiss sign languages (LSF, DSGS, LIS), built on the
 [SignSuisse](https://www.sgb-fss.ch/signsuisse/fr) lexicon of the Swiss Federation of the Deaf (SGB-FSS).
 
@@ -12,7 +23,26 @@ Signaire is a tool to learn and look up signs of the Swiss sign languages (LSF, 
   (sign → word and word → sign cards), EPUB e-book.
 - **Administration**: add, edit and delete signs; upload and reload bundles; synchronize with SignSuisse;
   handle the signs requested by users.
+- **Android app** (Android 14 and later): the signs on the phone, downloaded from SignSuisse or imported, searched
+  offline, and word lists.
 - Web interface and command line in **French, German, Italian and English**.
+
+## Screenshots
+
+The web application and the Android app, in French, with the invented signs of the tests: their pictures and videos
+are plain colors, where Signaire shows those of SignSuisse. `BrowserIT` and `AndroidIT` take these screenshots, and
+others, in `signaire-it/target/screenshots/`.
+
+<p>
+  <img src="docs/screenshots/web-results.png" width="49%" alt="The web application: the search, with filters by sign language and category, and the signs of the Nature category in the three sign languages">
+  <img src="docs/screenshots/web-sign.png" width="49%" alt="A sign page of the web application: the sign ARBRE, its picture, definition, category and example, and the word lists of the user">
+</p>
+<p>
+  <img src="docs/screenshots/web-phone-dark.png" width="24%" alt="The web application on a phone, in the dark theme">
+  <img src="docs/screenshots/android-search.png" width="24%" alt="The Android app: the signs on the phone, searched offline">
+  <img src="docs/screenshots/android-sign.png" width="24%" alt="The Android app: the sign GARE, its video playing, with its picture, definition and example">
+  <img src="docs/screenshots/android-library.png" width="24%" alt="The Android app: the categories of signs on the phone, downloaded from SignSuisse or imported">
+</p>
 
 ## The data is not included
 
