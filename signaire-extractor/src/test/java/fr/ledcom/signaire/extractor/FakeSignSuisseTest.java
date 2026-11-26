@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -72,7 +71,7 @@ class FakeSignSuisseTest {
         client.download(video, tmp.resolve("gare.mp4"));
         client.download(photo, tmp.resolve("gare.jpg"));
 
-        assertThat(Files.readString(tmp.resolve("gare.mp4"))).startsWith("fake video");
+        assertThat(tmp.resolve("gare.mp4")).hasBinaryContent(FakeVideo.mp4(FakeVideo.color(gare.videos().getFirst())));
         assertThat(tmp.resolve("gare.jpg")).isNotEmptyFile();
         assertThat(signSuisse.requests()).containsExactly(video.getPath(), photo.getPath());
     }
