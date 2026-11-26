@@ -971,16 +971,10 @@ main.sign p.language .sign-language {
     width: 100%;
 }
 
-/* Under each video, its slow motion: a toggle */
+/* Under each video, its slow motion */
 .player button.slow {
     display: block;
     margin-top: 0.5rem;
-}
-
-.player button.slow[aria-pressed="true"] {
-    background: var(--pico-secondary-background);
-    border-color: var(--pico-secondary-background);
-    color: var(--pico-secondary-inverse);
 }
 
 .sign-main .media img {

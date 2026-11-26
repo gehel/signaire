@@ -15,11 +15,11 @@
 
     <div class="sign-main">
         <div class="media">
-            <!--/* Each video plays once; its button, shown by videos.js, plays it again in slow motion */-->
+            <!--/* Each video plays once; its button, shown by videos.js, plays it again in slow motion, once */-->
             <div th:each="video : ${sign.videos()}" class="player">
                 <video controls preload="metadata" th:src="${links.media(video)}"
                        th:text="#{sign.videoUnsupported}">Your browser cannot play this video.</video>
-                <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                <button type="button" class="slow small secondary outline" hidden
                         th:text="#{sign.slow}">Slow motion</button>
             </div>
             <img th:each="image : ${sign.images()}" th:src="${links.media(image)}" th:alt="${sign.name()}">
@@ -58,7 +58,7 @@
                     <div th:if="${example.video() != null}" class="player">
                         <video controls preload="none" th:src="${links.media(example.video())}"
                                th:text="#{sign.videoUnsupported}"></video>
-                        <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                        <button type="button" class="slow small secondary outline" hidden
                                 th:text="#{sign.slow}">Slow motion</button>
                     </div>
                 </li>
@@ -73,7 +73,7 @@
                     <div th:if="${variant.video() != null}" class="player">
                         <video controls preload="none" th:src="${links.media(variant.video())}"
                                th:text="#{sign.videoUnsupported}"></video>
-                        <button type="button" class="slow small secondary outline" aria-pressed="false" hidden
+                        <button type="button" class="slow small secondary outline" hidden
                                 th:text="#{sign.slow}">Slow motion</button>
                     </div>
                 </li>
