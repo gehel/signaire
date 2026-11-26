@@ -123,4 +123,4 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 
 - Exports on the phone: PDF (`android.graphics.pdf`, not PDFBox, which needs AWT), Anki.
 - Synchronizing word lists with the web application (its REST API is still to design).
-- A release key and a store (F-Droid, Play) when the app is ready for others.
+- Release builds, their key and the stores (F-Droid, Play): [release.md](release.md).
