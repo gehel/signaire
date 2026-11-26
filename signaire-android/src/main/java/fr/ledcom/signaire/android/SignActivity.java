@@ -54,10 +54,12 @@ public final class SignActivity extends Activity {
         super.onCreate(state);
         setContentView(R.layout.activity_sign);
         app = SignaireApplication.of(this);
-        player = new Player(app, findViewById(R.id.video), findViewById(R.id.online_only));
+        player = new Player(app, findViewById(R.id.video), findViewById(R.id.online_only), findViewById(R.id.replay),
+                findViewById(R.id.slow));
         examplePlayerView = getLayoutInflater().inflate(R.layout.example_player, findViewById(R.id.examples), false);
         examplePlayer = new Player(app, examplePlayerView.findViewById(R.id.example_video),
-                examplePlayerView.findViewById(R.id.example_online_only));
+                examplePlayerView.findViewById(R.id.example_online_only),
+                examplePlayerView.findViewById(R.id.example_replay), examplePlayerView.findViewById(R.id.example_slow));
         String uid = String.valueOf(getIntent().getStringExtra(UID));
         app.inBackground(() -> app.library().sign(uid), found -> {
             if (found.isPresent()) {

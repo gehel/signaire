@@ -281,6 +281,28 @@ class AndroidIT {
         device.key("KEYCODE_BACK");
     }
 
+    @Test
+    @Order(8)
+    void videosPlayOnceAndAgainInSlowMotion() throws IOException, InterruptedException {
+        Sign gare = TestSigns.GARE;
+        device.tap(Objects.requireNonNull(gare.definition()));
+        device.waitForColor(device.waitFor("video"), FakeVideo.color(gare.videos().getFirst()));
+        int[] video = AndroidDevice.bounds(device.screen(), "video").orElseThrow();
+        // once: it ends, on its last picture
+        device.waitForStill(video);
+
+        // again, at half speed, and once
+        device.tap("slow");
+        device.waitForMotion(video);
+        assertThat(AndroidDevice.checked(device.screen(), "slow")).as("Ralenti checked").isTrue();
+        device.waitForStill(video);
+        device.tap("replay");
+        device.waitForMotion(video);
+        device.waitForStill(video);
+        screenshot("slow");
+        device.key("KEYCODE_BACK");
+    }
+
     private static void screenshot(String name) throws IOException, InterruptedException {
         device.screenshot(SCREENSHOTS.resolve(String.format(Locale.ROOT, "%02d-%s.png", ++screenshots, name)));
     }
