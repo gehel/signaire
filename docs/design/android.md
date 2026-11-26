@@ -39,6 +39,9 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 - **Word lists**: in a JSON file of the app, signs by uid, as everywhere else (signs are transient).
 - **Screens**: the search (field, filters, results as entries: gloss, sign language, start of the definition), a sign
   (video, images, texts, examples, add to a list), the lists and a list, the library (bundles, download, import).
+- **The videos of examples and regional variants** play in a player of their own, under the heading of their section
+  ("Exemples", "Variantes régionales"), shown when a line is tapped and scrolled into view. The sign's video stays at
+  the top, paused while an example plays.
 - **Languages**: French, German, Italian and English, like the rest: Android's string resources (`values` in French,
   `values-de`, `values-it`, `values-en`), with a test that each translation has the keys of the French. The build
   copies `values` to `values-fr`: Android takes a language of the phone's list that the app names before its default,
@@ -104,6 +107,10 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   - The name `www.sgb-fss.ch` sent to the computer on the phone: the site is HTTPS, so the fake would need a
     certificate the phone trusts, and the phone root access; a mistake would reach the real site.
   - An instrumented test APK: Android's test runner is an AndroidX library, which Maven doesn't use.
+- **A player for the examples, under their heading**, rather than:
+  - the sign's player: an example replaced the sign's video, with no way back to it but leaving the screen;
+  - a player under each line: the lines move as it opens and closes, and only one plays at a time anyway;
+  - a dialog: it hides the sign, which the example is about.
 - **Records written from their fields** rather than kept as records by `d8`: `d8` writes the annotations from which
   Android 14 knows a record only when given `-Dcom.android.tools.r8.emitRecordAnnotationsInDex`, a property of R8's
   internals rather than an option, which may go away; with it, the app crashed once in the runtime's garbage

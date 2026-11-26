@@ -52,6 +52,10 @@ final class Player {
         });
     }
 
+    void pause() {
+        video.pause();
+    }
+
     void stop() {
         video.stopPlayback();
     }

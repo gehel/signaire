@@ -28,6 +28,7 @@ import fr.ledcom.signaire.bundle.BundleReader;
 import fr.ledcom.signaire.extractor.FakeSignSuisse;
 import fr.ledcom.signaire.extractor.FakeVideo;
 import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.Example;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
@@ -254,6 +255,29 @@ class AndroidIT {
         device.waitForColor(device.waitFor("video"), FakeVideo.color(TestSigns.GARE.videos().getFirst()));
         assertThat(AndroidDevice.find(device.screen(), "online_only")).isEmpty();
         screenshot("downloaded-sign");
+        device.key("KEYCODE_BACK");
+    }
+
+    @Test
+    @Order(7)
+    void anExamplePlaysUnderItsHeadingWhileTheSignKeepsItsVideo() throws IOException, InterruptedException {
+        Sign gare = TestSigns.GARE;
+        Example example = gare.examples().getFirst();
+        device.tap(Objects.requireNonNull(gare.definition()));
+        device.waitForColor(device.waitFor("video"), FakeVideo.color(gare.videos().getFirst()));
+        String line = "Voir en vidéo : " + example.text();
+        device.scrollTo(line);
+        device.tap(line);
+
+        // the example's video, in a player under the heading of the examples
+        device.waitForColor(device.waitFor("example_video"), FakeVideo.color(Objects.requireNonNull(example.video())));
+        String screen = device.screen();
+        int[] heading = AndroidDevice.bounds(screen, "Exemples").orElseThrow();
+        int[] player = AndroidDevice.bounds(screen, "example_video").orElseThrow();
+        assertThat(player[1]).as("top of the example's video, under its heading").isGreaterThanOrEqualTo(heading[3]);
+        // the sign's video, still in its place
+        device.waitForColor(device.waitFor("video"), FakeVideo.color(gare.videos().getFirst()));
+        screenshot("example");
         device.key("KEYCODE_BACK");
     }
 
