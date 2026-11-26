@@ -131,7 +131,8 @@ class BrowserIT {
                 new Page("tour", "/tour/1"),
                 new Page("help", "/help/search"),
                 new Page("login", "/login"),
-                new Page("register", "/register")));
+                new Page("register", "/register"),
+                new Page("sign-videos", "/signs/" + TestSigns.GARE.uid())));
         for (int i = 0; i < pages.size(); i++) {
             look(theme, i, pages.get(i));
         }
@@ -183,6 +184,35 @@ class BrowserIT {
 
         assertThat(driver.findElements(By.cssSelector("h2.initial"))).extracting(WebElement::getText)
                 .containsExactly("A", "B", "F", "M", "W");
+    }
+
+    @Test
+    void videosPlayOnceAndAgainInSlowMotion() {
+        driver = open(Theme.LIGHT);
+        resize(Device.COMPUTER);
+        // the sign of the demonstration that has videos: its own and its example's
+        driver.get(base + "/signs/" + TestSigns.GARE.uid());
+        List<WebElement> slow = driver.findElements(By.cssSelector(".player button.slow"));
+        assertThat(slow).hasSize(2).allSatisfy(button -> assertThat(button.isDisplayed()).as("shown by the script")
+                .isTrue());
+        WebElement video = driver.findElement(By.cssSelector(".media .player video"));
+        assertThat(script("return arguments[0].loop", video)).isEqualTo(false);
+
+        // half speed, from the start: the second of the video lasts two, then it stays at its end
+        slow.getFirst().click();
+        assertThat(slow.getFirst().getDomAttribute("aria-pressed")).isEqualTo("true");
+        assertThat(((Number) script("return arguments[0].playbackRate", video)).doubleValue()).isEqualTo(0.5);
+        await("the video played once").atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200))
+                .until(() -> Boolean.TRUE.equals(script("return arguments[0].ended", video)));
+        Object end = script("return arguments[0].currentTime", video);
+        assertThat(((Number) end).doubleValue()).isGreaterThan(0.9);
+        await("still at its end").pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(2)).until(() -> Boolean.TRUE
+                .equals(script("return arguments[0].ended && arguments[0].currentTime === arguments[1]", video, end)));
+
+        // the normal speed again
+        slow.getFirst().click();
+        assertThat(slow.getFirst().getDomAttribute("aria-pressed")).isEqualTo("false");
+        assertThat(((Number) script("return arguments[0].playbackRate", video)).doubleValue()).isEqualTo(1.0);
     }
 
     @Test
@@ -336,8 +366,8 @@ class BrowserIT {
         }
     }
 
-    private Object script(String script) {
-        return driver.executeScript(script);
+    private Object script(String script, Object... arguments) {
+        return driver.executeScript(script, arguments);
     }
 
     private record Page(String name, String path) {

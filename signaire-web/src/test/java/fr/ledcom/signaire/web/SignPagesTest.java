@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
+import org.springframework.util.StringUtils;
 
 import fr.ledcom.signaire.bundle.BundleWriter;
 import fr.ledcom.signaire.model.TestSigns;
@@ -86,6 +87,19 @@ class SignPagesTest {
         MvcTestResult result = mvc.get().uri("/signs/1").header(HttpHeaders.ACCEPT_LANGUAGE, "it").exchange();
 
         assertThat(result).bodyText().contains("Definizione", "Esempi", ">Città</a>");
+    }
+
+    @Test
+    void videosPlayOnceAndAgainInSlowMotion() {
+        MvcTestResult result = mvc.get().uri("/signs/10").exchange();
+
+        assertThat(result).bodyText()
+                .doesNotContainPattern("<video[^>]*\\sloop")
+                .contains("src=\"/js/videos.js\"")
+                // under each video, the sign's, its example's and its variant's; the script shows it
+                .satisfies(page -> assertThat(StringUtils.countOccurrencesOf(page,
+                        "<button type=\"button\" class=\"slow small secondary outline\" aria-pressed=\"false\" hidden>"
+                                + "Ralenti</button>")).isEqualTo(3));
     }
 
     @Test
