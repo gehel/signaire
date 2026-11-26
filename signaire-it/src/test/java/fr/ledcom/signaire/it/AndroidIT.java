@@ -291,10 +291,9 @@ class AndroidIT {
         // once: it ends, on its last picture
         device.waitForStill(video);
 
-        // again, at half speed, and once
+        // again, at half speed, once; then again, at the normal speed
         device.tap("slow");
         device.waitForMotion(video);
-        assertThat(AndroidDevice.checked(device.screen(), "slow")).as("Ralenti checked").isTrue();
         device.waitForStill(video);
         device.tap("replay");
         device.waitForMotion(video);

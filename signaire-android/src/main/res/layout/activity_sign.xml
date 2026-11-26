@@ -22,13 +22,13 @@
                 android:layout_height="wrap_content"
                 android:paddingBottom="8dp"/>
 
-        <VideoView
+        <fr.ledcom.signaire.android.SignVideoView
                 android:id="@+id/video"
                 android:layout_width="match_parent"
                 android:layout_height="240dp"
                 android:layout_gravity="center_horizontal"/>
 
-        <!-- the video plays once: again, and again in slow motion -->
+        <!-- the video plays once: again, or again in slow motion, once -->
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -42,8 +42,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sign_replay"/>
 
-            <CheckBox
+            <Button
                     android:id="@+id/slow"
+                    style="?android:attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/sign_slow"/>
