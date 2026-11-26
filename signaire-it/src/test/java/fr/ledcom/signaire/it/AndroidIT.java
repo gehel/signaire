@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.TestWatcher;
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleReader;
 import fr.ledcom.signaire.extractor.FakeSignSuisse;
+import fr.ledcom.signaire.extractor.FakeVideo;
 import fr.ledcom.signaire.model.Category;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
@@ -34,9 +35,10 @@ import fr.ledcom.signaire.model.TestSigns;
 
 /**
  * The Android app on a phone (an emulator of Android 14, the oldest it supports), as its users go: signs made on a
- * computer, searched, a sign put in a list, the signs of the phone, a category downloaded from SignSuisse. In French,
- * the base language. Writes screenshots to {@code target/screenshots/android}. Only where the app is built: the
- * Android SDK ({@code ANDROID_HOME}). Downloads are from a fake SignSuisse, never from the real one.
+ * computer, searched, a sign put in a list, the signs of the phone, a category downloaded from SignSuisse and its
+ * videos played. In French, the base language. Writes screenshots to {@code target/screenshots/android}. Only where
+ * the app is built: the Android SDK ({@code ANDROID_HOME}). Downloads are from a fake SignSuisse, never from the real
+ * one.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AndroidIT {
@@ -241,11 +243,18 @@ class AndroidIT {
 
     @Test
     @Order(6)
-    void theDownloadedSignsAreFound() throws IOException, InterruptedException {
+    void theDownloadedSignsAreFoundAndTheirVideosPlay() throws IOException, InterruptedException {
         device.typeIn("search", "gare");
         device.waitForTexts("1 signe", "GARE", "LSF");
         device.key("KEYCODE_BACK");
         screenshot("downloaded-found");
+
+        // the video of the sign, from its bundle (not online): the color of the fake SignSuisse's on the screen
+        device.tap(Objects.requireNonNull(TestSigns.GARE.definition()));
+        device.waitForColor(device.waitFor("video"), FakeVideo.color(TestSigns.GARE.videos().getFirst()));
+        assertThat(AndroidDevice.find(device.screen(), "online_only")).isEmpty();
+        screenshot("downloaded-sign");
+        device.key("KEYCODE_BACK");
     }
 
     private static void screenshot(String name) throws IOException, InterruptedException {

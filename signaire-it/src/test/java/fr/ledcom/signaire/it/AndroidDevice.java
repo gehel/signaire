@@ -3,6 +3,8 @@ package fr.ledcom.signaire.it;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -39,6 +42,8 @@ final class AndroidDevice implements AutoCloseable {
     private static final Duration BOOT = Duration.ofMinutes(5);
     private static final Duration SCREEN = Duration.ofSeconds(15);
     private static final int TYPING_ATTEMPTS = 4;
+    /** How far a color of the screen may be from that of a video, on each channel: YCbCr, then RGB again. */
+    private static final int VIDEO_ROUNDING = 24;
     private static final int MAX_SWIPES = 10;
     private static final Pattern JAVA_CRASH = Pattern.compile("Process: (\\S+), PID: (\\d+)");
     private static final Pattern RUNTIME_CRASH = Pattern.compile("Fatal signal .* pid (\\d+) \\(([^)]+)\\)");
@@ -276,11 +281,45 @@ final class AndroidDevice implements AutoCloseable {
     }
 
     void screenshot(Path file) throws IOException, InterruptedException {
+        byte[] png = capture();
+        Files.createDirectories(file.getParent());
+        Files.write(file, png);
+    }
+
+    /**
+     * Waits for a point of the screen to show the color of a video, give or take the rounding of its conversions: a
+     * video is black until it plays.
+     */
+    void waitForColor(int[] point, Color expected) throws IOException, InterruptedException {
+        try {
+            await("color " + expected).atMost(SCREEN).pollInterval(Duration.ofMillis(500))
+                    .until(() -> color(point), color -> close(color, expected));
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError("The screen shows " + color(point) + " at " + point[0] + "," + point[1] + ", not "
+                    + expected + ": " + texts(screen()), e);
+        }
+    }
+
+    private Color color(int[] point) throws IOException, InterruptedException {
+        BufferedImage screen = ImageIO.read(new ByteArrayInputStream(capture()));
+        return new Color(screen.getRGB(point[0], point[1]));
+    }
+
+    private static boolean close(Color color, Color expected) {
+        return close(color.getRed(), expected.getRed()) && close(color.getGreen(), expected.getGreen())
+                && close(color.getBlue(), expected.getBlue());
+    }
+
+    private static boolean close(int channel, int expected) {
+        return channel >= expected - VIDEO_ROUNDING && channel <= expected + VIDEO_ROUNDING;
+    }
+
+    /** The screen, in PNG. */
+    private byte[] capture() throws IOException, InterruptedException {
         Process capture = new ProcessBuilder(adb.toString(), "exec-out", "screencap", "-p").start();
         byte[] png = capture.getInputStream().readAllBytes();
         assertThat(capture.waitFor()).isZero();
-        Files.createDirectories(file.getParent());
-        Files.write(file, png);
+        return png;
     }
 
     /** What a tag (a logger's simple name, for {@code java.util.logging}) wrote since the log was last cleared. */
