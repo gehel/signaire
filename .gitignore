@@ -47,3 +47,6 @@ pom.xml.bak
 ### Signaire ###
 # extracted SignSuisse data must never be committed
 /bundles/
+
+### Lighthouse CI (ci/lighthouse) ###
+node_modules/

@@ -24,13 +24,13 @@ jobs:
       # to download the measures of main
       actions: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: '27'
           cache: maven
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Build
@@ -39,13 +39,15 @@ jobs:
       - name: Start Signaire on demo signs
         run: ci/start-demo.sh target/demo
       - name: Lighthouse
-        # no install scripts: Lighthouse CI uses the Chrome of the runner
+        # the version and hashes of ci/lighthouse/package-lock.json; no install scripts: Lighthouse CI uses the Chrome
+        # of the runner
         run: |
-          npm install --global --ignore-scripts @lhci/cli@0.16.1
-          lhci autorun
+          npm ci --prefix ci/lighthouse --ignore-scripts --no-audit --no-fund
+          ci/lighthouse/node_modules/.bin/lhci autorun
       - name: sitespeed.io
         run: >
-          docker run --rm --network host -v "$PWD:/sitespeed.io" sitespeedio/sitespeed.io:43.0.0
+          docker run --rm --network host -v "$PWD:/sitespeed.io"
+          sitespeedio/sitespeed.io:43.0.0@sha256:ab1bf5fec86b15a2781478345a9e2cb485777cb12f264a2707e0f27cc3cadede
           --budget.configPath .sitespeed/budget.json -n 3 --outputFolder target/sitespeed
           --plugins.add analysisstorer
           http://localhost:8080/ "http://localhost:8080/?q=arbre" http://localhost:8080/signs/15
@@ -53,7 +55,7 @@ jobs:
         run: python3 ci/sitespeed.py summary target/sitespeed > target/sitespeed-summary.json
       - name: Keep the measures of main as the baseline
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sitespeed-baseline
           path: target/sitespeed-summary.json
@@ -75,7 +77,7 @@ jobs:
               | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload the reports
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: measures
           path: |
@@ -91,11 +93,11 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # SonarCloud needs the history to tell new code from old
           fetch-depth: 0
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: '27'

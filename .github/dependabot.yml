@@ -7,6 +7,11 @@ updates:
     groups:
       spring:
         patterns: ["org.springframework*"]
+  - package-ecosystem: npm
+    # Lighthouse CI, for the Quality workflow
+    directory: /ci/lighthouse
+    schedule:
+      interval: weekly
   - package-ecosystem: github-actions
     directory: /
     schedule:

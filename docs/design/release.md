@@ -297,4 +297,6 @@ UpdateCheckData: signaire-android/pom.xml|<android.versionCode>(\d+)</android.ve
   - the F-Droid recipe, with `fdroid build`.
 - **When Debian moves on**, F-Droid's JDK changes and the release APK's with it. Mismatches show as F-Droid skipping a
   version.
+- **Signed assets and SLSA provenance** with each GitHub release, which OpenSSF Scorecard counts
+  ([supply-chain.md](supply-chain.md)).
 - **A container image of the web application** (`spring-boot:build-image`, on ghcr.io): another channel, later.

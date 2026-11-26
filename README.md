@@ -5,6 +5,7 @@
 [![Quality gate](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=gehel_signaire)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=coverage)](https://sonarcloud.io/component_measures?id=gehel_signaire&metric=coverage)
 [![Security rating](https://sonarcloud.io/api/project_badges/measure?project=gehel_signaire&metric=security_rating)](https://sonarcloud.io/summary/overall?id=gehel_signaire)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/gehel/signaire/badge)](https://scorecard.dev/viewer/?uri=github.com/gehel/signaire)
 [![License](https://img.shields.io/github/license/gehel/signaire)](LICENSE)
 [![Java 27](https://img.shields.io/badge/Java-27-ED8B00?logo=openjdk&logoColor=white)](#quick-start)
 [![Android 14+](https://img.shields.io/badge/Android-14%2B-3DDC84?logo=android&logoColor=white)](docs/design/android.md)

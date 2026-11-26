@@ -1,0 +1,8 @@
+{
+  "name": "signaire-lighthouse",
+  "private": true,
+  "description": "Lighthouse CI for the Quality workflow: installed from package-lock.json with npm ci",
+  "dependencies": {
+    "@lhci/cli": "0.16.1"
+  }
+}
