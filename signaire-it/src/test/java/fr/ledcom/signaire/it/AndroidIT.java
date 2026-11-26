@@ -114,15 +114,13 @@ class AndroidIT {
     @Order(1)
     void theSignsOfThePhoneAreListedThenFoundAccentsIgnored() throws IOException, InterruptedException {
         // every sign of the bundles, by name
-        device.waitFor("ALBERO");
         long onThePhone = TestSigns.LEXICON.stream().filter(sign -> !sign.categories().contains(Category.CITY)).count();
-        assertThat(AndroidDevice.texts(device.screen())).contains(onThePhone + " signes", "ARBRE", "LIS");
+        device.waitForTexts(onThePhone + " signes", "ALBERO", "ARBRE", "LIS");
         screenshot("search");
 
         device.tap("search");
         device.type("foret");
-        device.waitFor("1 signe");
-        assertThat(AndroidDevice.texts(device.screen())).contains("FORÊT").doesNotContain("ARBRE");
+        assertThat(device.waitForTexts("1 signe", "FORÊT")).doesNotContain("ARBRE");
         device.key("KEYCODE_BACK");
         screenshot("results");
     }
@@ -133,8 +131,8 @@ class AndroidIT {
         device.tap("FORÊT");
         device.waitFor("add_to_list");
         // the definition is one text with its label
-        assertThat(String.join("\n", AndroidDevice.texts(device.screen()))).contains("Langue des signes française (LSF)",
-                "Définition\n" + TestSigns.FORET.definition());
+        assertThat(String.join("\n", device.waitForTexts("Langue des signes française (LSF)")))
+                .contains("Définition\n" + TestSigns.FORET.definition());
         screenshot("sign");
 
         device.tap("add_to_list");
@@ -153,8 +151,7 @@ class AndroidIT {
     void theListsKeepTheirSignsWhenTheAppRestarts() throws IOException, InterruptedException {
         device.tap("Mes listes");
         device.tap("Nature (1)");
-        device.waitFor("FORÊT");
-        assertThat(AndroidDevice.texts(device.screen())).contains("Nature", "FORÊT", "LSF");
+        device.waitForTexts("Nature", "FORÊT", "LSF");
         screenshot("list");
         device.key("KEYCODE_BACK");
         device.key("KEYCODE_BACK");
@@ -172,9 +169,8 @@ class AndroidIT {
     void theSignsOfThePhoneAreThoseOfItsValidBundles() throws IOException, InterruptedException {
         device.key("KEYCODE_MENU");
         device.tap("Signes du téléphone");
-        device.waitFor("Télécharger depuis SignSuisse");
-        List<String> texts = AndroidDevice.texts(device.screen());
-        assertThat(texts).contains("Animaux", "Nature").doesNotContain("Ville");
+        List<String> texts = device.waitForTexts("Télécharger depuis SignSuisse", "Animaux", "Nature");
+        assertThat(texts).doesNotContain("Ville");
         assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("library");
         device.key("KEYCODE_BACK");
@@ -201,9 +197,10 @@ class AndroidIT {
         device.tap("Vidéos et images");
         // the French signs of the city: GARE, GENÈVE and LAUSANNE
         List<Sign> french = TestSigns.of(Category.CITY, Language.FRENCH);
-        device.waitFor("Téléchargement terminé : " + french.size() + " signes", DOWNLOAD);
+        String done = "Téléchargement terminé : " + french.size() + " signes";
+        device.waitFor(done, DOWNLOAD);
         // the bundle of the city added to the others
-        List<String> texts = AndroidDevice.texts(device.screen());
+        List<String> texts = device.waitForTexts(done);
         assertThat(texts).filteredOn(text -> text.startsWith(french.size() + " signes, extraits le")).hasSize(1);
         assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("downloaded");
@@ -230,8 +227,7 @@ class AndroidIT {
         device.tap("search");
         device.clear();
         device.type("gare");
-        device.waitFor("1 signe");
-        assertThat(AndroidDevice.texts(device.screen())).contains("GARE", "LSF");
+        device.waitForTexts("1 signe", "GARE", "LSF");
         device.key("KEYCODE_BACK");
         screenshot("downloaded-found");
     }

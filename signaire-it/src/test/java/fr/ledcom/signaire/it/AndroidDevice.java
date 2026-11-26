@@ -183,6 +183,20 @@ final class AndroidDevice implements AutoCloseable {
         }
     }
 
+    /**
+     * Waits for a screen showing all these texts, and returns its texts: a screen read once, as it changes, may show
+     * none.
+     */
+    List<String> waitForTexts(String... expected) {
+        List<String> wanted = List.of(expected);
+        try {
+            return await("texts " + wanted).atMost(SCREEN).pollInterval(Duration.ofMillis(500))
+                    .until(() -> texts(screen()), texts -> texts.containsAll(wanted));
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError("Not all of " + wanted + " on the screen: " + texts(screen()), e);
+        }
+    }
+
     /** Scrolls the first view of the screen that scrolls, until a view shows a text (case ignored) or has an id. */
     void scrollTo(String textOrId) throws IOException, InterruptedException {
         for (int swipes = 0; swipes < MAX_SWIPES; swipes++) {
