@@ -238,9 +238,14 @@ class BrowserIT {
                 .until(() -> driver.getCurrentUrl().contains("theme=" + theme));
     }
 
-    /** The colors of a page: ours, Pico's, and some of their uses. */
+    /**
+     * The colors of a page: ours, Pico's, and some of their uses. Once our stylesheet applies: read before, they were
+     * all empty once in CI.
+     */
     @SuppressWarnings("unchecked")
     private Map<String, Object> colors() {
+        await("the stylesheet applied").atMost(Duration.ofSeconds(10)).until(() -> !"".equals(script(
+                "return getComputedStyle(document.documentElement).getPropertyValue('--page').trim()")));
         return (Map<String, Object>) script("""
                 const root = getComputedStyle(document.documentElement);
                 const colors = {};
