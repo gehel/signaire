@@ -49,7 +49,7 @@ public class WordListService {
 
     public WordList rename(long ownerId, long listId, String name) {
         WordListEntity list = find(ownerId, listId);
-        String stripped = name == null ? "" : name.strip();
+        String stripped = name.strip();
         // changing the case of the name only is fine, although the name is "taken"
         boolean sameName = list.toWordList().name().equalsIgnoreCase(stripped);
         list.rename(sameName ? stripped : validName(ownerId, name), Instant.now());
@@ -95,7 +95,7 @@ public class WordListService {
     }
 
     private String validName(long ownerId, String name) {
-        String stripped = name == null ? "" : name.strip();
+        String stripped = name.strip();
         if (stripped.isEmpty() || stripped.length() > MAX_NAME_LENGTH) {
             throw new WordListException(WordListException.Reason.INVALID_NAME, "Invalid list name: " + name);
         }
