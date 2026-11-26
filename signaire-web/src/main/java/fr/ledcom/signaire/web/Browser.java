@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
@@ -62,7 +63,7 @@ public class Browser {
     }
 
     /** The command that opens a page in the browser of a system, when Java can't. */
-    static Optional<List<String>> command(String osName, URI uri) {
+    static Optional<List<String>> command(@Nullable String osName, URI uri) {
         String os = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
         if (os.startsWith("windows")) {
             return Optional.of(List.of("rundll32", "url.dll,FileProtocolHandler", uri.toString()));

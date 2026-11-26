@@ -2,6 +2,8 @@ package fr.ledcom.signaire.extractor;
 
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The User-Agent header of the requests to SignSuisse. It names the project, so that SignSuisse can find out what
  * sends them, and the contact of the user, so that SignSuisse can reach them (if the load is too high, for example).
@@ -19,7 +21,7 @@ public record UserAgent(String value, boolean withContact) {
      * @param contact an email address or a URL where SignSuisse can reach the user, or null
      * @param override a header replacing the one of Signaire, or null
      */
-    public static UserAgent of(String contact, String override) {
+    public static UserAgent of(@Nullable String contact, @Nullable String override) {
         String header = clean(override);
         if (!header.isEmpty()) {
             return new UserAgent(header, true);
@@ -30,7 +32,7 @@ public record UserAgent(String value, boolean withContact) {
     }
 
     /** Header values are a single line. */
-    private static String clean(String text) {
+    private static String clean(@Nullable String text) {
         return text == null ? "" : CONTROL_CHARACTERS.matcher(text).replaceAll("").strip();
     }
 }

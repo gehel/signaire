@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import net.jcip.annotations.Immutable;
 
 /**
@@ -27,15 +29,15 @@ public final class UserDirectories {
     }
 
     /**
-     * @param osName the {@code os.name} system property
+     * @param osName the {@code os.name} system property, which a JVM could leave unset
      */
-    public UserDirectories(Map<String, String> environment, String osName, Path home) {
+    public UserDirectories(Map<String, String> environment, @Nullable String osName, Path home) {
         this.environment = Map.copyOf(environment);
         this.system = operatingSystem(osName);
         this.home = home;
     }
 
-    private static OperatingSystem operatingSystem(String osName) {
+    private static OperatingSystem operatingSystem(@Nullable String osName) {
         String os = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
         if (os.startsWith("windows")) {
             return OperatingSystem.WINDOWS;
