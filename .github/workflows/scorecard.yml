@@ -10,12 +10,14 @@ on:
     - cron: '27 4 * * 1'
   branch_protection_rule:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   analysis:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       # the results to code scanning
       security-events: write
       # the results published, for the badge
