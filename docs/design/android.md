@@ -51,6 +51,12 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 - **Java 17 is not Android**: `System.Logger`, for one, compiles and isn't on the phone, and `d8` doesn't say so.
   `AndroidApiTest` checks that the app and the modules it stands on use only the members of Java classes that
   `android.jar` has; the Android-compatible modules log with `java.util.logging`.
+- **Logs**: Android sends `java.util.logging` to logcat, tagged with the logger's simple name (`SignLibrary`), but
+  writes each message as the code gave it, without its parameters: "Ignoring the invalid bundle {0}: {1}" says
+  neither which bundle nor why. The app gives Android's handler a formatter when it starts: the message with its
+  parameters, as `java.util.logging` formats them on the JVM, then the stack trace of its exception, as Android's
+  own formatter does. `AndroidIT` leaves a file that isn't a bundle among the bundles of the phone, and reads in the
+  log which file was left out and why.
 - **`android.jar` is a dependency** like the others (`provided`): the root's `android` profile installs the SDK's into
   the local repository first, rather than the deprecated `system` scope.
 - **Tests**: JVM tests for the extractor and `signaire-offline`; `AndroidIT` (`signaire-it`) installs the APK on the
@@ -102,6 +108,11 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   Android 14 knows a record only when given `-Dcom.android.tools.r8.emitRecordAnnotationsInDex`, a property of R8's
   internals rather than an option, which may go away; with it, the app crashed once in the runtime's garbage
   collector.
+- **A formatter for Android's handler**, rather than:
+  - messages written whole by the code (concatenation, `String.format`): the shared modules would build every
+    message, logged or not, and give up the parameters that the JVM's logging formats;
+  - a handler of our own, writing with `android.util.Log`: Android's maps the levels and tags already, and the
+    formatter is all it lacks.
 - **`adb reverse`** rather than `10.0.2.2`, the emulator's address for the computer: phones have it too, and the
   address is the same on both sides.
 - **Plain HTTP to `127.0.0.1` only** (`network_security_config.xml`): Android refuses plain HTTP, and the fake
