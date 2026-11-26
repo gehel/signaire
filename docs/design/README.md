@@ -51,6 +51,7 @@ Applications:
 
 Project:
 - [Build, tests and quality](build-and-tests.md)
+- [Releases and app stores](release.md)
 - [Test signs and the fake SignSuisse](test-signs.md)
 - [Thread safety](thread-safety.md)
 - [Nullness](nullness.md)
