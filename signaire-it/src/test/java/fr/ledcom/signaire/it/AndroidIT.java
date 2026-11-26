@@ -19,6 +19,9 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.TestWatcher;
 
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleReader;
@@ -105,6 +108,23 @@ class AndroidIT {
         }
     }
 
+    /** What the phone showed when a test failed. */
+    @RegisterExtension
+    static final TestWatcher FAILURES = new TestWatcher() {
+        @Override
+        public void testFailed(ExtensionContext context, Throwable cause) {
+            if (device != null) {
+                try {
+                    screenshot("failed-" + context.getRequiredTestMethod().getName());
+                } catch (IOException e) {
+                    cause.addSuppressed(e);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    };
+
     @AfterEach
     void nothingCrashed() throws IOException, InterruptedException {
         assertThat(device.crashes(APP)).as("crashes of the app, see adb logcat -b crash").isEmpty();
@@ -118,8 +138,7 @@ class AndroidIT {
         device.waitForTexts(onThePhone + " signes", "ALBERO", "ARBRE", "LIS");
         screenshot("search");
 
-        device.tap("search");
-        device.type("foret");
+        device.typeIn("search", "foret");
         assertThat(device.waitForTexts("1 signe", "FORÊT")).doesNotContain("ARBRE");
         device.key("KEYCODE_BACK");
         screenshot("results");
@@ -138,8 +157,7 @@ class AndroidIT {
         device.tap("add_to_list");
         device.tap("Nouvelle liste");
         // the name asked once the dialog is there: its field, empty, shows its hint
-        device.tap("Nom de la liste");
-        device.type("Nature");
+        device.typeIn("Nom de la liste", "Nature");
         device.tap("OK");
         device.waitFor("Dans : Nature");
         screenshot("sign-in-list");
@@ -224,9 +242,7 @@ class AndroidIT {
     @Test
     @Order(6)
     void theDownloadedSignsAreFound() throws IOException, InterruptedException {
-        device.tap("search");
-        device.clear();
-        device.type("gare");
+        device.typeIn("search", "gare");
         device.waitForTexts("1 signe", "GARE", "LSF");
         device.key("KEYCODE_BACK");
         screenshot("downloaded-found");
