@@ -187,7 +187,7 @@ class BrowserIT {
     }
 
     @Test
-    void videosPlayOnceAndAgainInSlowMotion() {
+    void videosPlayOnceAndAgainInSlowMotionWhenAsked() {
         driver = open(Theme.LIGHT);
         resize(Device.COMPUTER);
         // the sign of the demonstration that has videos: its own and its example's
@@ -197,11 +197,11 @@ class BrowserIT {
                 .isTrue());
         WebElement video = driver.findElement(By.cssSelector(".media .player video"));
         assertThat(script("return arguments[0].loop", video)).isEqualTo(false);
+        assertThat(speed(video)).isEqualTo(1.0);
 
         // half speed, from the start: the second of the video lasts two, then it stays at its end
         slow.getFirst().click();
-        assertThat(slow.getFirst().getDomAttribute("aria-pressed")).isEqualTo("true");
-        assertThat(((Number) script("return arguments[0].playbackRate", video)).doubleValue()).isEqualTo(0.5);
+        assertThat(speed(video)).isEqualTo(0.5);
         await("the video played once").atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200))
                 .until(() -> Boolean.TRUE.equals(script("return arguments[0].ended", video)));
         Object end = script("return arguments[0].currentTime", video);
@@ -209,10 +209,16 @@ class BrowserIT {
         await("still at its end").pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(2)).until(() -> Boolean.TRUE
                 .equals(script("return arguments[0].ended && arguments[0].currentTime === arguments[1]", video, end)));
 
-        // the normal speed again
-        slow.getFirst().click();
-        assertThat(slow.getFirst().getDomAttribute("aria-pressed")).isEqualTo("false");
-        assertThat(((Number) script("return arguments[0].playbackRate", video)).doubleValue()).isEqualTo(1.0);
+        // for that play only: the browser's controls play it again at the normal speed
+        assertThat(speed(video)).isEqualTo(1.0);
+        script("arguments[0].play()", video);
+        await("played again").atMost(Duration.ofSeconds(5)).until(() -> Boolean.FALSE.equals(script(
+                "return arguments[0].paused", video)));
+        assertThat(speed(video)).isEqualTo(1.0);
+    }
+
+    private double speed(WebElement video) {
+        return ((Number) script("return arguments[0].playbackRate", video)).doubleValue();
     }
 
     @Test

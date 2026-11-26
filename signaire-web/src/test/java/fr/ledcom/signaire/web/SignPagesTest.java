@@ -98,7 +98,7 @@ class SignPagesTest {
                 .contains("src=\"/js/videos.js\"")
                 // under each video, the sign's, its example's and its variant's; the script shows it
                 .satisfies(page -> assertThat(StringUtils.countOccurrencesOf(page,
-                        "<button type=\"button\" class=\"slow small secondary outline\" aria-pressed=\"false\" hidden>"
+                        "<button type=\"button\" class=\"slow small secondary outline\" hidden>"
                                 + "Ralenti</button>")).isEqualTo(3));
     }
 

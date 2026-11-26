@@ -15,9 +15,10 @@ technical. The interface must be fast, accessible, usable without JavaScript, an
 - **htmx**: requests marked by htmx get fragments only (`Htmx.isPartialRequest`), except history restoration;
   responses vary on `HX-Request`. The language links are refreshed out of band. Forms work without script (plain
   POST and redirect), htmx improves them.
-- **Videos** (the sign's, its examples', its variants'): play once, with the browser's controls to play them again. A
-  "Ralenti" button under each plays it again at half speed, until pressed again (`static/js/videos.js`, on sign
-  pages: it shows the buttons, which stay hidden without script).
+- **Videos** (the sign's, its examples', its variants'): play once, at the normal speed, with the browser's controls
+  to play them again. A "Ralenti" button under each plays it again at half speed, once: when that play ends, the speed
+  is the normal one again (`static/js/videos.js`, on sign pages: it shows the buttons, which stay hidden without
+  script).
 - **Media** (`/media/{*path}`): served from the bundles by `MediaLibrary` (core), with range requests (video seeking)
   and a week of caching; missing media link to SignSuisse.
 - **Look**: Pico CSS styles the semantic HTML, `signaire.css` gives the identity and lays out the pages; see
@@ -46,6 +47,8 @@ technical. The interface must be fast, accessible, usable without JavaScript, an
     learners don't look there.
   - Half speed, one button, rather than a choice of speeds: slow enough to follow the hands, and one more control
     only.
+  - Slow only when asked, for one play, rather than a choice that stays (a toggle, or a setting kept from page to
+    page): a video plays at its normal speed unless its button was just pressed, and nothing is remembered.
 - **Links as a model attribute** (`Links`): Thymeleaf 3.1 forbids bean references in link attributes.
 
 ## Open questions

@@ -3,7 +3,7 @@
 The page of a sign shows everything SignSuisse says about it:
 
 - the **video** of the sign, which plays once: the controls of the player play it again or pause it, and the
-  **Slow motion** button plays it again at half speed (press it again for the normal speed);
+  **Slow motion** button plays it again once at half speed, after which it plays at the normal speed again;
 - the **images** (photo or drawing);
 - the **periphrase** and the **definition**;
 - the **categories**, which lead to the other signs of the category;

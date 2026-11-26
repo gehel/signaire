@@ -398,11 +398,6 @@ final class AndroidDevice implements AutoCloseable {
         return node(screen, textOrId).flatMap(AndroidDevice::bounds);
     }
 
-    /** Whether the first view whose text, description or id is this is checked: a check box. */
-    static boolean checked(String screen, String textOrId) {
-        return node(screen, textOrId).map(node -> "true".equals(node.getAttribute("checked"))).orElse(false);
-    }
-
     /** The first view on the screen whose text, description or id is this. */
     private static Optional<Element> node(String screen, String textOrId) {
         String wanted = textOrId.toLowerCase(Locale.ROOT);
