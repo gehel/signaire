@@ -221,8 +221,12 @@ browser, to see pages. Its image tag follows the Selenium version of the Spring 
 `AndroidIT` (in the `android` profile, with `ANDROID_HOME`) installs the APK on the device adb sees, or on an emulator
 it starts (`signaire.android.avd`, created from `system-images;android-34;google_apis;x86_64` when missing), pushes
 the demo bundles into the app (`run-as`), drives it with adb and uiautomator, in French, and writes screenshots to
-`signaire-it/target/screenshots/android/`. It skips without a device or that image. `AndroidApiTest` (signaire-android)
-fails on any use of Java that `android.jar` lacks: Java 17 compiling is not enough (`System.Logger` isn't on Android).
+`signaire-it/target/screenshots/android/`. It skips without a device or that image. Its downloads go to the fake
+SignSuisse, reached through `adb reverse`: a debuggable build downloads from the server named in its
+`files/signsuisse-server`, and shows it on the library screen, which the test checks before tapping Download.
+`AndroidApiTest` (signaire-android) fails on any use of Java that `android.jar` lacks: Java 17 compiling is not enough
+(`System.Logger` isn't on Android, nor `Files.readString`). On the phone, `d8` makes records plain classes: Jackson
+reads them but writes them as `{}`, unless its mapper writes fields (`BundleJson`, `WordLists`).
 
 Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
 (`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the

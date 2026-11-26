@@ -1,6 +1,7 @@
 package fr.ledcom.signaire.offline;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -12,6 +13,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import fr.ledcom.signaire.extractor.ExtractionListener;
 import fr.ledcom.signaire.extractor.ExtractionOptions;
@@ -45,6 +48,28 @@ class SignSuisseDownloadTest {
                     video -> assertThat(video).hasContent("video"));
             assertThat(download.status()).isPresent();
         }
+    }
+
+    @Test
+    void withoutAFileNamingAnotherServerDownloadsAreFromSignSuisse() {
+        assertThat(SignSuisseDownload.server(tmp.resolve("signsuisse-server")))
+                .isEqualTo(URI.create("https://www.sgb-fss.ch"));
+    }
+
+    @Test
+    void aFileNamesTheServerOfTheTests() throws IOException {
+        Path file = Files.writeString(tmp.resolve("signsuisse-server"), "http://127.0.0.1:4321\n");
+
+        assertThat(SignSuisseDownload.server(file)).isEqualTo(URI.create("http://127.0.0.1:4321"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "127.0.0.1:4321", "file:///sdcard/signs", "http:///signsuisse", "not an address"})
+    void aFileNamingNoServerStopsTheDownloadRatherThanGoToSignSuisse(String content) throws IOException {
+        Path file = Files.writeString(tmp.resolve("signsuisse-server"), content);
+
+        assertThatThrownBy(() -> SignSuisseDownload.server(file)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(file.toString());
     }
 
     /** One sign, LAUSANNE, with a video. */

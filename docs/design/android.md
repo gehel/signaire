@@ -44,7 +44,10 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   copies `values` to `values-fr`: Android takes a language of the phone's list that the app names before its default,
   so a phone in French then English would otherwise show English.
 - **Android 14 (API 34) and later**: the records and Java 17 APIs of the model and of Jackson run without
-  desugaring.
+  desugaring. `d8` still makes records plain classes, without their record components: Jackson reads them (through
+  the names of the constructor's parameters) but, seeing no accessors, writes them as `{}`. The mappers that write on
+  the phone (bundles, word lists) write fields instead, which gives the same JSON on the JVM. `AndroidIT` reads back a
+  bundle the phone downloaded, and restarts the app to find its lists.
 - **Java 17 is not Android**: `System.Logger`, for one, compiles and isn't on the phone, and `d8` doesn't say so.
   `AndroidApiTest` checks that the app and the modules it stands on use only the members of Java classes that
   `android.jar` has; the Android-compatible modules log with `java.util.logging`.
@@ -54,6 +57,13 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   device adb sees, or on an emulator of Android 14 it starts, pushes the demo bundles, drives the screens with `adb`
   (uiautomator to read them) in French, and writes screenshots, as `BrowserIT` does for the web. It skips without a
   device or the system image to emulate one.
+- **Downloads in the tests, never from SignSuisse**: `AndroidIT` downloads a category through the screens, from the
+  fake SignSuisse of `FullStackIT` (invented signs, with the structure of the site), served on the computer. `adb
+  reverse` gives the phone the port of the fake at the same address, `http://127.0.0.1:<port>`, so that the links
+  its search returns work on the phone as they are. The test writes that address in the files of the app
+  (`files/signsuisse-server`, with `run-as`) before it starts the app: a debuggable build reads it when it starts,
+  downloads from the server it names, and its library screen shows that server. The test checks the screen before
+  it taps Download: if the app ignored the file, the test fails before any request leaves for SignSuisse.
 - **CI** builds the APK (the runners have the SDK; `ci/android-sdk.sh` installs its packages) and keeps it as an
   artifact; a job of its own runs `AndroidIT` on an emulator, with KVM.
 
@@ -79,6 +89,23 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
 - **Word lists in a JSON file** rather than SQLite: a few lists, read and written whole, tested on the JVM.
 - **Android 14 and later**: older phones would need the desugaring of records and of Java's newer APIs, which only
   Gradle's plugin sets up.
+- **The test's server in a file of the app, read by debuggable builds only**: only the shell of a computer the phone
+  trusts writes there (`run-as`), and a release build ignores it. A file that doesn't name an `http` or `https`
+  address stops the app as it starts: never SignSuisse instead of the server a test wanted.
+  - An extra of the intent that starts the app: any app could start Signaire with it.
+  - A setting in the app: users have no other SignSuisse to point at.
+  - The name `www.sgb-fss.ch` sent to the computer on the phone: the site is HTTPS, so the fake would need a
+    certificate the phone trusts, and the phone root access; a mistake would reach the real site.
+  - An instrumented test APK: Android's test runner is an AndroidX library, which Maven doesn't use.
+- **Records written from their fields** rather than kept as records by `d8`: `d8` writes the annotations from which
+  Android 14 knows a record only when given `-Dcom.android.tools.r8.emitRecordAnnotationsInDex`, a property of R8's
+  internals rather than an option, which may go away; with it, the app crashed once in the runtime's garbage
+  collector.
+- **`adb reverse`** rather than `10.0.2.2`, the emulator's address for the computer: phones have it too, and the
+  address is the same on both sides.
+- **Plain HTTP to `127.0.0.1` only** (`network_security_config.xml`): Android refuses plain HTTP, and the fake
+  doesn't do HTTPS (a certificate the app would trust only in tests). Nothing on a phone's own address poses as
+  SignSuisse, so release builds keep the exception.
 
 ## Open questions
 

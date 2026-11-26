@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -36,6 +37,9 @@ final class AndroidDevice implements AutoCloseable {
 
     private static final Duration BOOT = Duration.ofMinutes(5);
     private static final Duration SCREEN = Duration.ofSeconds(15);
+    private static final int MAX_SWIPES = 10;
+    private static final Pattern JAVA_CRASH = Pattern.compile("Process: (\\S+), PID: (\\d+)");
+    private static final Pattern RUNTIME_CRASH = Pattern.compile("Fatal signal .* pid (\\d+) \\(([^)]+)\\)");
     private static final Pattern BOUNDS = Pattern.compile("\\[(\\d+),(\\d+)]\\[(\\d+),(\\d+)]");
 
     private final Path adb;
@@ -123,6 +127,15 @@ final class AndroidDevice implements AutoCloseable {
         run("shell", "rm", temporary);
     }
 
+    /** Copies a file of a debuggable app to the computer. */
+    void pullFromApp(String app, String file, Path target) throws IOException, InterruptedException {
+        Process cat = new ProcessBuilder(adb.toString(), "exec-out", "run-as", app, "cat", file).start();
+        byte[] content = cat.getInputStream().readAllBytes();
+        assertThat(cat.waitFor()).as("run-as %s cat %s", app, file).isZero();
+        Files.createDirectories(target.getParent());
+        Files.write(target, content);
+    }
+
     /**
      * The screen, as uiautomator sees it: it fails while the screen moves, and is asked again; its first reading on a
      * device just booted takes seconds. An emulator just booted may say that the system "isn't responding": the
@@ -157,17 +170,47 @@ final class AndroidDevice implements AutoCloseable {
 
     /** Waits for a view showing a text (case ignored) or with an id, and returns its center. */
     int[] waitFor(String textOrId) {
+        return waitFor(textOrId, SCREEN);
+    }
+
+    /** As {@link #waitFor(String)}, for longer: a download, for one. */
+    int[] waitFor(String textOrId, Duration timeout) {
         try {
-            return await("view " + textOrId).atMost(SCREEN).pollInterval(Duration.ofMillis(500))
+            return await("view " + textOrId).atMost(timeout).pollInterval(Duration.ofMillis(500))
                     .until(() -> find(screen(), textOrId), Optional::isPresent).orElseThrow();
         } catch (ConditionTimeoutException e) {
             throw new AssertionError("No view \"" + textOrId + "\" on the screen: " + texts(screen()), e);
         }
     }
 
+    /** Scrolls the first view of the screen that scrolls, until a view shows a text (case ignored) or has an id. */
+    void scrollTo(String textOrId) throws IOException, InterruptedException {
+        for (int swipes = 0; swipes < MAX_SWIPES; swipes++) {
+            String screen = screen();
+            if (find(screen, textOrId).isPresent()) {
+                return;
+            }
+            int[] list = nodes(screen).stream().filter(node -> node.getAttribute("scrollable").equals("true"))
+                    .map(AndroidDevice::bounds).flatMap(Optional::stream).findFirst().orElseThrow(
+                            () -> new AssertionError("Nothing scrolls to \"" + textOrId + "\": " + texts(screen)));
+            String x = String.valueOf((list[0] + list[2]) / 2);
+            int height = list[3] - list[1];
+            run("shell", "input", "swipe", x, String.valueOf(list[1] + height * 3 / 4), x,
+                    String.valueOf(list[1] + height / 4), "300");
+        }
+        throw new AssertionError("No view \"" + textOrId + "\" after scrolling: " + texts(screen()));
+    }
+
     void tap(String textOrId) throws IOException, InterruptedException {
         int[] center = waitFor(textOrId);
         run("shell", "input", "tap", String.valueOf(center[0]), String.valueOf(center[1]));
+    }
+
+    /** Empties the field that has the focus, of up to 40 characters. */
+    void clear() throws IOException, InterruptedException {
+        List<String> keys = new ArrayList<>(List.of("shell", "input", "keyevent", "KEYCODE_MOVE_END"));
+        keys.addAll(Collections.nCopies(40, "KEYCODE_DEL"));
+        run(keys.toArray(String[]::new));
     }
 
     /** Types in the view that has the focus: ASCII only, as adb types. */
@@ -187,9 +230,25 @@ final class AndroidDevice implements AutoCloseable {
         Files.write(file, png);
     }
 
-    /** The crashes of an app since the log was last cleared. */
+    /**
+     * The crashes of an app since the log was last cleared, with their stack traces: those of Java ("Process: app, PID:
+     * n"), and those of the runtime ("Fatal signal … pid n (end of the app's name)").
+     */
     List<String> crashes(String app) throws IOException, InterruptedException {
-        return run("logcat", "-d", "-b", "crash").lines().filter(line -> line.contains("Process: " + app + ",")).toList();
+        List<String> log = run("logcat", "-d", "-b", "crash").lines().toList();
+        List<String> processes = new ArrayList<>();
+        for (String line : log) {
+            Matcher java = JAVA_CRASH.matcher(line);
+            Matcher runtime = RUNTIME_CRASH.matcher(line);
+            if (java.find() && java.group(1).equals(app)) {
+                processes.add(java.group(2));
+            } else if (runtime.find() && app.endsWith(runtime.group(2))) {
+                processes.add(runtime.group(1));
+            }
+        }
+        // the lines of a crash carry the process id of the line naming the app
+        return log.stream().filter(line -> processes.stream().anyMatch(process -> line.matches(
+                "\\S+ \\S+\\s+" + process + "\\s.*"))).toList();
     }
 
     @Override
@@ -208,17 +267,22 @@ final class AndroidDevice implements AutoCloseable {
         for (Element node : nodes(screen)) {
             for (String attribute : List.of("text", "content-desc", "resource-id")) {
                 String value = node.getAttribute(attribute).toLowerCase(Locale.ROOT);
-                if (value.equals(wanted) || value.endsWith(":id/" + wanted)) {
-                    Matcher bounds = BOUNDS.matcher(node.getAttribute("bounds"));
-                    if (bounds.matches()) {
-                        return Optional.of(new int[] {
-                            (Integer.parseInt(bounds.group(1)) + Integer.parseInt(bounds.group(3))) / 2,
-                            (Integer.parseInt(bounds.group(2)) + Integer.parseInt(bounds.group(4))) / 2});
-                    }
+                Optional<int[]> bounds = bounds(node);
+                if ((value.equals(wanted) || value.endsWith(":id/" + wanted)) && bounds.isPresent()) {
+                    int[] box = bounds.get();
+                    return Optional.of(new int[] {(box[0] + box[2]) / 2, (box[1] + box[3]) / 2});
                 }
             }
         }
         return Optional.empty();
+    }
+
+    /** Left, top, right and bottom of a view. */
+    private static Optional<int[]> bounds(Element node) {
+        Matcher bounds = BOUNDS.matcher(node.getAttribute("bounds"));
+        return bounds.matches() ? Optional.of(new int[] {Integer.parseInt(bounds.group(1)),
+            Integer.parseInt(bounds.group(2)), Integer.parseInt(bounds.group(3)), Integer.parseInt(bounds.group(4))})
+                : Optional.empty();
     }
 
     /** The texts of the screen, to say what was there instead. */

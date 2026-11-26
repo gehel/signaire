@@ -1,5 +1,6 @@
 package fr.ledcom.signaire.android;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,8 +12,10 @@ import org.jspecify.annotations.Nullable;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Handler;
 import android.os.Looper;
+import fr.ledcom.signaire.extractor.SignSuisseClient;
 import fr.ledcom.signaire.offline.SignLibrary;
 import fr.ledcom.signaire.offline.SignSuisseDownload;
 import fr.ledcom.signaire.offline.WordLists;
@@ -32,6 +35,7 @@ public final class SignaireApplication extends Application {
     private final Handler screen = new Handler(Looper.getMainLooper());
     private SignLibrary library;
     private WordLists lists;
+    private URI signSuisse;
     private final AtomicReference<Download> download = new AtomicReference<>(Download.IDLE);
     private final AtomicReference<@Nullable SignSuisseDownload> running = new AtomicReference<>();
 
@@ -49,6 +53,10 @@ public final class SignaireApplication extends Application {
         super.onCreate();
         library = new SignLibrary(getFilesDir().toPath().resolve("bundles"));
         lists = new WordLists(getFilesDir().toPath().resolve("lists.json"));
+        // AndroidIT names its fake SignSuisse there (run-as); a file naming no server stops the app
+        boolean debuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        signSuisse = debuggable ? SignSuisseDownload.server(getFilesDir().toPath().resolve("signsuisse-server"))
+                : SignSuisseClient.DEFAULT_BASE_URI;
         background.execute(library::load);
     }
 
@@ -70,6 +78,16 @@ public final class SignaireApplication extends Application {
 
     WordLists lists() {
         return lists;
+    }
+
+    /** Where downloads go: SignSuisse, or the fake one of a test, on debuggable builds. */
+    URI signSuisse() {
+        return signSuisse;
+    }
+
+    /** Whether downloads go to another server than SignSuisse: the screens say so. */
+    boolean testServer() {
+        return !signSuisse.equals(SignSuisseClient.DEFAULT_BASE_URI);
     }
 
     /** Media copied out of their bundle for the players. */

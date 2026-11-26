@@ -76,8 +76,8 @@ public final class DownloadService extends Service {
             languages.add(Language.valueOf(name));
         }
         MediaChoice media = MediaChoice.valueOf(String.valueOf(intent.getStringExtra(MEDIA)));
-        SignSuisseDownload download = SignSuisseDownload.fromSignSuisse(app.library(), app.downloadCache(),
-                UserAgent.of("", ""), new Progress());
+        SignSuisseDownload download = SignSuisseDownload.fromSignSuisse(app.signSuisse(), app.library(),
+                app.downloadCache(), UserAgent.of("", ""), new Progress());
         app.running(download);
         app.download(new SignaireApplication.Download(true, starting));
         new Thread(() -> run(download, new ArrayList<>(categories), languages, ExtractionOptions.of(media)),

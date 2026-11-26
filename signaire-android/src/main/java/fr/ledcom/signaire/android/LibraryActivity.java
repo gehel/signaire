@@ -62,6 +62,11 @@ public final class LibraryActivity extends Activity {
                         .putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"application/zip",
                             "application/octet-stream"}), IMPORT));
         findViewById(R.id.cancel).setOnClickListener(view -> DownloadService.cancel(app));
+        if (app.testServer()) {
+            TextView server = findViewById(R.id.server);
+            server.setText(getString(R.string.library_server, app.signSuisse()));
+            server.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

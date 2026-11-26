@@ -16,6 +16,9 @@ import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import tools.jackson.core.JacksonException;
@@ -31,7 +34,10 @@ public final class WordLists {
 
     public static final int MAX_NAME_LENGTH = 100;
 
-    private static final JsonMapper JSON = JsonMapper.builder().build();
+    /** Records written from their fields, as in bundles: Jackson doesn't see the accessors of records on Android. */
+    private static final JsonMapper JSON = JsonMapper.builder()
+            .changeDefaultVisibility(visibility -> visibility.withVisibility(PropertyAccessor.FIELD, Visibility.ANY))
+            .build();
     private static final TypeReference<List<WordList>> LIST_TYPE = new TypeReference<>() { };
 
     private final Path file;
