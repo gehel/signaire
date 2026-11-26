@@ -46,7 +46,10 @@ final class AndroidDevice implements AutoCloseable {
     private static final int VIDEO_ROUNDING = 24;
     private static final int MAX_SWIPES = 10;
     private static final Pattern JAVA_CRASH = Pattern.compile("Process: (\\S+), PID: (\\d+)");
-    private static final Pattern RUNTIME_CRASH = Pattern.compile("Fatal signal .* pid (\\d+) \\(([^)]+)\\)");
+    /** In a line of the runtime's crash ("Fatal signal …"), the process and the end of its name. */
+    private static final Pattern RUNTIME_CRASH = Pattern.compile(" pid (\\d++) \\(([^)]++)\\)");
+    /** The name of a window, at the end of a line of {@code dumpsys window visible}. */
+    private static final Pattern WINDOW = Pattern.compile(" u0 ([^}]++)}:$");
     private static final Pattern BOUNDS = Pattern.compile("\\[(\\d+),(\\d+)]\\[(\\d+),(\\d+)]");
 
     private final Path adb;
@@ -271,9 +274,14 @@ final class AndroidDevice implements AutoCloseable {
                 .filter(line -> line.contains("mCurrentFocus") || line.contains("mFocusedApp")).map(String::strip)
                 .distinct().collect(Collectors.joining("; "));
         String windows = run("shell", "dumpsys", "window", "visible").lines().map(String::strip)
-                .filter(line -> line.startsWith("Window #")).map(line -> line.replaceFirst(".* u0 (.*)}:$", "$1"))
+                .filter(line -> line.startsWith("Window #")).map(AndroidDevice::windowName)
                 .collect(Collectors.joining(", "));
         return focus + "; on the screen: " + windows;
+    }
+
+    private static String windowName(String line) {
+        Matcher window = WINDOW.matcher(line);
+        return window.find() ? window.group(1) : line;
     }
 
     void key(String key) throws IOException, InterruptedException {
@@ -339,7 +347,7 @@ final class AndroidDevice implements AutoCloseable {
             Matcher runtime = RUNTIME_CRASH.matcher(line);
             if (java.find() && java.group(1).equals(app)) {
                 processes.add(java.group(2));
-            } else if (runtime.find() && app.endsWith(runtime.group(2))) {
+            } else if (line.contains("Fatal signal") && runtime.find() && app.endsWith(runtime.group(2))) {
                 processes.add(runtime.group(1));
             }
         }

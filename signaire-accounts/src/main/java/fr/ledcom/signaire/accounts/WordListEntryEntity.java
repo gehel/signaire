@@ -32,7 +32,7 @@ class WordListEntryEntity {
         // for JPA
     }
 
-    WordListEntryEntity(WordListEntity wordList, String signUid, Instant addedAt) {
+    WordListEntryEntity(WordListEntity wordList, String signUid, Instant addedAt) { // NOSONAR id: set by JPA
         this.wordList = wordList;
         this.signUid = signUid;
         this.addedAt = addedAt;

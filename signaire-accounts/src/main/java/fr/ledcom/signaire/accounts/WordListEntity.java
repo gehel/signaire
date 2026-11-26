@@ -41,7 +41,7 @@ class WordListEntity {
         // for JPA
     }
 
-    WordListEntity(AccountEntity owner, String name, Instant createdAt) {
+    WordListEntity(AccountEntity owner, String name, Instant createdAt) { // NOSONAR id: set by JPA
         this.owner = owner;
         this.name = name;
         this.createdAt = createdAt;
