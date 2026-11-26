@@ -230,6 +230,11 @@ final class AndroidDevice implements AutoCloseable {
         Files.write(file, png);
     }
 
+    /** What a tag (a logger's simple name, for {@code java.util.logging}) wrote since the log was last cleared. */
+    List<String> log(String tag) throws IOException, InterruptedException {
+        return run("logcat", "-d", "-s", tag + ":V").lines().toList();
+    }
+
     /**
      * The crashes of an app since the log was last cleared, with their stack traces: those of Java ("Process: app, PID:
      * n"), and those of the runtime ("Fatal signal … pid n (end of the app's name)").

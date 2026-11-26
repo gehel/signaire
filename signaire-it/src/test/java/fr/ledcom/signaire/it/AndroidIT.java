@@ -46,6 +46,8 @@ class AndroidIT {
     /** About 40 requests, 500 ms apart. */
     private static final Duration DOWNLOAD = Duration.ofMinutes(2);
     private static final String CITY = "city.zip";
+    /** A file among the bundles that isn't one. */
+    private static final String BROKEN = "broken.zip";
 
     private static AndroidDevice device;
     private static FakeSignSuisse signSuisse;
@@ -74,6 +76,7 @@ class AndroidIT {
                 device.pushToApp(bundle, APP, "files/bundles/" + bundle.getFileName());
             }
         }
+        device.pushToApp(Files.writeString(WORK.resolve(BROKEN), "not a bundle"), APP, "files/bundles/" + BROKEN);
         // downloads from a fake SignSuisse, at the same address on the phone as on the computer
         signSuisse = new FakeSignSuisse();
         port = "tcp:" + signSuisse.uri().getPort();
@@ -166,7 +169,7 @@ class AndroidIT {
 
     @Test
     @Order(4)
-    void theSignsOfThePhoneAreThoseOfTheirBundles() throws IOException, InterruptedException {
+    void theSignsOfThePhoneAreThoseOfItsValidBundles() throws IOException, InterruptedException {
         device.key("KEYCODE_MENU");
         device.tap("Signes du téléphone");
         device.waitFor("Télécharger depuis SignSuisse");
@@ -175,6 +178,10 @@ class AndroidIT {
         assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("library");
         device.key("KEYCODE_BACK");
+
+        // the file that isn't a bundle is left out, and the log says which and why
+        assertThat(device.log("SignLibrary")).anySatisfy(line -> assertThat(line)
+                .containsPattern("Ignoring the invalid bundle /\\S+/files/bundles/" + BROKEN + ": [^{]+$"));
     }
 
     @Test

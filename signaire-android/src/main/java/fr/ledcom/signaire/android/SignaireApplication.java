@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 import org.jspecify.annotations.Nullable;
 
@@ -51,6 +52,8 @@ public final class SignaireApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        // the shared modules log with java.util.logging, which Android writes without the parameters
+        LogFormatter.install(Logger.getLogger(""));
         library = new SignLibrary(getFilesDir().toPath().resolve("bundles"));
         lists = new WordLists(getFilesDir().toPath().resolve("lists.json"));
         // AndroidIT names its fake SignSuisse there (run-as); a file naming no server stops the app
