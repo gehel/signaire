@@ -23,7 +23,26 @@ Signaire is a tool to learn and look up signs of the Swiss sign languages (LSF, 
   (sign → word and word → sign cards), EPUB e-book.
 - **Administration**: add, edit and delete signs; upload and reload bundles; synchronize with SignSuisse;
   handle the signs requested by users.
+- **Android app** (Android 14 and later): the signs on the phone, downloaded from SignSuisse or imported, searched
+  offline, and word lists.
 - Web interface and command line in **French, German, Italian and English**.
+
+## Screenshots
+
+The web application and the Android app, in French, with the invented signs of the tests: their pictures and videos
+are plain colors, where Signaire shows those of SignSuisse. `BrowserIT` and `AndroidIT` take these screenshots, and
+others, in `signaire-it/target/screenshots/`.
+
+<p>
+  <img src="docs/screenshots/web-results.png" width="49%" alt="The web application: the search, with filters by sign language and category, and the signs of the Nature category in the three sign languages">
+  <img src="docs/screenshots/web-sign.png" width="49%" alt="A sign page of the web application: the sign ARBRE, its picture, definition, category and example, and the word lists of the user">
+</p>
+<p>
+  <img src="docs/screenshots/web-phone-dark.png" width="24%" alt="The web application on a phone, in the dark theme">
+  <img src="docs/screenshots/android-search.png" width="24%" alt="The Android app: the signs on the phone, searched offline">
+  <img src="docs/screenshots/android-sign.png" width="24%" alt="The Android app: the sign GARE, its video playing, with its picture, definition and example">
+  <img src="docs/screenshots/android-library.png" width="24%" alt="The Android app: the categories of signs on the phone, downloaded from SignSuisse or imported">
+</p>
 
 ## The data is not included
 
