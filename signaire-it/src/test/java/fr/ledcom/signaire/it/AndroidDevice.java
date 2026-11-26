@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,6 +38,7 @@ final class AndroidDevice implements AutoCloseable {
 
     private static final Duration BOOT = Duration.ofMinutes(5);
     private static final Duration SCREEN = Duration.ofSeconds(15);
+    private static final int TYPING_ATTEMPTS = 4;
     private static final int MAX_SWIPES = 10;
     private static final Pattern JAVA_CRASH = Pattern.compile("Process: (\\S+), PID: (\\d+)");
     private static final Pattern RUNTIME_CRASH = Pattern.compile("Fatal signal .* pid (\\d+) \\(([^)]+)\\)");
@@ -183,6 +185,20 @@ final class AndroidDevice implements AutoCloseable {
         }
     }
 
+    /**
+     * Waits for a screen showing all these texts, and returns its texts: a screen read once, as it changes, may show
+     * none.
+     */
+    List<String> waitForTexts(String... expected) {
+        List<String> wanted = List.of(expected);
+        try {
+            return await("texts " + wanted).atMost(SCREEN).pollInterval(Duration.ofMillis(500))
+                    .until(() -> texts(screen()), texts -> texts.containsAll(wanted));
+        } catch (ConditionTimeoutException e) {
+            throw new AssertionError("Not all of " + wanted + " on the screen: " + texts(screen()), e);
+        }
+    }
+
     /** Scrolls the first view of the screen that scrolls, until a view shows a text (case ignored) or has an id. */
     void scrollTo(String textOrId) throws IOException, InterruptedException {
         for (int swipes = 0; swipes < MAX_SWIPES; swipes++) {
@@ -207,7 +223,7 @@ final class AndroidDevice implements AutoCloseable {
     }
 
     /** Empties the field that has the focus, of up to 40 characters. */
-    void clear() throws IOException, InterruptedException {
+    private void clear() throws IOException, InterruptedException {
         List<String> keys = new ArrayList<>(List.of("shell", "input", "keyevent", "KEYCODE_MOVE_END"));
         keys.addAll(Collections.nCopies(40, "KEYCODE_DEL"));
         run(keys.toArray(String[]::new));
@@ -216,6 +232,43 @@ final class AndroidDevice implements AutoCloseable {
     /** Types in the view that has the focus: ASCII only, as adb types. */
     void type(String text) throws IOException, InterruptedException {
         run("shell", "input", "text", text.replace(" ", "%s"));
+    }
+
+    /**
+     * Types a text in a field (its id, or its hint while empty), again if the screen doesn't show it: on an emulator
+     * just booted and busy, a key may go to a dialog of the system that doesn't respond, or nowhere. The field is
+     * emptied before each try, so that keys that were only late don't stay.
+     */
+    void typeIn(String field, String text) throws IOException, InterruptedException {
+        tap(field);
+        for (int attempt = 1;; attempt++) {
+            clear();
+            type(text);
+            try {
+                await("\"" + text + "\" typed").atMost(SCREEN).pollInterval(Duration.ofMillis(500))
+                        .until(() -> texts(screen()).contains(text));
+                return;
+            } catch (ConditionTimeoutException e) {
+                if (attempt == TYPING_ATTEMPTS) {
+                    throw new AssertionError("No \"" + text + "\" typed in \"" + field + "\" (" + windows() + "): "
+                            + texts(screen()), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * The window that has the focus (the keys go there), the app's, and the windows on the screen, top first:
+     * uiautomator reads the app's alone.
+     */
+    private String windows() throws IOException, InterruptedException {
+        String focus = run("shell", "dumpsys", "window").lines()
+                .filter(line -> line.contains("mCurrentFocus") || line.contains("mFocusedApp")).map(String::strip)
+                .distinct().collect(Collectors.joining("; "));
+        String windows = run("shell", "dumpsys", "window", "visible").lines().map(String::strip)
+                .filter(line -> line.startsWith("Window #")).map(line -> line.replaceFirst(".* u0 (.*)}:$", "$1"))
+                .collect(Collectors.joining(", "));
+        return focus + "; on the screen: " + windows;
     }
 
     void key(String key) throws IOException, InterruptedException {
@@ -228,6 +281,11 @@ final class AndroidDevice implements AutoCloseable {
         assertThat(capture.waitFor()).isZero();
         Files.createDirectories(file.getParent());
         Files.write(file, png);
+    }
+
+    /** What a tag (a logger's simple name, for {@code java.util.logging}) wrote since the log was last cleared. */
+    List<String> log(String tag) throws IOException, InterruptedException {
+        return run("logcat", "-d", "-s", tag + ":V").lines().toList();
     }
 
     /**
