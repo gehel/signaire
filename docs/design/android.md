@@ -58,7 +58,8 @@ extracting them from SignSuisse on the phone, or by importing bundles they extra
   (uiautomator to read them) in French, and writes screenshots, as `BrowserIT` does for the web. It skips without a
   device or the system image to emulate one.
 - **Downloads in the tests, never from SignSuisse**: `AndroidIT` downloads a category through the screens, from the
-  fake SignSuisse of `FullStackIT` (invented signs, with the structure of the site), served on the computer. `adb
+  fake SignSuisse of the tests (the test signs, with the structure of the site: [test-signs.md](test-signs.md)),
+  served on the computer. `adb
   reverse` gives the phone the port of the fake at the same address, `http://127.0.0.1:<port>`, so that the links
   its search returns work on the phone as they are. The test writes that address in the files of the app
   (`files/signsuisse-server`, with `run-as`) before it starts the app: a debuggable build reads it when it starts,

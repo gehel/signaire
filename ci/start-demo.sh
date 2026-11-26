@@ -14,7 +14,7 @@ XDG_DATA_HOME="$work/data" XDG_CACHE_HOME="$work/cache" XDG_CONFIG_HOME="$work/c
     nohup java -jar "$jar" --signaire.bundles.directory="$work/bundles" > "$work/web.log" 2>&1 &
 echo $! > "$work/web.pid"
 for _ in $(seq 1 150); do
-    if curl -sf 'http://localhost:8080/?q=arbre' | grep -q '/signs/90000'; then
+    if curl -sf 'http://localhost:8080/?q=arbre' | grep -q '/signs/15'; then
         echo "Signaire is ready on http://localhost:8080"
         exit 0
     fi

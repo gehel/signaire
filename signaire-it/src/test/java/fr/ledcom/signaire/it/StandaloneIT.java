@@ -16,6 +16,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import fr.ledcom.signaire.extractor.FakeSignSuisse;
+import fr.ledcom.signaire.model.TestSigns;
+
 /**
  * The standalone application, as a user runs it on their computer: no container, no server. Set up on its first
  * run, it downloads signs from a (fake) SignSuisse, keeps everything for the next runs, and stops from its pages.
@@ -62,12 +65,12 @@ class StandaloneIT {
         // the signs are downloaded in the background
         await("signs downloaded, see " + standalone.log())
                 .atMost(Duration.ofMinutes(2))
-                .until(() -> me.get("/?q=geneve").body().contains("href=\"/signs/9002\""));
+                .until(() -> me.get("/?q=geneve").body().contains("href=\"/signs/" + TestSigns.GENEVE.uid() + "\""));
         // no account: lists right away, and the administration
         HttpResponse<String> list = me.post("/lists", Map.of("name", "Villes"));
         assertThat(list.statusCode()).isEqualTo(302);
         String location = list.headers().firstValue("Location").orElseThrow();
-        me.post("/signs/9002/lists/" + location.substring(location.lastIndexOf('/') + 1), Map.of());
+        me.post("/signs/" + TestSigns.GENEVE.uid() + "/lists/" + location.substring(location.lastIndexOf('/') + 1), Map.of());
         assertThat(me.get("/admin").statusCode()).isEqualTo(200);
 
         // started again while it runs: it only opens the browser

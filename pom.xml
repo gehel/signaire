@@ -122,12 +122,6 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
-                <artifactId>signaire-core</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-            </dependency>
-            <dependency>
-                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-export</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -138,8 +132,20 @@
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-extractor</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
                 <artifactId>signaire-model</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.ledcom</groupId>
+                <artifactId>signaire-model</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>fr.ledcom</groupId>

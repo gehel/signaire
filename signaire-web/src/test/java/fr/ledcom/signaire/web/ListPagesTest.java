@@ -28,7 +28,7 @@ import fr.ledcom.signaire.accounts.WordList;
 import fr.ledcom.signaire.accounts.WordListException;
 import fr.ledcom.signaire.accounts.WordListException.Reason;
 import fr.ledcom.signaire.accounts.WordListService;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
 @WebLayerTest({ListController.class, SignController.class})
@@ -46,7 +46,7 @@ class ListPagesTest {
     @BeforeEach
     void indexSigns() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 

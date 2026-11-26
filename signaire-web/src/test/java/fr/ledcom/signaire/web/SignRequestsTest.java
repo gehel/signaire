@@ -27,16 +27,18 @@ import fr.ledcom.signaire.accounts.SignOverrideService;
 import fr.ledcom.signaire.accounts.SignRequest;
 import fr.ledcom.signaire.accounts.SignRequest.Status;
 import fr.ledcom.signaire.accounts.SignRequestService;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 import fr.ledcom.signaire.core.search.SignSearchService;
+import fr.ledcom.signaire.extractor.FakeSignSource;
+import fr.ledcom.signaire.extractor.SearchHit;
 import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Sign;
 
 /** Users request missing signs; administrators import them from (a fake) SignSuisse, create them, or reject them. */
 @WebLayerTest({SearchController.class, RequestController.class, AdminController.class,
     AdminRequestsController.class, AdminSignsController.class})
-@Import({SignEditor.class, FakeSignSuisse.class})
+@Import({SignEditor.class, FakeSignSuisseConfiguration.class})
 class SignRequestsTest {
 
     private static final long REQUEST_ID = 7;
@@ -59,29 +61,29 @@ class SignRequestsTest {
     @BeforeEach
     void setUp() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
     }
 
     @Test
     void usersRequestMissingSigns() {
-        when(requests.request(ALICE_ID, "Zoug", Language.FRENCH, "Le canton"))
-                .thenReturn(request("Zoug", Language.FRENCH, "Le canton", Status.OPEN, null));
+        when(requests.request(ALICE_ID, "Gare", Language.FRENCH, "Où partent les trains"))
+                .thenReturn(request("Gare", Language.FRENCH, "Où partent les trains", Status.OPEN, null));
         when(requests.byRequester(ALICE_ID))
-                .thenReturn(List.of(request("Zoug", Language.FRENCH, "Le canton", Status.OPEN, null)));
+                .thenReturn(List.of(request("Gare", Language.FRENCH, "Où partent les trains", Status.OPEN, null)));
 
-        assertThat(mvc.get().uri("/?q=zoug").with(ALICE).exchange()).bodyText()
-                .contains("href=\"/requests?word=zoug\"");
-        assertThat(mvc.get().uri("/requests?word=zoug").with(ALICE).exchange()).bodyText()
-                .contains("value=\"zoug\"");
+        assertThat(mvc.get().uri("/?q=gare").with(ALICE).exchange()).bodyText()
+                .contains("href=\"/requests?word=gare\"");
+        assertThat(mvc.get().uri("/requests?word=gare").with(ALICE).exchange()).bodyText()
+                .contains("value=\"gare\"");
 
         MvcTestResult sent = mvc.post().uri("/requests").with(ALICE).with(csrf())
-                .param("word", "Zoug").param("language", "fr").param("comment", "Le canton").exchange();
+                .param("word", "Gare").param("language", "fr").param("comment", "Où partent les trains").exchange();
 
         assertThat(sent).hasRedirectedUrl("/requests")
-                .flash().containsEntry("status", "Demande envoyée : « Zoug ».");
+                .flash().containsEntry("status", "Demande envoyée : « Gare ».");
         assertThat(mvc.get().uri("/requests").with(ALICE).exchange()).bodyText()
-                .contains("Zoug", "Le canton", "En attente");
+                .contains("Gare", "Où partent les trains", "En attente");
     }
 
     @Test
@@ -102,43 +104,44 @@ class SignRequestsTest {
     @Test
     void usersSeeWhatBecameOfTheirRequests() {
         when(requests.byRequester(ALICE_ID)).thenReturn(List.of(
-                request("Zoug", Language.FRENCH, null, Status.ADDED, "900"),
+                request("Gare", Language.FRENCH, null, Status.ADDED, "6"),
                 request("Xyz", Language.FRENCH, null, Status.REJECTED, null)));
 
         assertThat(mvc.get().uri("/requests").with(ALICE).exchange()).bodyText()
-                .contains("Ajouté", "href=\"/signs/900\"", "Refusé");
+                .contains("Ajouté", "href=\"/signs/6\"", "Refusé");
     }
 
     @Test
     void administratorsSeeTheOpenRequests() {
-        SignRequest zoug = request("Zoug", Language.FRENCH, "Le canton", Status.OPEN, null);
+        SignRequest gare = request("Gare", Language.FRENCH, "Où partent les trains", Status.OPEN, null);
         when(requests.openCount()).thenReturn(1L);
-        when(requests.open()).thenReturn(List.of(zoug));
+        when(requests.open()).thenReturn(List.of(gare));
 
         assertThat(mvc.get().uri("/admin").with(ADMIN).exchange()).bodyText()
                 .contains("href=\"/admin/requests\"", "1 demande en attente");
         assertThat(mvc.get().uri("/admin/requests").with(ADMIN).exchange()).bodyText()
-                .contains("Zoug", "alice", "Le canton");
+                .contains("Gare", "alice", "Où partent les trains");
     }
 
     @Test
     void administratorsImportRequestedSignsFromSignSuisse() {
-        when(requests.get(REQUEST_ID)).thenReturn(Optional.of(request("Zoug", Language.FRENCH, null, Status.OPEN,
+        when(requests.get(REQUEST_ID)).thenReturn(Optional.of(request("Gare", Language.FRENCH, null, Status.OPEN,
                 null)));
         String uri = "/admin/requests/" + REQUEST_ID;
 
         assertThat(mvc.get().uri(uri + "/signsuisse").with(ADMIN).exchange()).bodyText()
-                .contains("ZOUG", "action=\"" + uri + "/import\"").doesNotContain("ZURICH");
+                .contains("GARE", "action=\"" + uri + "/import\"").doesNotContain("LAUSANNE");
 
+        SearchHit gare = FakeSignSource.hit(TestSigns.GARE);
         MvcTestResult imported = mvc.post().uri(uri + "/import").with(ADMIN).with(csrf())
-                .param("uid", FakeSignSuisse.ZOUG.uid()).param("name", "ZOUG").param("language", "fr")
-                .param("url", FakeSignSuisse.ZOUG.url()).exchange();
+                .param("uid", gare.uid()).param("name", "GARE").param("language", "fr")
+                .param("url", gare.url()).exchange();
 
-        assertThat(imported).hasRedirectedUrl("/signs/900");
-        Sign zoug = search.findByUid("900").orElseThrow();
-        assertThat(zoug.definition()).isEqualTo("Ville de Suisse alémanique");
-        verify(overrides).save(zoug, ADMIN_ID);
-        verify(requests).markAdded(REQUEST_ID, "900");
+        assertThat(imported).hasRedirectedUrl("/signs/" + gare.uid());
+        Sign added = search.findByUid(gare.uid()).orElseThrow();
+        assertThat(added.definition()).isEqualTo(TestSigns.GARE.definition());
+        verify(overrides).save(added, ADMIN_ID);
+        verify(requests).markAdded(REQUEST_ID, gare.uid());
     }
 
     @Test
@@ -151,15 +154,15 @@ class SignRequestsTest {
 
     @Test
     void administratorsCreateRequestedSigns() {
-        when(requests.get(REQUEST_ID)).thenReturn(Optional.of(request("Zoug", Language.GERMAN, null, Status.OPEN,
-                null)));
+        when(requests.get(REQUEST_ID)).thenReturn(Optional.of(request("Bahnhof", Language.GERMAN, null,
+                Status.OPEN, null)));
         when(overrides.newUid()).thenReturn("local-1");
 
         assertThat(mvc.get().uri("/admin/signs/new?request=" + REQUEST_ID).with(ADMIN).exchange())
-                .bodyText().contains("value=\"Zoug\"", "name=\"request\"");
+                .bodyText().contains("value=\"Bahnhof\"", "name=\"request\"");
 
         MvcTestResult created = mvc.post().uri("/admin/signs").with(ADMIN).with(csrf())
-                .param("name", "ZUG").param("language", "de").param("request", String.valueOf(REQUEST_ID))
+                .param("name", "BAHNHOF").param("language", "de").param("request", String.valueOf(REQUEST_ID))
                 .exchange();
 
         assertThat(created).hasRedirectedUrl("/signs/local-1");

@@ -104,7 +104,7 @@ Key decisions:
   New signs get `local-…` uids. Bundles can be uploaded (checked, then named after their category), reloaded
   and reindexed. `SignSuisseSync` runs the extractor in a background virtual thread, one at a time,
   cancellable, against the `SignSource` bean (`ExtractionConfiguration`; web tests replace it with
-  `FakeSignSuisse`); each sign is indexed as soon as it is extracted, its bundle loaded at the end of its category. Users request missing signs (`sign_request`); admins import them from SignSuisse
+  `FakeSignSuisseConfiguration`); each sign is indexed as soon as it is extracted, its bundle loaded at the end of its category. Users request missing signs (`sign_request`); admins import them from SignSuisse
   (media linked, not downloaded), link an existing sign, create it, or reject the request.
 - **Exports** (`signaire-export`, plain Java): the caller gives an `ExportRequest` (title, signs, locale)
   and a `MediaSource` reading downloaded media (web and CLI adapt `MediaLibrary`). Labels are in
@@ -197,14 +197,18 @@ Gotchas with the WMF ruleset and Java 27:
   explicit locale.
 
 Tests never use the network: the `argLine` of the root POM sends HTTP(S) to a closed local port, except for
-localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead (`FakeSignSuisse` in web
-tests, a `SignSource` or a local `HttpServer` elsewhere); never point a test at sgb-fss.ch.
+localhost (Testcontainers), and `NoNetworkTest` checks it. Fake SignSuisse instead; never point a test at sgb-fss.ch.
+Every test uses the same invented signs (`docs/design/test-signs.md`): `TestSigns`, in model's test-jar (21 signs:
+cities, animals and nature in the three sign languages; `FIVE` for the search tests, `LEXICON` for all), served by
+the fake SignSuisse of the extractor's test-jar, in two forms: `FakeSignSource`, a `SignSource` in the process
+(failing pages or media, hooks before searches and pages, what it served), and `FakeSignSuisse`, over HTTP on
+127.0.0.1, for what runs the real client (`FakeSignSuisseTest` reads its pages back with the parser). Add what a
+test needs to them rather than another fake.
 
 Only `signaire-it` needs Docker (PostgreSQL and Chromium in containers, Testcontainers); the other modules have unit
 tests only. A test above the database mocks the services below it rather than using a database: the accounts tests
 use H2, the web tests mock the account services (`@WebLayerTest`). The search needs no container: core tests open a
-`SignIndex` on a `@TempDir`, Spring tests use `target/test-index`. `TestSigns` lives in core's test-jar, shared with
-the CLI and web tests.
+`SignIndex` on a `@TempDir`, Spring tests use `target/test-index`.
 
 `signaire-it` tests the whole stack as users run it: the CLI and web jars as processes (XDG directories under
 `target/it`, so both share the index), PostgreSQL in a container, and a fake SignSuisse served locally
@@ -228,9 +232,9 @@ SignSuisse, reached through `adb reverse`: a debuggable build downloads from the
 (`System.Logger` isn't on Android, nor `Files.readString`). On the phone, `d8` makes records plain classes: Jackson
 reads them but writes them as `{}`, unless its mapper writes fields (`BundleJson`, `WordLists`).
 
-Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of invented signs
-(`DemoBundles`, test code of `signaire-it`) with the development containers; Lighthouse CI asserts the
-scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
+Measures (`.github/workflows/quality.yml`): `ci/start-demo.sh` starts the web jar on bundles of the test signs
+(`DemoBundles`, test code of `signaire-it`, an image per sign and no video) with the development containers;
+Lighthouse CI asserts the scores of `.lighthouserc.json` (accessibility must stay at 1), sitespeed.io the budget of
 `.sitespeed/budget.json` and, on pull requests, the measures of the last successful build of main: `ci/sitespeed.py`
 summarizes them (main keeps them as the `sitespeed-baseline` artifact, 90 days) and fails when a timing, a size or the
 requests of a page grow by more than 10% (and more than 100 ms, 1 KB or 1 request). The comparison is in the summary of

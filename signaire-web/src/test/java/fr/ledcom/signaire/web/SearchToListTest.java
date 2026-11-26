@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import fr.ledcom.signaire.accounts.WordList;
 import fr.ledcom.signaire.accounts.WordListException;
 import fr.ledcom.signaire.accounts.WordListService;
-import fr.ledcom.signaire.core.TestSigns;
+import fr.ledcom.signaire.model.TestSigns;
 import fr.ledcom.signaire.core.search.SignIndex;
 
 @WebLayerTest({SearchController.class, SearchToListController.class})
@@ -43,7 +43,7 @@ class SearchToListTest {
     @BeforeEach
     void setUp() {
         index.recreate();
-        index.index(TestSigns.ALL);
+        index.index(TestSigns.FIVE);
         index.refresh();
         when(lists.lists(ALICE_ID)).thenReturn(List.of(FAMILY));
         when(lists.get(ALICE_ID, FAMILY.id())).thenReturn(FAMILY);

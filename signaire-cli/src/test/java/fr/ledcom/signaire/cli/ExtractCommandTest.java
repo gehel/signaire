@@ -5,15 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,13 +22,9 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-import fr.ledcom.signaire.extractor.ExtractionException;
-import fr.ledcom.signaire.extractor.SearchHit;
-import fr.ledcom.signaire.extractor.SignSource;
-import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.extractor.FakeSignSource;
 import fr.ledcom.signaire.model.Language;
-import fr.ledcom.signaire.model.Media;
-import fr.ledcom.signaire.model.Sign;
+import fr.ledcom.signaire.model.TestSigns;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
@@ -49,7 +41,7 @@ class ExtractCommandTest {
     private SignaireCommand command;
 
     @Autowired
-    private FakeSource source;
+    private FakeSignSource source;
 
     @Value("${signaire.media.cache}")
     private Path mediaCache;
@@ -59,9 +51,7 @@ class ExtractCommandTest {
 
     @BeforeEach
     void reset() throws IOException {
-        source.searchedLanguages.clear();
-        source.downloads.clear();
-        source.fetches.clear();
+        source.reset().failingPage(TestSigns.GENEVE);
         // media downloaded by a previous test or build would not be downloaded again
         if (Files.isDirectory(mediaCache)) {
             try (Stream<Path> files = Files.walk(mediaCache)) {
@@ -82,9 +72,9 @@ class ExtractCommandTest {
         assertThat(output.resolve("nation.zip")).doesNotExist();
         assertThat(out.toString())
                 .contains("Catégorie ville (fr)")
-                .contains("2 signes trouvés")
-                .contains("1 signes écrits dans " + output.resolve("city.zip"));
-        assertThat(err.toString()).contains("Échec pour BERNE (2)");
+                .contains("3 signes trouvés")
+                .contains("2 signes écrits dans " + output.resolve("city.zip"));
+        assertThat(err.toString()).contains("Échec pour GENÈVE (2)");
     }
 
     @Test
@@ -92,7 +82,8 @@ class ExtractCommandTest {
         int exitCode = execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--sans-medias");
 
         assertThat(exitCode).isZero();
-        assertThat(source.searchedLanguages).contains(Language.FRENCH, Language.GERMAN, Language.ITALIAN);
+        assertThat(source.searches()).extracting(FakeSignSource.Search::language)
+                .contains(Language.FRENCH, Language.GERMAN, Language.ITALIAN);
     }
 
     @Test
@@ -101,22 +92,23 @@ class ExtractCommandTest {
                 "--medias", "images");
 
         assertThat(exitCode).isZero();
-        assertThat(source.downloads).containsExactly(URI.create("https://example.org/lausanne.jpg"));
+        assertThat(source.downloads()).containsExactly(URI.create(TestSigns.GARE.images().getFirst().sourceUrl()));
     }
 
     @Test
     void reusesTheSignsAlreadyExtractedUnlessAskedToReadThemAgain() {
         execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias");
-        source.fetches.clear();
+        int read = source.pages().size();
 
         execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias");
-        // BERNE failed: it isn't in the bundle
-        assertThat(source.fetches).containsExactly("2");
+        // GENÈVE failed: it isn't in the bundle
+        assertThat(source.pages().subList(read, source.pages().size())).containsExactly(TestSigns.GENEVE.uid());
 
-        source.fetches.clear();
+        read = source.pages().size();
         execute("extraire", "--sortie", output.toString(), "--categorie", "ville", "--langue", "fr", "--sans-medias",
                 "--rafraichir");
-        assertThat(source.fetches).containsExactlyInAnyOrder("1", "2");
+        assertThat(source.pages().subList(read, source.pages().size())).containsExactlyInAnyOrder(
+                TestSigns.GARE.uid(), TestSigns.GENEVE.uid(), TestSigns.LAUSANNE.uid());
     }
 
     @Test
@@ -153,57 +145,18 @@ class ExtractCommandTest {
         return commandLine.execute(args);
     }
 
-    /** Replaces SignSuisse with two signs in the CITY category, the second one failing. */
+    /** Replaces SignSuisse with the fake one, which tests set up. */
     @TestConfiguration
     static class FakeSourceConfiguration {
         @Bean
-        FakeSource fakeSource() {
-            return new FakeSource();
+        FakeSignSource fakeSource() {
+            return new FakeSignSource();
         }
 
         @Bean
         @Primary
-        SignSourceFactory fakeSignSourceFactory(FakeSource source) {
+        SignSourceFactory fakeSignSourceFactory(FakeSignSource source) {
             return (Duration interval) -> source;
-        }
-    }
-
-    static final class FakeSource implements SignSource {
-        private final List<Language> searchedLanguages = Collections.synchronizedList(new ArrayList<>());
-        private final List<URI> downloads = Collections.synchronizedList(new ArrayList<>());
-        private final List<String> fetches = Collections.synchronizedList(new ArrayList<>());
-
-        @Override
-        public List<SearchHit> search(String term, Language language, Category category) {
-            searchedLanguages.add(language);
-            if (category != Category.CITY || language != Language.FRENCH) {
-                return List.of();
-            }
-            return List.of(new SearchHit("1", "LAUSANNE", language, "https://example.org/1"),
-                    new SearchHit("2", "BERNE", language, "https://example.org/2"));
-        }
-
-        @Override
-        public Sign fetchSign(SearchHit hit) {
-            fetches.add(hit.uid());
-            if ("2".equals(hit.uid())) {
-                throw new ExtractionException("page indisponible");
-            }
-            return Sign.builder(hit.uid(), hit.language(), hit.name()).categories(List.of(Category.CITY))
-                    .videos(List.of(new Media("https://example.org/lausanne.mp4", null)))
-                    .images(List.of(new Media("https://example.org/lausanne.jpg", null)))
-                    .build();
-        }
-
-        @Override
-        public void download(URI uri, Path target) {
-            downloads.add(uri);
-            try {
-                Files.createDirectories(target.getParent());
-                Files.writeString(target, "content of " + uri);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
     }
 }

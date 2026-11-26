@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterAll;
@@ -21,8 +22,12 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import fr.ledcom.signaire.bundle.Bundle;
 import fr.ledcom.signaire.bundle.BundleReader;
+import fr.ledcom.signaire.extractor.FakeSignSuisse;
+import fr.ledcom.signaire.model.Category;
+import fr.ledcom.signaire.model.Language;
 import fr.ledcom.signaire.model.Media;
 import fr.ledcom.signaire.model.Sign;
+import fr.ledcom.signaire.model.TestSigns;
 
 /**
  * The Android app on a phone (an emulator of Android 14, the oldest it supports), as its users go: signs made on a
@@ -40,6 +45,7 @@ class AndroidIT {
     private static final Path WORK = Path.of(System.getProperty("signaire.it.work")).resolveSibling("it-android");
     /** About 40 requests, 500 ms apart. */
     private static final Duration DOWNLOAD = Duration.ofMinutes(2);
+    private static final String CITY = "city.zip";
 
     private static AndroidDevice device;
     private static FakeSignSuisse signSuisse;
@@ -58,11 +64,13 @@ class AndroidIT {
         device.run("install", "-r", apk.toString());
         device.run("shell", "pm", "clear", APP);
         device.run("shell", "cmd", "locale", "set-app-locales", APP, "--locales", "fr");
-        // the bundles made on a computer, in the files of the app
+        // the bundles made on a computer, in the files of the app: not the city, downloaded by a test
         Path bundles = WORK.resolve("bundles");
+        JavaProcess.deleteRecursively(bundles);
         DemoBundles.write(bundles);
         try (Stream<Path> files = Files.list(bundles)) {
-            for (Path bundle : files.filter(file -> file.toString().endsWith(".zip")).toList()) {
+            for (Path bundle : files.filter(file -> file.toString().endsWith(".zip"))
+                    .filter(file -> !file.getFileName().toString().equals(CITY)).toList()) {
                 device.pushToApp(bundle, APP, "files/bundles/" + bundle.getFileName());
             }
         }
@@ -102,8 +110,10 @@ class AndroidIT {
     @Test
     @Order(1)
     void theSignsOfThePhoneAreListedThenFoundAccentsIgnored() throws IOException, InterruptedException {
-        device.waitFor("ARBRE");
-        assertThat(AndroidDevice.texts(device.screen())).contains("20 signes", "BATEAU", "DSGS");
+        // every sign of the bundles, by name
+        device.waitFor("ALBERO");
+        long onThePhone = TestSigns.LEXICON.stream().filter(sign -> !sign.categories().contains(Category.CITY)).count();
+        assertThat(AndroidDevice.texts(device.screen())).contains(onThePhone + " signes", "ARBRE", "LIS");
         screenshot("search");
 
         device.tap("search");
@@ -119,9 +129,9 @@ class AndroidIT {
     void aSignShowsItsTextsAndGoesInAList() throws IOException, InterruptedException {
         device.tap("FORÊT");
         device.waitFor("add_to_list");
-        // the periphrase and the definition are one text, under their labels
-        assertThat(String.join("\n", AndroidDevice.texts(device.screen()))).contains("Langue des signes italienne (LIS)",
-                "Définition\nUn forêt de démonstration, qui n'existe pas dans SignSuisse.");
+        // the definition is one text with its label
+        assertThat(String.join("\n", AndroidDevice.texts(device.screen()))).contains("Langue des signes française (LSF)",
+                "Définition\n" + TestSigns.FORET.definition());
         screenshot("sign");
 
         device.tap("add_to_list");
@@ -141,7 +151,7 @@ class AndroidIT {
         device.tap("Mes listes");
         device.tap("Nature (1)");
         device.waitFor("FORÊT");
-        assertThat(AndroidDevice.texts(device.screen())).contains("Nature", "FORÊT", "LIS");
+        assertThat(AndroidDevice.texts(device.screen())).contains("Nature", "FORÊT", "LSF");
         screenshot("list");
         device.key("KEYCODE_BACK");
         device.key("KEYCODE_BACK");
@@ -161,7 +171,7 @@ class AndroidIT {
         device.tap("Signes du téléphone");
         device.waitFor("Télécharger depuis SignSuisse");
         List<String> texts = AndroidDevice.texts(device.screen());
-        assertThat(texts).contains("Ville", "Nature", "Circulation");
+        assertThat(texts).contains("Animaux", "Nature").doesNotContain("Ville");
         assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("library");
         device.key("KEYCODE_BACK");
@@ -182,23 +192,28 @@ class AndroidIT {
         device.waitFor("Langues des signes");
         device.tap("OK");
         device.tap("Vidéos et images");
-        device.waitFor("Téléchargement terminé : 2 signes", DOWNLOAD);
-        // the bundle of the city replaced, the others kept
+        // the French signs of the city: GARE, GENÈVE and LAUSANNE
+        List<Sign> french = TestSigns.of(Category.CITY, Language.FRENCH);
+        device.waitFor("Téléchargement terminé : " + french.size() + " signes", DOWNLOAD);
+        // the bundle of the city added to the others
         List<String> texts = AndroidDevice.texts(device.screen());
-        assertThat(texts).filteredOn(text -> text.startsWith("2 signes, extraits le")).hasSize(1);
-        assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(1);
+        assertThat(texts).filteredOn(text -> text.startsWith(french.size() + " signes, extraits le")).hasSize(1);
+        assertThat(texts).filteredOn(text -> text.startsWith("7 signes, extraits le")).hasSize(2);
         screenshot("downloaded");
         device.key("KEYCODE_BACK");
 
-        Path city = WORK.resolve("downloaded/city.zip");
-        device.pullFromApp(APP, "files/bundles/city.zip", city);
+        Path city = WORK.resolve("downloaded").resolve(CITY);
+        device.pullFromApp(APP, "files/bundles/" + CITY, city);
         try (Bundle bundle = new BundleReader().read(city)) {
             bundle.verifyMedia();
-            assertThat(bundle.signs()).extracting(Sign::name).containsExactlyInAnyOrder("LAUSANNE", "GENÈVE");
-            assertThat(bundle.signs()).allSatisfy(sign -> {
-                assertThat(sign.videos()).singleElement().extracting(Media::file).isNotNull();
-                assertThat(sign.images()).singleElement().extracting(Media::file).isNotNull();
-            });
+            assertThat(bundle.signs()).extracting(Sign::uid)
+                    .containsExactlyInAnyOrderElementsOf(french.stream().map(Sign::uid).toList());
+            Sign gare = bundle.signs().stream().filter(sign -> sign.uid().equals(TestSigns.GARE.uid())).findFirst()
+                    .orElseThrow();
+            assertThat(gare.videos()).singleElement().extracting(Media::file).isNotNull();
+            assertThat(gare.images()).singleElement().extracting(Media::file).isNotNull();
+            assertThat(gare.examples()).singleElement()
+                    .satisfies(example -> assertThat(Objects.requireNonNull(example.video()).file()).isNotNull());
         }
     }
 
@@ -207,9 +222,9 @@ class AndroidIT {
     void theDownloadedSignsAreFound() throws IOException, InterruptedException {
         device.tap("search");
         device.clear();
-        device.type("lausanne");
+        device.type("gare");
         device.waitFor("1 signe");
-        assertThat(AndroidDevice.texts(device.screen())).contains("LAUSANNE", "LSF");
+        assertThat(AndroidDevice.texts(device.screen())).contains("GARE", "LSF");
         device.key("KEYCODE_BACK");
         screenshot("downloaded-found");
     }
